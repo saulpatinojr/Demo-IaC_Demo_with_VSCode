@@ -1,0 +1,48 @@
+name: "Deploy L3 - Containers & Data"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+  ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
+  LOCATION: eastus2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint
+        run: az bicep build --file labs/L3-containers/main.bicep
+
+      - name: What-if (preview changes)
+        run: |
+          az deployment sub what-if \
+            --name l3-whatif-${{ github.run_number }} \
+            --location $LOCATION \
+            --parameters labs/L3-containers/main.bicepparam
+
+      - name: Deploy
+        run: |
+          az deployment sub create \
+            --name l3-deploy-${{ github.run_number }} \
+            --location $LOCATION \
+            --parameters labs/L3-containers/main.bicepparam
+
+      - name: Show app URL
+        run: |
+          az deployment sub show --name l3-deploy-${{ github.run_number }} \
+            --query properties.outputs.appUrl.value -o tsv

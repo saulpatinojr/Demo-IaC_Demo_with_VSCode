@@ -1,0 +1,47 @@
+name: "Deploy L4 - Global Scale"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+  LOCATION: eastus2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint
+        run: az bicep build --file labs/L4-global/main.bicep
+
+      - name: What-if (preview changes)
+        run: |
+          az deployment sub what-if \
+            --name l4-whatif-${{ github.run_number }} \
+            --location $LOCATION \
+            --parameters labs/L4-global/main.bicepparam
+
+      - name: Deploy
+        run: |
+          az deployment sub create \
+            --name l4-deploy-${{ github.run_number }} \
+            --location $LOCATION \
+            --parameters labs/L4-global/main.bicepparam
+
+      - name: Show Front Door endpoint
+        run: |
+          az deployment sub show --name l4-deploy-${{ github.run_number }} \
+            --query properties.outputs.frontDoorEndpoint.value -o tsv

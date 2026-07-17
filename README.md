@@ -1,0 +1,110 @@
+# IaC Demo — Bicep + GitHub Copilot + GitHub Actions → Azure
+
+Learn to author **Azure Bicep** infrastructure-as-code with **GitHub Copilot agent mode in VS Code**, built entirely from **Azure Verified Modules (AVM)**, and deploy it to Azure with **GitHub Actions (OIDC)** — no stored cloud credentials.
+
+The demo is four **cumulative lab stages**. Each stage builds on the infrastructure the previous one deployed, and each gives you 2–3 ways to test what you built:
+
+| Stage | What you build | What it adds | Tests |
+|-------|----------------|--------------|-------|
+| **[L1 — Hub & Spoke](../../wiki/L1-Hub-and-Spoke)** | Hub + spoke VNets (peered), Bastion, 1 Linux VM | Core networking & connectivity | Bastion SSH, cross-peering curl/ping, peering state check |
+| **[L2 — Web Tier & Firewall](../../wiki/L2-Web-Tier-and-Firewall)** | 3 nginx VMs behind an internal LB, Azure Firewall (DNAT + egress control), NSGs, route tables | Traffic inspection & load balancing | Round-robin curl via firewall, blocked vs allowed egress, NSG flow verify |
+| **[L3 — Containers & Data](../../wiki/L3-Containers-and-Data)** | Azure Container Apps, Azure SQL, Key Vault, managed identity, monitoring + alerting | Containers, data tier, **private networking** (private endpoints, no public data plane) | Hit the app URL, prove SQL is private-only, trigger an alert |
+| **[L4 — Global Scale](../../wiki/L4-Global-Scale)** | Second region, SQL failover group, Azure Front Door | Multi-region HA & global entry point | Front Door URL, simulated regional failover, SQL failover group |
+
+> 📖 **The full workshop guide lives in the [Wiki](../../wiki)** — start there after finishing the setup below.
+
+---
+
+## 1. Install the software
+
+Everything installs on Windows via `winget` (or use the download links). macOS/Linux users: use the links.
+
+| Tool | Why you need it | winget | Download |
+|------|-----------------|--------|----------|
+| **Visual Studio Code** | Editor + Copilot agent mode home | `winget install Microsoft.VisualStudioCode` | [code.visualstudio.com](https://code.visualstudio.com/download) |
+| **GitHub Copilot** (VS Code extensions) | The AI agent that writes your Bicep | — (install in VS Code: *GitHub Copilot* + *GitHub Copilot Chat*) | [marketplace](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) |
+| **Bicep** (VS Code extension) | Bicep language server, validation, AVM IntelliSense | — (install in VS Code: *Bicep*) | [marketplace](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-bicep) |
+| **Git** | Version control | `winget install Git.Git` | [git-scm.com](https://git-scm.com/downloads) |
+| **GitHub Desktop** | Easy clone/commit/push UI | `winget install GitHub.GitHubDesktop` | [desktop.github.com](https://desktop.github.com/) |
+| **GitHub CLI** (`gh`) | Repo secrets, workflow runs from the terminal | `winget install GitHub.cli` | [cli.github.com](https://cli.github.com/) |
+| **Azure CLI** (`az`) | Deployments, what-if, testing — Copilot agent mode drives this | `winget install Microsoft.AzureCLI` | [learn.microsoft.com/cli/azure](https://learn.microsoft.com/cli/azure/install-azure-cli) |
+| **Bicep CLI** | Compiles/lints the templates | `az bicep install` (after Azure CLI) | [docs](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install) |
+| PowerShell 7 *(optional)* | Modern shell for Windows | `winget install Microsoft.PowerShell` | [github.com/PowerShell](https://github.com/PowerShell/PowerShell/releases) |
+
+Verify your install:
+
+```bash
+git --version
+gh --version
+az --version
+az bicep version
+```
+
+This repo recommends the right VS Code extensions automatically — accept the prompt when you first open the folder (see [.vscode/extensions.json](.vscode/extensions.json)).
+
+> 🧭 Deeper install/config guidance for every tool: **[Wiki → Tools and References](../../wiki/Tools-and-References)**.
+
+## 2. Get the code
+
+1. **Fork** this repo (top-right on GitHub) — you need your own fork so workflows can use *your* secrets.
+2. Clone it with **GitHub Desktop**: `File → Clone repository`, pick your fork.
+3. Open the folder in **VS Code** and sign in to Copilot when prompted.
+
+## 3. Sign in to everything
+
+```bash
+az login                 # Azure
+gh auth login            # GitHub CLI
+```
+
+You need an Azure subscription where you can create resource groups, and a GitHub Copilot subscription (Free tier works).
+
+## 4. Wire up GitHub → Azure (OIDC, one-time)
+
+The workflows authenticate with a federated credential — no secrets stored beyond IDs. Short version:
+
+```bash
+az ad app create --display-name iac-demo-oidc
+# then create a service principal, a federated credential for your fork's main branch,
+# and grant it Contributor on your subscription
+```
+
+Full copy-paste steps: **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**.
+
+Then set your repo secrets:
+
+```bash
+gh secret set AZURE_CLIENT_ID       --body "<appId>"
+gh secret set AZURE_TENANT_ID       --body "<tenantId>"
+gh secret set AZURE_SUBSCRIPTION_ID --body "<subscriptionId>"
+gh secret set VM_ADMIN_PASSWORD     --body "<strong throwaway password>"
+gh secret set SQL_ADMIN_PASSWORD    --body "<strong throwaway password>"
+```
+
+## 5. Start the workshop
+
+Head to the **[Wiki Home](../../wiki)** and begin with **L1**. Each lab guide shows you the Copilot agent-mode prompts to author/modify the Bicep, the workflow to deploy it, and the tests to prove it works.
+
+## Repo map
+
+```
+labs/
+  L1-hub-spoke/     hub+spoke, Bastion, test VM
+  L2-web-tier/      internal LB + 3 web VMs + Azure Firewall
+  L3-containers/    Container Apps, SQL, Key Vault, monitoring, private endpoints
+  L4-global/        second region, SQL failover group, Front Door
+  modules/          the only two non-AVM modules (subnet-on-existing-VNet, failover group)
+.github/workflows/  deploy-l1..l4.yml + teardown.yml (all OIDC, all manual dispatch)
+bicepconfig.json    linter settings
+```
+
+All Azure resources come from [Azure Verified Modules](https://aka.ms/avm) (`br/public:avm/res/...`), version-pinned.
+
+## ⚠️ Cost & cleanup
+
+These labs create real, billable resources — **Azure Firewall (~$1.25/hr) and Bastion are the big ones**. When you're done (or pausing overnight), run the **Teardown labs** workflow (type `DELETE` to confirm) or:
+
+```bash
+az group delete -n rg-iacdemo-l4 -y; az group delete -n rg-iacdemo-l3 -y
+az group delete -n rg-iacdemo-l2 -y; az group delete -n rg-iacdemo-l1 -y
+```
