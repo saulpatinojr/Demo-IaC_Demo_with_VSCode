@@ -1,5 +1,7 @@
 name: "Teardown labs"
 
+# Deletes lab resource groups. There is also a local equivalent you can run
+# from your machine: scripts/Cleanup-Labs.ps1 (supports -WhatIf).
 on:
   workflow_dispatch:
     inputs:
@@ -18,6 +20,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: teardown
+  cancel-in-progress: false
+
 env:
   PREFIX: iacdemo
 
@@ -26,6 +32,21 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.confirm == 'DELETE' }}
     steps:
+      - name: Preflight - verify required secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          missing=0
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 first."
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:

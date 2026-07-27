@@ -11,7 +11,10 @@ The demo is four **cumulative lab stages**. Each stage builds on the infrastruct
 | **[L3 — Containers & Data](../../wiki/L3-Containers-and-Data)** | Azure Container Apps, Azure SQL, Key Vault, managed identity, monitoring + alerting | Containers, data tier, **private networking** (private endpoints, no public data plane) | Hit the app URL, prove SQL is private-only, trigger an alert |
 | **[L4 — Global Scale](../../wiki/L4-Global-Scale)** | Second region, SQL failover group, Azure Front Door | Multi-region HA & global entry point | Front Door URL, simulated regional failover, SQL failover group |
 
-> 📖 **The full workshop guide lives in the [Wiki](../../wiki)** — start there after finishing the setup below.
+> 📖 **The full workshop guide lives in the [Wiki](../../wiki).**
+> - Brand new to any of this? Start with the **[Start-Here Checklist](../../wiki/Start-Here-Checklist)** and **[Understanding IaC](../../wiki/Understanding-IaC)**.
+> - New to GitHub itself (repos, Actions, secrets vs. variables)? **[GitHub Essentials](../../wiki/GitHub-Essentials)**.
+> - Want to get comfortable with VS Code, Bicep, and Copilot first? **[Getting Comfortable with the Tools](../../wiki/Getting-Comfortable-with-the-Tools)**.
 
 ---
 
@@ -61,25 +64,16 @@ You need an Azure subscription where you can create resource groups, and a GitHu
 
 ## 4. Wire up GitHub → Azure (OIDC, one-time)
 
-The workflows authenticate with a federated credential — no secrets stored beyond IDs. Short version:
+GitHub Actions logs into Azure with a **federated credential** — nothing but non-secret IDs are stored, and there is no cloud password to leak. One script sets up the entire handshake, auto-detecting your fork from the tools you're already signed in to:
 
-```bash
-az ad app create --display-name iac-demo-oidc
-# then create a service principal, a federated credential for your fork's main branch,
-# and grant it Contributor on your subscription
+```powershell
+./scripts/Setup-Oidc.ps1 -WhatIf   # preview — changes nothing
+./scripts/Setup-Oidc.ps1           # do it for real
 ```
 
-Full copy-paste steps: **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**.
+It creates the Entra app + service principal, adds the federated credential for your fork's branch, grants Contributor on your subscription, and pushes all the repo secrets (including strong throwaway VM/SQL passwords it generates for you). Re-run any time to rotate.
 
-Then set your repo secrets:
-
-```bash
-gh secret set AZURE_CLIENT_ID       --body "<appId>"
-gh secret set AZURE_TENANT_ID       --body "<tenantId>"
-gh secret set AZURE_SUBSCRIPTION_ID --body "<subscriptionId>"
-gh secret set VM_ADMIN_PASSWORD     --body "<strong throwaway password>"
-gh secret set SQL_ADMIN_PASSWORD    --body "<strong throwaway password>"
-```
+> Want to understand each step, or on macOS/Linux? The manual `az`/`gh` walkthrough is in **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**. New to secrets vs. variables? See **[Wiki → GitHub Essentials](../../wiki/GitHub-Essentials)**.
 
 ## 5. Start the workshop
 
@@ -94,6 +88,9 @@ labs/
   L3-containers/    Container Apps, SQL, Key Vault, monitoring, private endpoints
   L4-global/        second region, SQL failover group, Front Door
   modules/          the only two non-AVM modules (subnet-on-existing-VNet, failover group)
+scripts/
+  Setup-Oidc.ps1    one-command GitHub↔Azure OIDC handshake (+ repo secrets)
+  Cleanup-Labs.ps1  tear down lab resource groups (and optionally the OIDC identity)
 .github/workflows/  deploy-l1..l4.yml + teardown.yml (all OIDC, all manual dispatch)
 bicepconfig.json    linter settings
 ```
@@ -102,7 +99,14 @@ All Azure resources come from [Azure Verified Modules](https://aka.ms/avm) (`br/
 
 ## ⚠️ Cost & cleanup
 
-These labs create real, billable resources — **Azure Firewall (~$1.25/hr) and Bastion are the big ones**. When you're done (or pausing overnight), run the **Teardown labs** workflow (type `DELETE` to confirm) or:
+These labs create real, billable resources — **Azure Firewall (~$1.25/hr) and Bastion are the big ones**. When you're done (or pausing overnight), tear everything down one of three ways:
+
+```powershell
+./scripts/Cleanup-Labs.ps1 -WhatIf   # preview, then run without -WhatIf
+```
+
+- **Teardown labs** workflow in GitHub Actions (type `DELETE` to confirm), or
+- the raw CLI:
 
 ```bash
 az group delete -n rg-iacdemo-l4 -y; az group delete -n rg-iacdemo-l3 -y

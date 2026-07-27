@@ -1,5 +1,6 @@
 name: "Deploy L2 - Web Tier & Firewall"
 
+# Manual only. Prerequisite: L1 deployed with the same prefix.
 on:
   workflow_dispatch:
 
@@ -7,15 +8,34 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: deploy-l2
+  cancel-in-progress: false
+
 env:
   VM_ADMIN_PASSWORD: ${{ secrets.VM_ADMIN_PASSWORD }}
-  LOCATION: eastus2
+  LOCATION: eastus2   # deployment metadata region only; resource region is set in main.bicepparam
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Preflight - verify required secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          missing=0
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID VM_ADMIN_PASSWORD; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -24,7 +44,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Lint
+      - name: Lint (compile + linter)
         run: az bicep build --file labs/L2-web-tier/main.bicep
 
       - name: What-if (preview changes)

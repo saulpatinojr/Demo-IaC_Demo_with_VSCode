@@ -1,0 +1,12 @@
+# Normalize line endings. Files that run on Linux runners (GitHub Actions) or
+# in bash MUST be LF, or they fail with "$'\r': command not found".
+* text=auto eol=lf
+
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sh    text eol=lf
+*.bicep text eol=lf
+*.bicepparam text eol=lf
+
+# PowerShell is happy with either; keep CRLF for native Windows editing.
+*.ps1   text eol=crlf

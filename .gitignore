@@ -1,3 +1,12 @@
 .DS_Store
 *.log
+
+# Bicep build output (ARM JSON) — the .bicep is the source of truth
 main.json
+*.build.json
+
+# Never commit secrets. Credentials live in GitHub secrets / Key Vault,
+# not in the repo. A .env is only for throwaway local values.
+.env
+*.env
+!.env.sample
