@@ -33,7 +33,8 @@
     assignment. Off by default so you can redeploy without re-running setup.
 
 .PARAMETER AppName
-    Entra app to remove when -RemoveOidc is set. Default: iac-demo-oidc.
+    Entra app to remove when -RemoveOidc is set. Defaults to "iac-demo-<Prefix>"
+    to match the name created by Setup-Oidc.ps1.
 
 .PARAMETER WhatIf
     Show what would be deleted without deleting anything.
@@ -56,13 +57,15 @@ param(
     [ValidateSet('All', 'L4', 'L3', 'L2', 'L1')]
     [string] $Level = 'All',
     [switch] $RemoveOidc,
-    [string] $AppName = 'iac-demo-oidc'
+    [string] $AppName = ''
 )
 
 $ErrorActionPreference = 'Stop'
 function Write-Step($m) { Write-Host "`n==> $m" -ForegroundColor Cyan }
 function Write-Ok($m)   { Write-Host "    [ok] $m" -ForegroundColor Green }
 function Write-Skip($m) { Write-Host "    [skip] $m" -ForegroundColor DarkGray }
+
+if (-not $AppName) { $AppName = "iac-demo-$Prefix" }
 
 if (-not (Get-Command az -ErrorAction SilentlyContinue)) { Write-Host 'az not found.' -ForegroundColor Red; exit 1 }
 try { az account show -o none 2>$null } catch { Write-Host 'Run: az login' -ForegroundColor Red; exit 1 }

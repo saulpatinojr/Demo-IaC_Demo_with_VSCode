@@ -33,7 +33,9 @@
     created for this exact branch (that is the identity GitHub presents).
 
 .PARAMETER AppName
-    Display name of the Entra app registration. Default: iac-demo-oidc.
+    Display name of the Entra app registration. Defaults to "iac-demo-<Prefix>"
+    so each participant automatically gets a uniquely named app. Override only
+    if you need a specific name.
 
 .PARAMETER SubscriptionId
     Target subscription. Default: your current az default subscription.
@@ -73,7 +75,7 @@
 param(
     [string] $GitHubRepo,
     [string] $Branch = 'main',
-    [string] $AppName = 'iac-demo-oidc',
+    [string] $AppName = '',
     [string] $SubscriptionId,
     [string] $ResourceGroup,
     [string] $Prefix = 'iacdemo',
@@ -84,6 +86,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $issuer   = 'https://token.actions.githubusercontent.com'
 $audience = 'api://AzureADTokenExchange'
+
+# Derive a unique app name from the prefix so each participant gets their own
+# Entra app registration and avoid collisions in a shared tenant.
+if (-not $AppName) { $AppName = "iac-demo-$Prefix" }
 
 function Write-Step($msg)  { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)    { Write-Host "    [ok] $msg" -ForegroundColor Green }
