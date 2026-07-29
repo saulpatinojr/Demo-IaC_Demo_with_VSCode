@@ -3,10 +3,10 @@
 // Deploys: hub VNet (Bastion + reserved firewall subnet), spoke VNet (peered),
 // and one Linux VM in the spoke. Built entirely from Azure Verified Modules.
 // L2 builds on top of this deployment — do not tear it down between labs.
+// Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
-targetScope = 'subscription'
 
-@description('Prefix used for all resource names, e.g. "iacdemo".')
+@description('Prefix used for all resource names. Use a unique value per lab participant.')
 @maxLength(12)
 param prefix string = 'iacdemo'
 
@@ -20,19 +20,11 @@ param adminUsername string = 'azureuser'
 @secure()
 param adminPassword string
 
-var rgName = 'rg-${prefix}-l1'
 var hubVnetName = 'vnet-${prefix}-hub'
 var spokeVnetName = 'vnet-${prefix}-spoke1'
 
-resource rg 'Microsoft.Resources/resourceGroups@2024-11-01' = {
-  name: rgName
-  location: location
-  tags: { lab: 'L1', demo: prefix }
-}
-
 // --- Hub VNet: Bastion subnet now, AzureFirewallSubnet reserved for L2 -----
 module hubVnet 'br/public:avm/res/network/virtual-network:0.9.0' = {
-  scope: rg
   name: 'l1-hub-vnet'
   params: {
     name: hubVnetName
@@ -47,7 +39,6 @@ module hubVnet 'br/public:avm/res/network/virtual-network:0.9.0' = {
 
 // --- Spoke VNet: workload subnet now, web subnet added by L2 ---------------
 module spokeVnet 'br/public:avm/res/network/virtual-network:0.9.0' = {
-  scope: rg
   name: 'l1-spoke-vnet'
   params: {
     name: spokeVnetName
@@ -73,7 +64,6 @@ module spokeVnet 'br/public:avm/res/network/virtual-network:0.9.0' = {
 // 30–45 minutes to deploy, so this demo uses Bastion instead. The equivalent
 // gateway deployment is shown (commented) at the bottom of this file.
 module bastion 'br/public:avm/res/network/bastion-host:0.8.2' = {
-  scope: rg
   name: 'l1-bastion'
   params: {
     name: 'bas-${prefix}-hub'
@@ -85,7 +75,6 @@ module bastion 'br/public:avm/res/network/bastion-host:0.8.2' = {
 
 // --- One small Linux VM in the spoke ---------------------------------------
 module testVm 'br/public:avm/res/compute/virtual-machine:0.22.2' = {
-  scope: rg
   name: 'l1-test-vm'
   params: {
     name: 'vm-${prefix}-test'
@@ -120,7 +109,7 @@ module testVm 'br/public:avm/res/compute/virtual-machine:0.22.2' = {
   }
 }
 
-output resourceGroupName string = rgName
+output resourceGroupName string = resourceGroup().name
 output hubVnetId string = hubVnet.outputs.resourceId
 output spokeVnetId string = spokeVnet.outputs.resourceId
 output vmName string = testVm.outputs.name

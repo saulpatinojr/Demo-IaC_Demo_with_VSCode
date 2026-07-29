@@ -4,19 +4,29 @@
 
 .DESCRIPTION
     The labs create real, billable resources — Azure Firewall, Bastion, Front
-    Door and SQL all bill while idle. This script tears them down in the correct
-    order (L4 -> L1, because later labs depend on earlier ones) and can also
-    remove the Entra app + role assignment created by Setup-Oidc.ps1.
+    Door and SQL all bill while idle. This script tears them down.
+
+    Classroom mode (-ResourceGroup): deletes ALL resources inside the shared
+    resource group without deleting the group itself (students typically don't
+    have permission to delete the RG). Resources are deleted in parallel; some
+    dependent resources (e.g. Private Endpoints before their parent) may need
+    two passes.
+
+    Standard mode: deletes the lab resource groups rg-<prefix>-l1..l4 in the
+    correct order (L4 first, L1 last).
 
     ALWAYS preview first:   ./scripts/Cleanup-Labs.ps1 -WhatIf
+
+.PARAMETER ResourceGroup
+    When set, delete all resources INSIDE this group (classroom mode). The
+    group itself is not deleted. Ignores -Prefix and -Level.
 
 .PARAMETER Prefix
     Resource-name prefix used when deploying. Default: iacdemo. Resource groups
     are rg-<prefix>-l1 .. rg-<prefix>-l4.
 
 .PARAMETER Level
-    Which labs to remove: All (default), L4, L3, L2, or L1. Deleting a single
-    level does NOT delete the ones it depends on.
+    Which labs to remove (standard mode only): All (default), L4, L3, L2, L1.
 
 .PARAMETER RemoveOidc
     Also delete the Entra app registration named by -AppName and its role
@@ -31,14 +41,17 @@
 .EXAMPLE
     ./scripts/Cleanup-Labs.ps1 -WhatIf
 .EXAMPLE
-    ./scripts/Cleanup-Labs.ps1                 # delete all lab resource groups
+    ./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-alice"   # classroom mode
 .EXAMPLE
-    ./scripts/Cleanup-Labs.ps1 -Level L2       # delete only rg-iacdemo-l2
+    ./scripts/Cleanup-Labs.ps1                                  # delete all lab RGs (standard)
 .EXAMPLE
-    ./scripts/Cleanup-Labs.ps1 -RemoveOidc     # full teardown incl. OIDC identity
+    ./scripts/Cleanup-Labs.ps1 -Level L2                        # delete only rg-iacdemo-l2
+.EXAMPLE
+    ./scripts/Cleanup-Labs.ps1 -RemoveOidc                      # full teardown incl. OIDC identity
 #>
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
+    [string] $ResourceGroup,
     [string] $Prefix = 'iacdemo',
     [ValidateSet('All', 'L4', 'L3', 'L2', 'L1')]
     [string] $Level = 'All',
@@ -55,6 +68,35 @@ if (-not (Get-Command az -ErrorAction SilentlyContinue)) { Write-Host 'az not fo
 try { az account show -o none 2>$null } catch { Write-Host 'Run: az login' -ForegroundColor Red; exit 1 }
 if ($LASTEXITCODE -ne 0) { Write-Host 'Run: az login' -ForegroundColor Red; exit 1 }
 
+# ---- Classroom mode: delete resources inside a shared RG -------------------
+if ($ResourceGroup) {
+    Write-Step "Classroom mode: deleting all resources in '$ResourceGroup'"
+    $rgExists = (az group exists --name $ResourceGroup) -eq 'true'
+    if (-not $rgExists) { Write-Host "Resource group '$ResourceGroup' not found." -ForegroundColor Red; exit 1 }
+
+    $ids = az resource list --resource-group $ResourceGroup --query '[].id' -o tsv 2>$null
+    if (-not $ids) { Write-Skip 'No resources found in the resource group'; return }
+
+    $idList = ($ids -split "`n") -replace '\r', '' | Where-Object { $_ }
+    Write-Host "    Found $($idList.Count) resource(s) to delete." -ForegroundColor Yellow
+
+    if ($PSCmdlet.ShouldProcess($ResourceGroup, "Delete $($idList.Count) resources")) {
+        # Delete in one batch; ARM handles dependency ordering within the group.
+        az resource delete --ids $idList | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok "All resources deleted from '$ResourceGroup'"
+        } else {
+            Write-Host '    Some resources may not have deleted (dependency ordering). Re-run to clean up.' -ForegroundColor Yellow
+        }
+    } else {
+        $idList | ForEach-Object { Write-Skip "would delete $_" }
+    }
+    Write-Host "`nDone." -ForegroundColor Green
+    if ($WhatIfPreference) { Write-Host 'DRY RUN — nothing was deleted.' -ForegroundColor Yellow }
+    return
+}
+
+# ---- Standard mode: delete whole lab resource groups -----------------------
 # Delete order matters: L4 first (SQL failover group on L3), L2 before L1 (firewall in L1 hub).
 $order = if ($Level -eq 'All') { @('l4', 'l3', 'l2', 'l1') } else { @($Level.ToLower()) }
 

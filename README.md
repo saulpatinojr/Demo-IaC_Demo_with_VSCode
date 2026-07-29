@@ -49,7 +49,7 @@ This repo recommends the right VS Code extensions automatically — accept the p
 
 ## 2. Get the code
 
-1. **Fork** this repo (top-right on GitHub) — you need your own fork so workflows can use *your* secrets.
+1. **Fork** this repo (top-right on GitHub) to your personal account or your org. You need your own fork so workflows can use *your* secrets and variables.
 2. Clone it with **GitHub Desktop**: `File → Clone repository`, pick your fork.
 3. Open the folder in **VS Code** and sign in to Copilot when prompted.
 
@@ -64,14 +64,19 @@ You need an Azure subscription where you can create resource groups, and a GitHu
 
 ## 4. Wire up GitHub → Azure (OIDC, one-time)
 
-GitHub Actions logs into Azure with a **federated credential** — nothing but non-secret IDs are stored, and there is no cloud password to leak. One script sets up the entire handshake, auto-detecting your fork from the tools you're already signed in to:
+GitHub Actions logs into Azure with a **federated credential** — nothing but non-secret IDs are stored, and there is no cloud password to leak. One script sets up the entire handshake, auto-detecting your fork from the tools you're already signed in to.
+
+> **Classroom participants:** your instructor has pre-created a resource group for you (e.g. `rg-lab-<yourname>`) and granted you Contributor on it. Use `-ResourceGroup` and `-Prefix` so the script scopes access correctly and avoids name conflicts with other participants.
 
 ```powershell
 ./scripts/Setup-Oidc.ps1 -WhatIf   # preview — changes nothing
-./scripts/Setup-Oidc.ps1           # do it for real
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
 ```
 
-It creates the Entra app + service principal, adds the federated credential for your fork's branch, grants Contributor on your subscription, and pushes all the repo secrets (including strong throwaway VM/SQL passwords it generates for you). Re-run any time to rotate.
+This creates the Entra app + service principal, adds a federated credential for your fork's branch, grants Contributor on your assigned resource group, and pushes all the required repo secrets and variables (including strong throwaway VM/SQL passwords it generates for you). Re-run any time to rotate.
+
+**Secrets set:** `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD`  
+**Variables set:** `AZURE_PREFIX` (your unique prefix), `AZURE_LOCATION` (defaults to `eastus2`)
 
 > Want to understand each step, or on macOS/Linux? The manual `az`/`gh` walkthrough is in **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**. New to secrets vs. variables? See **[Wiki → GitHub Essentials](../../wiki/GitHub-Essentials)**.
 
@@ -99,14 +104,20 @@ All Azure resources come from [Azure Verified Modules](https://aka.ms/avm) (`br/
 
 ## ⚠️ Cost & cleanup
 
-These labs create real, billable resources — **Azure Firewall (~$1.25/hr) and Bastion are the big ones**. When you're done (or pausing overnight), tear everything down one of three ways:
+These labs create real, billable resources — **Azure Firewall (~$1.25/hr) and Bastion are the big ones**. When you're done (or pausing overnight), tear everything down:
 
+**Classroom participants** (shared resource group — deletes resources, not the RG):
+```powershell
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>" -WhatIf   # preview first
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>"
+```
+
+**Standard / self-hosted** (deletes the lab resource groups entirely):
 ```powershell
 ./scripts/Cleanup-Labs.ps1 -WhatIf   # preview, then run without -WhatIf
 ```
 
-- **Teardown labs** workflow in GitHub Actions (type `DELETE` to confirm), or
-- the raw CLI:
+Or via **Teardown labs** workflow in GitHub Actions (type `DELETE` to confirm), or the raw CLI:
 
 ```bash
 az group delete -n rg-iacdemo-l4 -y; az group delete -n rg-iacdemo-l3 -y

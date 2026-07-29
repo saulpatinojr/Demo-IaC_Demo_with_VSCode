@@ -8,14 +8,17 @@
       2. Creates (or reuses) an Entra ID app registration + service principal.
       3. Adds a federated credential so Actions on your branch can log in with
          NO stored client secret.
-      4. Grants that identity Contributor on your subscription (the labs create
-         resource groups, so subscription scope is required).
-      5. Pushes the three non-secret IDs as GitHub Actions *secrets*, and
-         generates strong throwaway VM/SQL passwords as secrets too.
+      4. Grants that identity Contributor on your assigned resource group
+         (use -ResourceGroup) or on the full subscription (default, requires
+         subscription-level permissions).
+      5. Pushes the required IDs as GitHub Actions secrets, sets AZURE_PREFIX
+         and AZURE_LOCATION as repo variables, and generates strong throwaway
+         VM/SQL passwords as secrets.
 
-    You normally run this with no arguments. Everything is derived from the
-    tools you are already signed in to. It is safe to re-run — each step checks
-    for existing objects first (idempotent).
+    You normally run this with -ResourceGroup set to the resource group your
+    instructor assigned. Everything else is derived from the tools you are
+    already signed in to. It is safe to re-run — each step checks for existing
+    objects first (idempotent).
 
 .PREREQUISITES
     - Azure CLI  (az)  -> signed in:  az login
@@ -35,6 +38,20 @@
 .PARAMETER SubscriptionId
     Target subscription. Default: your current az default subscription.
 
+.PARAMETER ResourceGroup
+    Resource group name to scope Contributor to. Recommended for classroom
+    labs where you have been assigned a single resource group. If omitted,
+    Contributor is granted at subscription scope (requires owner/admin perms).
+
+.PARAMETER Prefix
+    Unique prefix for resource names (e.g. your initials). Stored as the
+    AZURE_PREFIX repo variable. Default: iacdemo. Use something unique to
+    avoid naming conflicts with other lab participants.
+
+.PARAMETER Location
+    Azure region for all lab resources. Stored as the AZURE_LOCATION repo
+    variable. Default: eastus2.
+
 .PARAMETER AlertEmail
     If provided, also sets the ALERT_EMAIL repo *variable* used by L3.
 
@@ -46,11 +63,11 @@
     Preview exactly what would be created.
 
 .EXAMPLE
-    ./scripts/Setup-Oidc.ps1
-    Do the real thing using auto-detected values.
+    ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-alice" -Prefix "alice"
+    Typical classroom setup: scope to assigned RG with a unique prefix.
 
 .EXAMPLE
-    ./scripts/Setup-Oidc.ps1 -GitHubRepo "octocat/Demo-IaC_Demo_with_VSCode" -AlertEmail "me@example.com"
+    ./scripts/Setup-Oidc.ps1 -GitHubRepo "myorg/Demo-IaC_Demo_with_VSCode" -ResourceGroup "rg-lab-alice" -Prefix "alice" -AlertEmail "me@example.com"
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
@@ -58,6 +75,9 @@ param(
     [string] $Branch = 'main',
     [string] $AppName = 'iac-demo-oidc',
     [string] $SubscriptionId,
+    [string] $ResourceGroup,
+    [string] $Prefix = 'iacdemo',
+    [string] $Location = 'eastus2',
     [string] $AlertEmail
 )
 
@@ -146,9 +166,16 @@ function Ensure-FederatedCredential($name, $subject) {
 Ensure-FederatedCredential "gh-$Branch" $subjectMain
 Ensure-FederatedCredential 'gh-pull-request' $subjectPR   # lets PR validation runs authenticate too
 
-# --- 5. Role assignment: Contributor at subscription scope ------------------
-Write-Step 'Ensuring Contributor role at subscription scope'
-$scope = "/subscriptions/$SubscriptionId"
+# --- 5. Role assignment: Contributor at resource group or subscription scope --
+Write-Step 'Ensuring Contributor role assignment'
+if ($ResourceGroup) {
+    $scope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroup"
+    Write-Ok "Scoping to resource group: $ResourceGroup"
+} else {
+    $scope = "/subscriptions/$SubscriptionId"
+    Write-Host '    [note] No -ResourceGroup specified — granting at subscription scope.' -ForegroundColor Yellow
+    Write-Host '           This requires Owner or User Access Administrator on the subscription.' -ForegroundColor Yellow
+}
 $hasRole = az role assignment list --assignee $appId --scope $scope --role Contributor --query '[0].id' -o tsv 2>$null
 if ($hasRole) {
     Write-Skip 'Contributor already assigned'
@@ -166,7 +193,7 @@ if ($hasRole) {
 }
 
 # --- 6. GitHub secrets & variables ------------------------------------------
-Write-Step 'Setting GitHub Actions secrets'
+Write-Step 'Setting GitHub Actions secrets and variables'
 function New-ThrowawayPassword {
     # 20 chars, mixed classes; meets Azure VM + SQL complexity rules.
     $upper='ABCDEFGHJKLMNPQRSTUVWXYZ'; $lower='abcdefghijkmnpqrstuvwxyz'
@@ -183,18 +210,28 @@ function Set-RepoSecret($name, $value) {
         Write-Ok "secret $name set"
     } else { Write-Skip "would set secret $name" }
 }
+function Set-RepoVariable($name, $value) {
+    if ($PSCmdlet.ShouldProcess("$GitHubRepo variable $name", 'Set')) {
+        gh variable set $name --repo $GitHubRepo --body $value 2>$null
+        Write-Ok "variable $name = $value"
+    } else { Write-Skip "would set variable $name = $value" }
+}
 Set-RepoSecret 'AZURE_CLIENT_ID'       $appId
 Set-RepoSecret 'AZURE_TENANT_ID'       $TenantId
 Set-RepoSecret 'AZURE_SUBSCRIPTION_ID' $SubscriptionId
 Set-RepoSecret 'VM_ADMIN_PASSWORD'  (New-ThrowawayPassword)
 Set-RepoSecret 'SQL_ADMIN_PASSWORD' (New-ThrowawayPassword)
+if ($ResourceGroup) {
+    Set-RepoSecret 'AZURE_RESOURCE_GROUP' $ResourceGroup
+}
+
+# Prefix and location are non-secret variables (they appear in resource names/logs).
+Set-RepoVariable 'AZURE_PREFIX'   $Prefix
+Set-RepoVariable 'AZURE_LOCATION' $Location
 
 if ($AlertEmail) {
     Write-Step 'Setting ALERT_EMAIL variable (L3)'
-    if ($PSCmdlet.ShouldProcess("$GitHubRepo variable ALERT_EMAIL", 'Set')) {
-        gh variable set ALERT_EMAIL --repo $GitHubRepo --body $AlertEmail 2>$null
-        Write-Ok "variable ALERT_EMAIL = $AlertEmail"
-    }
+    Set-RepoVariable 'ALERT_EMAIL' $AlertEmail
 }
 
 # --- Done --------------------------------------------------------------------
@@ -207,5 +244,8 @@ if ($WhatIfPreference) {
     Write-Host "`n Next: GitHub -> Actions -> 'Deploy L1 - Hub & Spoke' -> Run workflow." -ForegroundColor Green
     Write-Host " (Throwaway VM/SQL passwords were generated and stored as secrets;" -ForegroundColor DarkGray
     Write-Host "  you never need to see them. Re-run this script to rotate.)" -ForegroundColor DarkGray
+    if ($ResourceGroup) {
+        Write-Host "`n Resource group: $ResourceGroup  |  Prefix: $Prefix  |  Location: $Location" -ForegroundColor Green
+    }
 }
 Write-Host '============================================================' -ForegroundColor Green

@@ -4,9 +4,9 @@
 // failover group between the L3 (primary) and new secondary SQL server, and
 // Azure Front Door as the single global entry point with health-probed
 // failover between the two regions.
-// Prerequisite: L3 deployed (same prefix).
+// Prerequisite: L3 deployed (same prefix, same resource group).
+// Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
-targetScope = 'subscription'
 
 @description('Same prefix used in L1–L3.')
 @maxLength(12)
@@ -15,9 +15,6 @@ param prefix string = 'iacdemo'
 @description('Secondary region for the failover stack.')
 param secondaryLocation string = 'westus2'
 
-@description('Resource group created by L3.')
-param l3ResourceGroupName string = 'rg-${prefix}-l3'
-
 @description('SQL admin login (must match L3).')
 param sqlAdminLogin string = 'sqladminuser'
 
@@ -25,30 +22,17 @@ param sqlAdminLogin string = 'sqladminuser'
 @secure()
 param sqlAdminPassword string
 
-var rgName = 'rg-${prefix}-l4'
 var suffix = take(uniqueString(subscription().id, prefix), 6)
 var primarySqlServerName = 'sql-${prefix}-${suffix}'
 var appDatabaseName = 'sqldb-${prefix}-app'
 
-resource l3Rg 'Microsoft.Resources/resourceGroups@2024-11-01' existing = {
-  name: l3ResourceGroupName
-}
-
 // L3's container app — Front Door's primary origin.
 resource primaryApp 'Microsoft.App/containerApps@2024-03-01' existing = {
-  scope: l3Rg
   name: 'ca-${prefix}-web'
-}
-
-resource rg 'Microsoft.Resources/resourceGroups@2024-11-01' = {
-  name: rgName
-  location: secondaryLocation
-  tags: { lab: 'L4', demo: prefix }
 }
 
 // --- Secondary region: Container Apps stack (slim — no VNet, public) -------
 module acaEnv2 'br/public:avm/res/app/managed-environment:0.13.3' = {
-  scope: rg
   name: 'l4-aca-env-secondary'
   params: {
     name: 'cae-${prefix}-l4'
@@ -58,7 +42,6 @@ module acaEnv2 'br/public:avm/res/app/managed-environment:0.13.3' = {
 }
 
 module webApp2 'br/public:avm/res/app/container-app:0.23.0' = {
-  scope: rg
   name: 'l4-container-app-secondary'
   params: {
     name: 'ca-${prefix}-web2'
@@ -82,7 +65,6 @@ module webApp2 'br/public:avm/res/app/container-app:0.23.0' = {
 
 // --- Secondary SQL server + failover group ----------------------------------
 module sqlSecondary 'br/public:avm/res/sql/server:0.21.4' = {
-  scope: rg
   name: 'l4-sql-secondary'
   params: {
     name: 'sql-${prefix}-${suffix}-dr'
@@ -93,9 +75,8 @@ module sqlSecondary 'br/public:avm/res/sql/server:0.21.4' = {
   }
 }
 
-// Failover group lives on the PRIMARY server (in L3's resource group).
+// Failover group lives on the PRIMARY server (in same resource group as L3).
 module failoverGroup '../modules/sql-failover-group.bicep' = {
-  scope: l3Rg
   name: 'l4-sql-failover-group'
   params: {
     primaryServerName: primarySqlServerName
@@ -107,7 +88,6 @@ module failoverGroup '../modules/sql-failover-group.bicep' = {
 
 // --- Azure Front Door (Standard): global entry, health-probed failover -----
 module frontDoor 'br/public:avm/res/cdn/profile:0.19.3' = {
-  scope: rg
   name: 'l4-front-door'
   params: {
     name: 'afd-${prefix}-${suffix}'
@@ -162,7 +142,7 @@ module frontDoor 'br/public:avm/res/cdn/profile:0.19.3' = {
   }
 }
 
-output resourceGroupName string = rgName
+output resourceGroupName string = resourceGroup().name
 output frontDoorEndpoint string = 'https://${frontDoor.outputs.frontDoorEndpointHostNames[0]}'
 output secondaryAppUrl string = 'https://${webApp2.outputs.fqdn}'
 output failoverGroupListener string = failoverGroup.outputs.listenerEndpoint

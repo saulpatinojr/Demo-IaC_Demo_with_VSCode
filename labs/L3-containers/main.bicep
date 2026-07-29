@@ -5,9 +5,10 @@
 // networking is introduced: SQL and Key Vault have public access disabled and
 // are reachable only through private endpoints in a new spoke peered to L1's
 // hub. The container app itself stays publicly reachable so you can test it.
-// Prerequisite: L1 deployed (same prefix). L2 is not required but can coexist.
+// Prerequisite: L1 deployed (same prefix, same resource group). L2 is not
+// required but can coexist.
+// Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
-targetScope = 'subscription'
 
 @description('Same prefix used in L1.')
 @maxLength(12)
@@ -15,9 +16,6 @@ param prefix string = 'iacdemo'
 
 @description('Same region used in L1.')
 param location string = 'eastus2'
-
-@description('Resource group created by L1.')
-param l1ResourceGroupName string = 'rg-${prefix}-l1'
 
 @description('SQL admin login name.')
 param sqlAdminLogin string = 'sqladminuser'
@@ -29,29 +27,16 @@ param sqlAdminPassword string
 @description('Email address for the alert action group.')
 param alertEmail string = 'you@example.com'
 
-var rgName = 'rg-${prefix}-l3'
 var hubVnetName = 'vnet-${prefix}-hub'
 // uniqueString keeps globally-unique names (SQL, KV) stable per subscription.
 var suffix = take(uniqueString(subscription().id, prefix), 6)
 
-resource l1Rg 'Microsoft.Resources/resourceGroups@2024-11-01' existing = {
-  name: l1ResourceGroupName
-}
-
 resource hubVnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
-  scope: l1Rg
   name: hubVnetName
-}
-
-resource rg 'Microsoft.Resources/resourceGroups@2024-11-01' = {
-  name: rgName
-  location: location
-  tags: { lab: 'L3', demo: prefix }
 }
 
 // --- New spoke: ACA infrastructure + private endpoints, peered to L1 hub ---
 module spoke2 'br/public:avm/res/network/virtual-network:0.9.0' = {
-  scope: rg
   name: 'l3-spoke2-vnet'
   params: {
     name: 'vnet-${prefix}-spoke2'
@@ -81,7 +66,6 @@ module spoke2 'br/public:avm/res/network/virtual-network:0.9.0' = {
 
 // --- Private DNS zones for SQL + Key Vault private endpoints ---------------
 module sqlDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.1' = {
-  scope: rg
   name: 'l3-sql-dns'
   params: {
     name: 'privatelink${environment().suffixes.sqlServerHostname}'
@@ -92,7 +76,6 @@ module sqlDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.1' = {
 }
 
 module kvDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.1' = {
-  scope: rg
   name: 'l3-kv-dns'
   params: {
     name: 'privatelink.vaultcore.azure.net'
@@ -104,7 +87,6 @@ module kvDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.1' = {
 
 // --- Monitoring foundation ---------------------------------------------------
 module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.15.1' = {
-  scope: rg
   name: 'l3-log-analytics'
   params: {
     name: 'log-${prefix}-l3'
@@ -114,7 +96,6 @@ module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.15.1' = 
 }
 
 module appInsights 'br/public:avm/res/insights/component:0.7.2' = {
-  scope: rg
   name: 'l3-app-insights'
   params: {
     name: 'appi-${prefix}-l3'
@@ -125,7 +106,6 @@ module appInsights 'br/public:avm/res/insights/component:0.7.2' = {
 
 // --- Managed identity for the app -------------------------------------------
 module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.6.0' = {
-  scope: rg
   name: 'l3-app-identity'
   params: {
     name: 'id-${prefix}-app'
@@ -135,7 +115,6 @@ module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.
 
 // --- Key Vault: public access OFF, private endpoint only --------------------
 module keyVault 'br/public:avm/res/key-vault/vault:0.13.3' = {
-  scope: rg
   name: 'l3-key-vault'
   params: {
     name: 'kv-${prefix}-${suffix}'
@@ -172,7 +151,6 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.13.3' = {
 
 // --- Azure SQL: public access OFF, private endpoint only --------------------
 module sqlServer 'br/public:avm/res/sql/server:0.21.4' = {
-  scope: rg
   name: 'l3-sql-server'
   params: {
     name: 'sql-${prefix}-${suffix}'
@@ -205,7 +183,6 @@ module sqlServer 'br/public:avm/res/sql/server:0.21.4' = {
 
 // --- Container Apps environment (VNet-integrated, public ingress) ----------
 module acaEnv 'br/public:avm/res/app/managed-environment:0.13.3' = {
-  scope: rg
   name: 'l3-aca-env'
   params: {
     name: 'cae-${prefix}-l3'
@@ -222,7 +199,6 @@ module acaEnv 'br/public:avm/res/app/managed-environment:0.13.3' = {
 
 // --- The app (public quickstart image) --------------------------------------
 module webApp 'br/public:avm/res/app/container-app:0.23.0' = {
-  scope: rg
   name: 'l3-container-app'
   params: {
     name: 'ca-${prefix}-web'
@@ -254,7 +230,6 @@ module webApp 'br/public:avm/res/app/container-app:0.23.0' = {
 
 // --- Alerting: email when the app's CPU runs hot ----------------------------
 module actionGroup 'br/public:avm/res/insights/action-group:0.8.0' = {
-  scope: rg
   name: 'l3-action-group'
   params: {
     name: 'ag-${prefix}-ops'
@@ -270,7 +245,6 @@ module actionGroup 'br/public:avm/res/insights/action-group:0.8.0' = {
 }
 
 module cpuAlert 'br/public:avm/res/insights/metric-alert:0.4.1' = {
-  scope: rg
   name: 'l3-cpu-alert'
   params: {
     name: 'alert-${prefix}-app-replicas'
@@ -298,7 +272,7 @@ module cpuAlert 'br/public:avm/res/insights/metric-alert:0.4.1' = {
   }
 }
 
-output resourceGroupName string = rgName
+output resourceGroupName string = resourceGroup().name
 output appUrl string = 'https://${webApp.outputs.fqdn}'
 output sqlServerName string = sqlServer.outputs.name
 output keyVaultName string = keyVault.outputs.name

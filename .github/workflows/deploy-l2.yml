@@ -14,7 +14,9 @@ concurrency:
 
 env:
   VM_ADMIN_PASSWORD: ${{ secrets.VM_ADMIN_PASSWORD }}
-  LOCATION: eastus2   # deployment metadata region only; resource region is set in main.bicepparam
+  AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
 jobs:
   deploy:
@@ -29,7 +31,7 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID VM_ADMIN_PASSWORD; do
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP VM_ADMIN_PASSWORD; do
             if [ -z "${!v}" ]; then
               echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
               missing=1
@@ -49,19 +51,20 @@ jobs:
 
       - name: What-if (preview changes)
         run: |
-          az deployment sub what-if \
+          az deployment group what-if \
             --name l2-whatif-${{ github.run_number }} \
-            --location $LOCATION \
+            --resource-group $AZURE_RESOURCE_GROUP \
             --parameters labs/L2-web-tier/main.bicepparam
 
       - name: Deploy
         run: |
-          az deployment sub create \
+          az deployment group create \
             --name l2-deploy-${{ github.run_number }} \
-            --location $LOCATION \
+            --resource-group $AZURE_RESOURCE_GROUP \
             --parameters labs/L2-web-tier/main.bicepparam
 
       - name: Show test URL
         run: |
-          az deployment sub show --name l2-deploy-${{ github.run_number }} \
+          az deployment group show --name l2-deploy-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
             --query properties.outputs.testUrl.value -o tsv
