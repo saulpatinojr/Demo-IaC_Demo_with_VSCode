@@ -25,10 +25,10 @@
       CONFIGURATION
         git config  user.name / user.email / sensible defaults
         VS Code     auto-save, format on save, PS7 as default terminal
-        gh copilot  CLI extension (installed after gh auth login)
+                gh copilot  built-in GH CLI command (verified after gh auth login)
 
       SIGN-IN (interactive, opens browser)
-        gh auth login   - GitHub (+ installs gh copilot extension after)
+                gh auth login   - GitHub (+ verifies gh copilot command is available)
         az login        - Azure (then prompts to select the right subscription)
 
       NEXT STEPS REMINDER (printed at the end - require the GUI)
@@ -495,7 +495,7 @@ Write-Step "Authentication is deferred to a follow-up script"
 Write-Host "  Fresh desktops are expected to be signed out, so this installer focuses on setting up tools first." -ForegroundColor DarkCyan
 Write-Host "  Run this after installation completes:" -ForegroundColor DarkCyan
 Write-Host "    ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
-Write-Host "  That script will sign you into GitHub and Azure and install the Copilot CLI extension." -ForegroundColor DarkCyan
+Write-Host "  That script will sign you into GitHub and Azure, then verify the built-in gh copilot command." -ForegroundColor DarkCyan
 
 # ── Final verification ────────────────────────────────────────────────────────
 

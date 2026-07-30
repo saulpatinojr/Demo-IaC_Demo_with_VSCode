@@ -51,6 +51,14 @@ if (-not $SkipGhLogin) {
             }
         }
         Write-Ok 'GitHub CLI authentication complete.'
+
+        Write-Step 'Verifying gh copilot command'
+        gh copilot --version 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok 'gh copilot command is available.'
+        } else {
+            Write-Warn 'gh copilot is not available in this GH CLI build. Update GH CLI, reopen PowerShell, and retry.'
+        }
     } else {
         Write-Warn 'GitHub CLI was not found in PATH. Please install it first.'
     }
