@@ -93,6 +93,7 @@ function Write-Ok($msg)    { Write-Host "    [OK] $msg" -ForegroundColor Green }
 function Write-Skip($msg)  { Write-Host "    [SKIP] $msg" -ForegroundColor DarkGray }
 function Write-Warn($msg)  { Write-Host "    [WARN] $msg" -ForegroundColor Yellow }
 function Write-Fail($msg)  { Write-Host "    [FAIL] $msg" -ForegroundColor Red }
+function Write-Info($msg)  { Write-Host "    [INFO] $msg" -ForegroundColor DarkCyan }
 
 function Get-BicepVersionFromAz {
     try {
@@ -124,9 +125,52 @@ function Winget-Install($id, $name) {
         Write-Skip "$name already installed"
         return
     }
-    winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements --source winget
-    if ($LASTEXITCODE -eq 0) { Write-Ok "$name installed" }
-    else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
+
+    # Use non-interactive mode and print heartbeat logs so long installs never
+    # look frozen in workshop environments.
+    $arguments = @(
+        'install',
+        '--id', $id,
+        '--exact',
+        '--silent',
+        '--disable-interactivity',
+        '--accept-package-agreements',
+        '--accept-source-agreements',
+        '--source', 'winget'
+    )
+
+    $maxInstallSeconds = 1800
+    $heartbeatSeconds = 20
+    $start = Get-Date
+    $nextHeartbeat = $start.AddSeconds($heartbeatSeconds)
+
+    Write-Info "$name install started (this can take a few minutes)."
+    $proc = Start-Process -FilePath 'winget' -ArgumentList $arguments -NoNewWindow -PassThru
+
+    while (-not $proc.HasExited) {
+        Start-Sleep -Seconds 2
+        $proc.Refresh()
+
+        $now = Get-Date
+        if ($now -ge $nextHeartbeat) {
+            $elapsed = [int]($now - $start).TotalSeconds
+            Write-Info "$name install still running (${elapsed}s elapsed)..."
+            $nextHeartbeat = $now.AddSeconds($heartbeatSeconds)
+        }
+
+        if (($now - $start).TotalSeconds -ge $maxInstallSeconds) {
+            try { $proc.Kill() } catch { }
+            Write-Fail "$name install exceeded $maxInstallSeconds seconds and was stopped. Re-run to retry."
+            return
+        }
+    }
+
+    if ($proc.ExitCode -eq 0) {
+        Write-Ok "$name installed"
+    }
+    else {
+        Write-Warn "$name install returned exit $($proc.ExitCode) (may still have succeeded)"
+    }
 }
 
 # ── Admin check ───────────────────────────────────────────────────────────────
@@ -151,6 +195,7 @@ if (-not (Is-Installed 'winget')) {
 }
 $wingetVer = (winget --version) -replace '[^0-9.]',''
 Write-Ok "winget $wingetVer available"
+Write-Info 'Installs run in silent mode; heartbeat messages will print during long operations.'
 
 # ── Software installs ─────────────────────────────────────────────────────────
 
