@@ -77,20 +77,36 @@ $MissingExtensionsCount = 0
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 function Write-Banner($text) {
-    $line = '─' * ($text.Length + 4)
-    Write-Host "`n$line" -ForegroundColor Cyan
-    Write-Host "  $text" -ForegroundColor Cyan
-    Write-Host "$line" -ForegroundColor Cyan
+    $line = '=' * ($text.Length + 8)
+    Write-Host ""
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host "  === $text ===" -ForegroundColor Yellow
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host ""
 }
 
 function Write-Step($msg) {
-    Write-Host "  >" -ForegroundColor White
-    Write-Host "    $msg" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  > $msg" -ForegroundColor White
 }
 function Write-Ok($msg)    { Write-Host "    [OK] $msg" -ForegroundColor Green }
 function Write-Skip($msg)  { Write-Host "    [SKIP] $msg" -ForegroundColor DarkGray }
 function Write-Warn($msg)  { Write-Host "    [WARN] $msg" -ForegroundColor Yellow }
 function Write-Fail($msg)  { Write-Host "    [FAIL] $msg" -ForegroundColor Red }
+
+function Get-BicepVersionFromAz {
+    try {
+        $raw = az bicep version 2>$null
+        if (-not $raw) { return $null }
+        $combined = ($raw | Out-String).Trim()
+        if ($combined -match 'Bicep CLI version\s+([0-9]+\.[0-9]+\.[0-9]+)') {
+            return $Matches[1]
+        }
+        return $combined
+    } catch {
+        return $null
+    }
+}
 
 function Refresh-Path {
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
@@ -155,10 +171,18 @@ Refresh-Path
 
 Write-Step "Bicep CLI (via az bicep install)"
 if (Is-Installed 'az') {
-    az bicep install 2>&1 | Out-Null
-    $bicepVer = az bicep version --query version -o tsv 2>$null
-    if ($bicepVer) { Write-Ok "Bicep CLI $bicepVer" }
-    else           { Write-Ok "Bicep CLI installed (run 'az bicep version' to verify)" }
+    $existingBicepVer = Get-BicepVersionFromAz
+    if ($existingBicepVer) {
+        Write-Skip "Bicep CLI already available: $existingBicepVer"
+    } else {
+        az bicep install 2>&1 | Out-Null
+        $bicepVer = Get-BicepVersionFromAz
+        if ($bicepVer) {
+            Write-Ok "Bicep CLI $bicepVer"
+        } else {
+            Write-Warn "Bicep install attempted but version could not be detected. Reopen terminal and run: az bicep version"
+        }
+    }
 } else {
     Write-Warn "az CLI not on PATH yet - run 'az bicep install' after reopening the terminal"
 }

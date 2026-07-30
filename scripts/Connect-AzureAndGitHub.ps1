@@ -7,11 +7,20 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Off
 
-function Write-Step([string]$message) { Write-Host "[STEP] $message" -ForegroundColor Cyan }
-function Write-Ok([string]$message) { Write-Host "[OK] $message" -ForegroundColor Green }
-function Write-Warn([string]$message) { Write-Host "[WARN] $message" -ForegroundColor Yellow }
-function Write-Fail([string]$message) { Write-Host "[FAIL] $message" -ForegroundColor Red }
+function Write-Banner([string]$text) {
+    $line = '=' * ($text.Length + 8)
+    Write-Host ""
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host "  === $text ===" -ForegroundColor Yellow
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host ""
+}
+function Write-Step([string]$message) { Write-Host ""; Write-Host "  > $message" -ForegroundColor White }
+function Write-Ok([string]$message) { Write-Host "    [OK] $message" -ForegroundColor Green }
+function Write-Warn([string]$message) { Write-Host "    [WARN] $message" -ForegroundColor Yellow }
+function Write-Fail([string]$message) { Write-Host "    [FAIL] $message" -ForegroundColor Red }
 
+Write-Banner 'Authentication Setup'
 Write-Step 'Connecting Azure CLI and GitHub CLI'
 
 if (-not $SkipAzLogin) {

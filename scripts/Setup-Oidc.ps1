@@ -95,13 +95,25 @@ $scope = ''
 # Entra app registration and avoid collisions in a shared tenant.
 if (-not $AppName) { $AppName = "iac-demo-$Prefix" }
 
-function Write-Step($msg)  { Write-Host "`n==> $msg" -ForegroundColor Cyan }
-function Write-Ok($msg)    { Write-Host "    [ok] $msg" -ForegroundColor Green }
-function Write-Skip($msg)  { Write-Host "    [skip] $msg" -ForegroundColor DarkGray }
+function Write-Banner($text) {
+    $line = '=' * ($text.Length + 8)
+    Write-Host ""
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host "  === $text ===" -ForegroundColor Yellow
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host ""
+}
+function Write-Step($msg)  { Write-Host ""; Write-Host "  > $msg" -ForegroundColor White }
+function Write-Ok($msg)    { Write-Host "    [OK] $msg" -ForegroundColor Green }
+function Write-Skip($msg)  { Write-Host "    [SKIP] $msg" -ForegroundColor DarkGray }
+function Write-Warn($msg)  { Write-Host "    [WARN] $msg" -ForegroundColor Yellow }
+function Write-Fail($msg)  { Write-Host "    [FAIL] $msg" -ForegroundColor Red }
 function Fail($msg)        { throw $msg }
 $TopLevelCmdlet = $PSCmdlet
 
 try {
+    Write-Banner 'GitHub <-> Azure OIDC Setup'
+
     # --- 0. Tooling / auth checks --------------------------------------------
     Write-Step 'Checking prerequisites'
     foreach ($t in 'az', 'gh') {
@@ -343,14 +355,14 @@ try {
 
         if ($missingSecret.Count -gt 0) {
             foreach ($s in $missingSecret) {
-                Write-Host "    [missing secret] $s" -ForegroundColor Yellow
+                Write-Warn "Missing secret: $s"
             }
             Fail 'One or more required GitHub secrets are missing after setup. Re-run this script.'
         }
 
         if ($missingVar.Count -gt 0) {
             foreach ($v in $missingVar) {
-                Write-Host "    [missing variable] $v" -ForegroundColor Yellow
+                Write-Warn "Missing variable: $v"
             }
             Fail 'One or more required GitHub variables are missing after setup. Re-run this script.'
         }
@@ -359,30 +371,28 @@ try {
     }
 
     # --- Done ----------------------------------------------------------------
-    Write-Host "`n============================================================" -ForegroundColor Green
+    Write-Banner 'OIDC Setup Complete'
     if ($WhatIfPreference) {
-        Write-Host ' DRY RUN complete - nothing was changed. Re-run without -WhatIf.' -ForegroundColor Yellow
+        Write-Warn 'DRY RUN complete - nothing was changed. Re-run without -WhatIf.'
     } else {
-        Write-Host ' OIDC handshake complete. GitHub can now deploy to Azure' -ForegroundColor Green
-        Write-Host ' with no stored cloud credentials.' -ForegroundColor Green
-        Write-Host "`n Next: GitHub -> Actions -> 'Deploy L1 - Hub & Spoke' -> Run workflow." -ForegroundColor Green
-        Write-Host " (Throwaway VM/SQL passwords were generated and stored as secrets;" -ForegroundColor DarkGray
-        Write-Host "  you never need to see them. Re-run this script to rotate.)" -ForegroundColor DarkGray
+        Write-Ok 'OIDC handshake complete. GitHub can now deploy to Azure with no stored cloud credentials.'
+        Write-Ok "Next: GitHub -> Actions -> 'Deploy L1 - Hub & Spoke' -> Run workflow."
+        Write-Host "    (Throwaway VM/SQL passwords were generated and stored as secrets;" -ForegroundColor DarkGray
+        Write-Host "     you never need to see them. Re-run this script to rotate.)" -ForegroundColor DarkGray
         if ($ResourceGroup) {
-            Write-Host "`n Resource group: $ResourceGroup  |  Prefix: $Prefix  |  Location: $Location" -ForegroundColor Green
+            Write-Ok "Resource group: $ResourceGroup  |  Prefix: $Prefix  |  Location: $Location"
         }
     }
-    Write-Host '============================================================' -ForegroundColor Green
 }
 catch {
     $errText = $_.Exception.Message
-    Write-Host "`nERROR: $errText" -ForegroundColor Red
+    Write-Fail "ERROR: $errText"
 
     if (-not $WhatIfPreference -and $createdRoleAssignment -and $appId -and $scope) {
         Write-Step 'Rollback: removing Contributor role assignment created by this run'
         az role assignment delete --assignee $appId --role Contributor --scope $scope 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) { Write-Ok 'removed Contributor role assignment' }
-        else { Write-Host '    [warn] unable to remove role assignment automatically' -ForegroundColor Yellow }
+        else { Write-Warn 'unable to remove role assignment automatically' }
     }
 
     if (-not $WhatIfPreference -and $appId -and $createdFederatedCredentialNames.Count -gt 0) {
@@ -390,7 +400,7 @@ catch {
         foreach ($fcName in $createdFederatedCredentialNames) {
             az ad app federated-credential delete --id $appId --federated-credential-id $fcName 2>$null | Out-Null
             if ($LASTEXITCODE -eq 0) { Write-Ok "removed federated credential '$fcName'" }
-            else { Write-Host "    [warn] unable to remove federated credential '$fcName' automatically" -ForegroundColor Yellow }
+            else { Write-Warn "unable to remove federated credential '$fcName' automatically" }
         }
     }
 
@@ -398,14 +408,14 @@ catch {
         Write-Step 'Rollback: removing service principal created by this run'
         az ad sp delete --id $appId 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) { Write-Ok 'removed service principal' }
-        else { Write-Host '    [warn] unable to remove service principal automatically' -ForegroundColor Yellow }
+        else { Write-Warn 'unable to remove service principal automatically' }
     }
 
     if (-not $WhatIfPreference -and $createdApp -and $appId) {
         Write-Step 'Rollback: removing app registration created by this run'
         az ad app delete --id $appId 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) { Write-Ok 'removed app registration' }
-        else { Write-Host '    [warn] unable to remove app registration automatically' -ForegroundColor Yellow }
+        else { Write-Warn 'unable to remove app registration automatically' }
     }
 
     exit 1
