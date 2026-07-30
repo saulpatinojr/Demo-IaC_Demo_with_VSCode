@@ -12,48 +12,53 @@ Files: [labs/L1-hub-spoke/main.bicep](../blob/main/labs/L1-hub-spoke/main.bicep)
 
 ## Deploy the Bicep template
 
-Your credentials were saved **once** by the `Setup-Oidc.ps1` one-shot (see the [Deployment Guide](Deployment-Guide)). GitHub Actions signs in to Azure with **OIDC** and reads them — so there is **nothing to paste for each lab**.
+The simplest path: deploy straight from the VS Code terminal with `az`. You only need to be signed in (`az login`, done in the [Start-Here Checklist](Start-Here-Checklist)) and inside your cloned repo folder.
 
-### 1. Confirm your one-time setup (only needed once for the whole workshop)
+### 1. One-time — save your lab values (persists across terminals)
 
-```powershell
-gh secret list
-gh variable list
-```
-
-You should see `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, plus the `AZURE_PREFIX` and `AZURE_LOCATION` variables. Missing any? Run the one-shot (it stores everything for you):
+Run this **once for the whole workshop**. It sets the values for this terminal *and* saves them so future terminals already have them — no re-pasting per lab:
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
+$vals = @{
+  AZURE_PREFIX       = "<yourname>"                    # unique, max 12 chars, lowercase
+  AZURE_LOCATION     = "eastus2"
+  VM_ADMIN_PASSWORD  = "<Strong-Throwaway-Passw0rd!>"  # 12+ chars, 3 of 4 classes
+  SQL_ADMIN_PASSWORD = "<Another-Throwaway-Passw0rd!>" # used by L3/L4; must not contain 'sqladminuser'
+}
+$vals.GetEnumerator() | ForEach-Object {
+  Set-Item "env:$($_.Key)" $_.Value
+  [Environment]::SetEnvironmentVariable($_.Key, $_.Value, 'User')
+}
+$RG = "rg-lab-<yourname>"   # your assigned resource group
 ```
 
-### 2. Run the deploy
+> **Self-hosted only** (no resource group yet)? `az group create --name $RG --location $env:AZURE_LOCATION`
 
-GitHub → **Actions → "Deploy L1 - Hub & Spoke" → Run workflow**. It runs three stages and needs **no input from you**:
+### 2. Preview, then deploy (two commands)
 
-1. **Lint** — `az bicep build` (compile + linter)
-2. **What-if** — previews `+ Create / ~ Modify / - Delete` per resource
-3. **Deploy** — `az deployment group create` into your resource group
+```powershell
+az deployment group what-if --resource-group $RG --parameters labs/L1-hub-spoke/main.bicepparam
+az deployment group create  --resource-group $RG --parameters labs/L1-hub-spoke/main.bicepparam
+```
 
-Takes ~10 minutes (Bastion is the slow part). The run log ends with `Succeeded`.
+The `what-if` shows `+ Create` for everything (nothing exists yet). The `create` takes ~10 minutes (Bastion) and ends with `"provisioningState": "Succeeded"`.
 
-> Want to trigger it from the terminal instead of clicking? `gh workflow run deploy-l1.yml` (then watch with `gh run watch`).
+> ### ⚙️ GitHub Actions — the hands-off alternative
+> Rather deploy from CI with nothing on your laptop? Do the one-time OIDC setup (stores your creds in GitHub, see the [Deployment Guide](Deployment-Guide)):
+> ```powershell
+> ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
+> ```
+> Then GitHub → **Actions → "Deploy L1 - Hub & Spoke" → Run workflow** (or `gh workflow run deploy-l1.yml`). It logs in with OIDC and reads the stored secrets — Lint → What-if → Deploy, no local input.
 
 ---
 
 ## Test it (3 ways)
 
-Set two non-secret values for the commands below (your RG and prefix):
-
-```powershell
-$RG = "rg-lab-<yourname>"; $PREFIX = "<yourname>"
-```
-
-1. **Bastion SSH** — Portal → `vm-$PREFIX-test` → **Connect → Bastion** → log in with `azureuser` + your password.
+1. **Bastion SSH** — Portal → `vm-$env:AZURE_PREFIX-test` → **Connect → Bastion** → log in with `azureuser` + your VM password.
 2. **Outbound works** — from that SSH session: `curl -s ifconfig.me` (works now; in L2 this same call is forced through the firewall).
 3. **Peering is Connected** —
    ```powershell
-   az network vnet peering list --resource-group $RG --vnet-name "vnet-$PREFIX-spoke1" -o table
+   az network vnet peering list --resource-group $RG --vnet-name "vnet-$env:AZURE_PREFIX-spoke1" -o table
    ```
    `PeeringState` must be `Connected` in both directions.
 
@@ -61,16 +66,14 @@ $RG = "rg-lab-<yourname>"; $PREFIX = "<yourname>"
 
 > ### <img src="copilot-logo.png" width="24" align="top">&nbsp; GitHub Copilot — the alternative path
 >
-> The steps above are the plain Bicep + Actions path. If you'd rather **let Copilot drive**, open **Copilot Chat → Agent mode** and paste:
+> Prefer to **let Copilot drive** the edits and deploy? Open **Copilot Chat → Agent mode** and paste:
 >
-> > _Add a `snet-data` subnet `10.1.2.0/24` to the spoke VNet in `labs/L1-hub-spoke/main.bicep`, run `az bicep build` to verify, then commit, push, and trigger the deploy with `gh workflow run deploy-l1.yml`._
+> > _Add a `snet-data` subnet `10.1.2.0/24` to the spoke VNet in `labs/L1-hub-spoke/main.bicep`, run `az bicep build` to verify, then deploy it with `az deployment group create --resource-group rg-lab-<yourname> --parameters labs/L1-hub-spoke/main.bicepparam`._
 >
 > **Why reach for Copilot here?**
-> - **Change before you deploy** — it edits the Bicep, verifies with `az bicep build`, pushes, and kicks off the workflow for you.
+> - **Change before you deploy** — it edits the Bicep, verifies with `az bicep build`, and runs the deploy for you.
 > - **Explain anything** — _"why does the hub already reserve an `AzureFirewallSubnet` that nothing uses yet?"_
-> - **Fix errors for you** — paste a failed run's error back into chat and it patches the template and reruns.
->
-> No creds to handle — the workflow still logs in with OIDC using the secrets from your one-time setup.
+> - **Fix errors for you** — paste a red deploy error back into chat and it patches the template and retries.
 
 ---
 

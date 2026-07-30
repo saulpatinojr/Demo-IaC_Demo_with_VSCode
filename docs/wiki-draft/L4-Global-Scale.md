@@ -10,25 +10,25 @@ Files: [`labs/L4-global/main.bicep`](../blob/main/labs/L4-global/main.bicep), [`
 
 ## Deploy the Bicep template
 
-**L3 must already be deployed**, and L4 reuses the **same** stored `SQL_ADMIN_PASSWORD` — so the failover group's two servers match. Nothing to paste.
-
-### 1. (Optional) confirm setup
+**L3 must already be deployed** — L4 reuses the **same** SQL password so the failover group's two servers match. Set your resource group and run the two commands:
 
 ```powershell
-gh secret list      # expect SQL_ADMIN_PASSWORD
-gh variable list    # expect AZURE_PREFIX
+$RG = "rg-lab-<yourname>"
+az deployment group what-if --resource-group $RG --parameters labs/L4-global/main.bicepparam
+az deployment group create  --resource-group $RG --parameters labs/L4-global/main.bicepparam
 ```
 
-### 2. Run the deploy
+The deployment output prints your Front Door endpoint (`<name>.azurefd.net`). Front Door propagation can take ~10 minutes after the first deploy.
 
-GitHub → **Actions → "Deploy L4 - Global Scale" → Run workflow** (or `gh workflow run deploy-l4.yml`). Lint → What-if → Deploy. The run output prints your Front Door endpoint (`<name>.azurefd.net`). Front Door propagation can take ~10 minutes after the first deploy.
+> ### ⚙️ GitHub Actions — the hands-off alternative
+> After the one-time OIDC setup (see the [Deployment Guide](Deployment-Guide)): GitHub → **Actions → "Deploy L4 - Global Scale" → Run workflow** (or `gh workflow run deploy-l4.yml`). Logs in with OIDC, runs Lint → What-if → Deploy, no local input.
 
 ---
 
 ## Test it (3 ways)
 
 ```powershell
-$RG = "rg-lab-<yourname>"; $PREFIX = "<yourname>"; $FDE = "<your-fde-endpoint>.azurefd.net"
+$RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX; $FDE = "<your-fde-endpoint>.azurefd.net"
 ```
 
 1. **Global entry point** —
@@ -59,14 +59,12 @@ $RG = "rg-lab-<yourname>"; $PREFIX = "<yourname>"; $FDE = "<your-fde-endpoint>.a
 >
 > Prefer to **let Copilot drive**? Open **Copilot Chat → Agent mode**:
 >
-> > _Switch the Front Door origin group in `labs/L4-global/main.bicep` to weighted round-robin between both regions instead of priority failover, run `az bicep build`, then commit, push, and trigger `gh workflow run deploy-l4.yml`._
+> > _Switch the Front Door origin group in `labs/L4-global/main.bicep` to weighted round-robin between both regions instead of priority failover, run `az bicep build`, then deploy with `az deployment group create --resource-group rg-lab-<yourname> --parameters labs/L4-global/main.bicepparam`._
 >
 > **Why reach for Copilot here?**
 > - **Change the routing strategy** — the prompt above edits, verifies, and redeploys in one go.
 > - **Explain the failover story** — _"what does the SQL failover-group listener endpoint give the application during a region outage?"_
-> - **Fix errors for you** — paste any failed run's error and Copilot patches the template and reruns.
->
-> No creds to handle — the workflow logs in with OIDC using your stored secrets.
+> - **Fix errors for you** — paste any deploy error and Copilot patches the template and retries.
 
 ---
 

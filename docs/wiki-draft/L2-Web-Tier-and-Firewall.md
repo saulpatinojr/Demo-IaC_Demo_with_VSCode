@@ -12,26 +12,27 @@ Files: [`labs/L2-web-tier/main.bicep`](../blob/main/labs/L2-web-tier/main.bicep)
 
 ## Deploy the Bicep template
 
-**L1 must already be deployed with the same prefix** — L2 adds to that network. Your creds are already stored from the one-time `Setup-Oidc.ps1` run, so there's **nothing to paste**.
-
-### 1. (Optional) confirm setup
+**L1 must already be deployed with the same prefix.** Your lab values persist from L1's one-time setup — just set your resource group and run the two commands:
 
 ```powershell
-gh secret list
+$RG = "rg-lab-<yourname>"
+az deployment group what-if --resource-group $RG --parameters labs/L2-web-tier/main.bicepparam
+az deployment group create  --resource-group $RG --parameters labs/L2-web-tier/main.bicepparam
 ```
 
-Missing anything? Re-run the one-shot: `./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"`
+> Haven't set your values yet? Run L1's **one-time** block first (it saves prefix, location, and passwords for every lab).
 
-### 2. Run the deploy
+The Azure Firewall is the slow part (~10 min); the deployment output includes your test URL (the firewall's public IP).
 
-GitHub → **Actions → "Deploy L2 - Web Tier & Firewall" → Run workflow** (or `gh workflow run deploy-l2.yml`). Same three stages — Lint → What-if → Deploy. The Azure Firewall is the slow part (~10 min); the run output includes your test URL (the firewall's public IP).
+> ### ⚙️ GitHub Actions — the hands-off alternative
+> After the one-time OIDC setup (see the [Deployment Guide](Deployment-Guide)): GitHub → **Actions → "Deploy L2 - Web Tier & Firewall" → Run workflow** (or `gh workflow run deploy-l2.yml`). Logs in with OIDC, runs Lint → What-if → Deploy, no local input.
 
 ---
 
 ## Test it (3 ways)
 
 ```powershell
-$RG = "rg-lab-<yourname>"; $PREFIX = "<yourname>"
+$RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX
 ```
 
 1. **Round-robin through the firewall** — the page alternates hostnames `vm-$PREFIX-web0/1/2`:
@@ -58,14 +59,12 @@ $RG = "rg-lab-<yourname>"; $PREFIX = "<yourname>"
 >
 > Prefer to **let Copilot drive** the edits and deploy? Open **Copilot Chat → Agent mode**:
 >
-> > _Limit the firewall's outbound network rule in `labs/L2-web-tier/main.bicep` to port 443 only (remove 80), run `az bicep build`, then commit, push, and trigger `gh workflow run deploy-l2.yml`._
+> > _Limit the firewall's outbound network rule in `labs/L2-web-tier/main.bicep` to port 443 only (remove 80), run `az bicep build`, then deploy with `az deployment group create --resource-group rg-lab-<yourname> --parameters labs/L2-web-tier/main.bicepparam`._
 >
 > **Why reach for Copilot here?**
 > - **Tighten security before deploy** — the prompt above hardens egress, verifies, and redeploys in one go.
 > - **Scale the tier** — _"add a 4th web VM by changing `vmCount` and confirm the outputs update"_.
 > - **Explain the tricky bit** — _"why would a public load balancer break this design?"_
->
-> No creds to handle — the workflow logs in with OIDC using your stored secrets.
 
 ---
 
