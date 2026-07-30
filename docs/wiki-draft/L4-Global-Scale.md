@@ -28,7 +28,8 @@ All three deploy the **same** template and give the **same** result.
 
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-> 💡 *Best if you like the command line. Values persist from L1 — nothing to re-type.*
+> [!NOTE]
+> **Best if you like the command line.** Values persist from L1 — nothing to re-type.
 
 ```powershell
 $RG = "rg-lab-<yourname>"
@@ -44,7 +45,8 @@ The output prints your Front Door endpoint (`<name>.azurefd.net`). Front Door pr
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-> 💡 *Best if you'd rather click a button. Needs the one-time `Setup-Oidc.ps1` from L1.*
+> [!TIP]
+> **Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.
 
 On GitHub: **Actions → "Deploy L4 - Global Scale" → Run workflow** (or `gh workflow run deploy-l4.yml`). Signs in with OIDC, runs Lint → What-if → Deploy.
 
@@ -54,7 +56,8 @@ On GitHub: **Actions → "Deploy L4 - Global Scale" → Run workflow** (or `gh w
 
 ## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
 
-> 💡 *Best if you'd rather describe the change and have AI edit + deploy it.*
+> [!IMPORTANT]
+> **Best if you'd rather describe the change** and have AI edit + deploy it.
 
 Open **Copilot Chat → Agent mode**:
 

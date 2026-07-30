@@ -28,7 +28,8 @@ All three deploy the **same** template and give the **same** result. Choose the 
 
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-> 💡 *Best if you like the command line and want to watch each step happen.*
+> [!NOTE]
+> **Best if you like the command line** and want to watch each step happen.
 
 **Do this once** (saves your values for every lab — no re-typing later):
 
@@ -61,7 +62,8 @@ Takes ~10 minutes (Bastion is the slow part) and ends with `"provisioningState":
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-> 💡 *Best if you'd rather click a button and let the cloud do the work — nothing installed locally.*
+> [!TIP]
+> **Best if you'd rather click a button** and let the cloud do the work — nothing installed locally.
 
 **Do this once** — store your credentials in GitHub with the setup script:
 
@@ -79,7 +81,8 @@ That's it. It signs in with OIDC (no password anywhere) and runs **Lint → What
 
 ## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
 
-> 💡 *Best if you'd rather describe what you want — and have AI change the template and deploy it for you.*
+> [!IMPORTANT]
+> **Best if you'd rather describe what you want** — and have AI change the template and deploy it for you.
 
 Open **Copilot Chat → Agent mode** and paste:
 

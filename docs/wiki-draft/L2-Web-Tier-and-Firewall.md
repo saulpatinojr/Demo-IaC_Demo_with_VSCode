@@ -30,7 +30,8 @@ All three deploy the **same** template and give the **same** result.
 
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-> 💡 *Best if you like the command line. Your values persist from L1 — nothing to re-type.*
+> [!NOTE]
+> **Best if you like the command line.** Your values persist from L1 — nothing to re-type.
 
 ```powershell
 $RG = "rg-lab-<yourname>"
@@ -46,7 +47,8 @@ The Azure Firewall is the slow part (~10 min); the output includes your test URL
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-> 💡 *Best if you'd rather click a button. Needs the one-time `Setup-Oidc.ps1` from L1.*
+> [!TIP]
+> **Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.
 
 On GitHub: **Actions → "Deploy L2 - Web Tier & Firewall" → Run workflow** (or `gh workflow run deploy-l2.yml`). Signs in with OIDC, runs Lint → What-if → Deploy.
 
@@ -56,7 +58,8 @@ On GitHub: **Actions → "Deploy L2 - Web Tier & Firewall" → Run workflow** (o
 
 ## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
 
-> 💡 *Best if you'd rather describe the change and have AI edit + deploy it.*
+> [!IMPORTANT]
+> **Best if you'd rather describe the change** and have AI edit + deploy it.
 
 Open **Copilot Chat → Agent mode**:
 
