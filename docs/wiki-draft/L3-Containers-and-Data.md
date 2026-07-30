@@ -10,53 +10,40 @@ Files: [`labs/L3-containers/main.bicep`](../blob/main/labs/L3-containers/main.bi
 
 ## Deploy the Bicep template
 
-**L1 must already be deployed** (L3 reuses the spoke network). Same three commands — note L3 uses a **SQL** password, not the VM one.
+**L1 must already be deployed** (L3 reuses the spoke network). L3 uses the **SQL** password — also stored once by `Setup-Oidc.ps1`, so there's **nothing to paste**.
 
-### 1. Set your values (once per terminal)
-
-```powershell
-$RG                     = "rg-lab-<yourname>"
-$env:AZURE_PREFIX       = "<yourname>"
-$env:AZURE_LOCATION     = "eastus2"
-$env:SQL_ADMIN_PASSWORD = "<Strong-Throwaway-Passw0rd!>"   # must NOT contain 'sqladminuser'
-$env:ALERT_EMAIL        = "you@yourdomain.com"             # optional — used by the alert
-```
-
-### 2. Preview
+### 1. (Optional) confirm setup
 
 ```powershell
-az deployment group what-if `
-  --resource-group $RG `
-  --parameters labs/L3-containers/main.bicepparam
+gh secret list      # expect SQL_ADMIN_PASSWORD among the others
+gh variable list    # expect AZURE_PREFIX, AZURE_LOCATION (and optionally ALERT_EMAIL)
 ```
 
-### 3. Deploy
+Missing `ALERT_EMAIL` and want the alert email? Re-run with it:
+`./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>" -AlertEmail "you@yourdomain.com"`
 
-```powershell
-az deployment group create `
-  --resource-group $RG `
-  --parameters labs/L3-containers/main.bicepparam
-```
+### 2. Run the deploy
 
-The deployment output prints the app URL (`https://ca-<prefix>-web...azurecontainerapps.io`).
-
-> Prefer CI/CD? Same three stages run in the **GitHub Actions** workflow — see the [Deployment Guide](Deployment-Guide).
+GitHub → **Actions → "Deploy L3 - Containers & Data" → Run workflow** (or `gh workflow run deploy-l3.yml`). Lint → What-if → Deploy. The run output prints the app URL (`https://ca-<prefix>-web...azurecontainerapps.io`).
 
 ---
 
 ## Test it (3 ways)
 
+```powershell
+$RG = "rg-lab-<yourname>"; $PREFIX = "<yourname>"
+```
+
 1. **Hit the app** — open the printed URL; the quickstart page loads.
 2. **Prove SQL is private-only** — from your laptop:
    ```powershell
-   $SQL = az sql server list -g $RG --query "[?starts_with(name, 'sql-$env:AZURE_PREFIX-')].name | [0]" -o tsv
+   $SQL = az sql server list -g $RG --query "[?starts_with(name, 'sql-$PREFIX-')].name | [0]" -o tsv
    nslookup "$SQL.database.windows.net"
-   sqlcmd -S "$SQL.database.windows.net" -U sqladminuser -P $env:SQL_ADMIN_PASSWORD -Q "SELECT 1"
    ```
-   The `sqlcmd` attempt from your laptop **fails** — public SQL access is disabled. From inside the VNet the same name resolves to a `10.2.2.x` private IP. That's private endpoints working.
-3. **Monitoring + alert** — scale the app and watch for the "HighReplicaCount" alert email (~15 min), or query Log Analytics:
+   Connecting to that SQL server from your laptop **fails** — public access is disabled. From inside the VNet the same name resolves to a `10.2.2.x` private IP. That's private endpoints working.
+3. **Monitoring + alert** — scale the app and watch for the "HighReplicaCount" alert email (~15 min):
    ```powershell
-   az containerapp update -n "ca-$env:AZURE_PREFIX-web" -g $RG --min-replicas 2
+   az containerapp update -n "ca-$PREFIX-web" -g $RG --min-replicas 2
    ```
 
 ---
@@ -65,14 +52,14 @@ The deployment output prints the app URL (`https://ca-<prefix>-web...azurecontai
 >
 > Prefer to **let Copilot drive**? Open **Copilot Chat → Agent mode**:
 >
-> > _Deploy `labs/L3-containers/main.bicep` to resource group `rg-lab-<yourname>` with `az deployment group create` using prefix `<yourname>`, and prompt me for the SQL admin password._
+> > _In `labs/L3-containers/main.bicep`, raise `maxReplicas` to 5 and add an env var `GREETING=Hello L3` to the container, run `az bicep build`, then commit, push, and trigger `gh workflow run deploy-l3.yml`._
 >
 > **Why reach for Copilot here?**
-> - **Scale + configure before deploy** — _"raise `maxReplicas` to 5 and add an env var `GREETING=Hello L3` to the container, then redeploy"_.
+> - **Scale + configure before deploy** — the prompt above edits, verifies, and redeploys in one shot.
 > - **Add observability** — _"add a metric alert when the SQL database CPU averages over 80% for 15 minutes, reusing the existing action group"_.
 > - **Explain private networking** — _"how do the private endpoints and DNS zones make SQL reachable only from the VNet?"_
 >
-> Copilot edits the Bicep, runs `az bicep build`, and reruns the deploy for you.
+> No creds to handle — the workflow logs in with OIDC using your stored secrets.
 
 ---
 

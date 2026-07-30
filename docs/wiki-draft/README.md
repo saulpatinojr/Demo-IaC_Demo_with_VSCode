@@ -6,12 +6,17 @@ live here on the feature branch to keep the whole change reviewable in one PR.
 
 ## What changed vs. the live wiki
 
-Each lab page (L1–L4) now leads with the **Bicep deploy steps** as the primary
-path — three copy/paste commands (`what-if` → `create`) using the `.bicepparam`
-files and a local `az` login. The **GitHub Copilot** path is now a clearly
-badged callout (logo + prompt + benefits) placed **after the Test steps and
-before "What carries forward"**, framed as the alternative rather than the
-default.
+Each lab page (L1–L4) now leads with the **Bicep deploy** as the primary path,
+run through the **GitHub Actions workflow**. Credentials are stored **once** by
+the existing `Setup-Oidc.ps1` one-shot (OIDC + `gh secret set`), so there is
+**nothing to paste per lab** — Actions signs in with OIDC and reads the stored
+secrets/variables. Each page shows an optional `gh secret list` / `gh variable
+list` confirmation and a `gh workflow run deploy-lN.yml` shortcut.
+
+The **GitHub Copilot** path is a clearly badged callout (logo + prompt +
+benefits) placed **after the Test steps and before "What carries forward"**. Its
+prompts drive the same workflow — edit the Bicep, `az bicep build`, commit, push,
+then `gh workflow run` — so Copilot never handles credentials either.
 
 ## Files
 
