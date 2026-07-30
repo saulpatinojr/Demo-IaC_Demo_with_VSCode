@@ -28,12 +28,12 @@
         gh copilot  CLI extension (installed after gh auth login)
 
       SIGN-IN (interactive, opens browser)
-        gh auth login   — GitHub (+ installs gh copilot extension after)
-        az login        — Azure (then prompts to select the right subscription)
+        gh auth login   - GitHub (+ installs gh copilot extension after)
+        az login        - Azure (then prompts to select the right subscription)
 
-      NEXT STEPS REMINDER (printed at the end — require the GUI)
-        Open VS Code → Ctrl+Alt+I → sign in to Copilot Chat
-        Fork + clone the lab repo → run Setup-Oidc.ps1
+      NEXT STEPS REMINDER (printed at the end - require the GUI)
+        Open VS Code -> Ctrl+Alt+I -> sign in to Copilot Chat
+        Fork + clone the lab repo -> run Setup-Oidc.ps1
 
     The script is idempotent: already-installed tools are skipped. Re-running
     after an interrupted install is safe.
@@ -49,7 +49,7 @@
 
 .EXAMPLE
     ./scripts/Install-LabTools.ps1
-    Fully guided — prompts for name + email, then opens browser for Azure + GitHub login.
+    Fully guided - prompts for name + email, then opens browser for Azure + GitHub login.
 
 .EXAMPLE
     ./scripts/Install-LabTools.ps1 -GitName "Alice Smith" -GitEmail "alice@example.com"
@@ -61,7 +61,7 @@
 .NOTES
     Requires: Windows 10/11 with winget, local Administrator rights.
     No execution-policy bypass command is required for this workshop.
-    Run from PowerShell 5 or PowerShell 7 — the script works in both.
+    Run from PowerShell 5 or PowerShell 7 - the script works in both.
 #>
 [CmdletBinding()]
 param(
@@ -72,6 +72,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Off
+$MissingExtensionsCount = 0
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -82,11 +83,14 @@ function Write-Banner($text) {
     Write-Host "$line" -ForegroundColor Cyan
 }
 
-function Write-Step($msg)  { Write-Host "`n  ▶  $msg" -ForegroundColor White }
-function Write-Ok($msg)    { Write-Host "     ✅  $msg" -ForegroundColor Green }
-function Write-Skip($msg)  { Write-Host "     ⏭   $msg" -ForegroundColor DarkGray }
-function Write-Warn($msg)  { Write-Host "     ⚠️   $msg" -ForegroundColor Yellow }
-function Write-Fail($msg)  { Write-Host "     ❌  $msg" -ForegroundColor Red }
+function Write-Step($msg) {
+    Write-Host "  >" -ForegroundColor White
+    Write-Host "    $msg" -ForegroundColor White
+}
+function Write-Ok($msg)    { Write-Host "    [OK] $msg" -ForegroundColor Green }
+function Write-Skip($msg)  { Write-Host "    [SKIP] $msg" -ForegroundColor DarkGray }
+function Write-Warn($msg)  { Write-Host "    [WARN] $msg" -ForegroundColor Yellow }
+function Write-Fail($msg)  { Write-Host "    [FAIL] $msg" -ForegroundColor Red }
 
 function Refresh-Path {
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
@@ -104,7 +108,7 @@ function Winget-Install($id, $name) {
         Write-Skip "$name already installed"
         return
     }
-    winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements
+    winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements --source winget
     if ($LASTEXITCODE -eq 0) { Write-Ok "$name installed" }
     else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
 }
@@ -114,11 +118,11 @@ function Winget-Install($id, $name) {
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Write-Banner "Lab Workstation Setup — IaC with GitHub Copilot Workshop"
+Write-Banner "Lab Workstation Setup - IaC with GitHub Copilot Workshop"
 
 if (-not $isAdmin) {
     Write-Fail "Not running as Administrator. This script requires elevation for reliable one-shot setup."
-    Write-Warn "Right-click PowerShell → 'Run as administrator' and re-run this script."
+    Write-Warn "Right-click PowerShell -> 'Run as administrator' and re-run this script."
     exit 1
 }
 
@@ -156,7 +160,7 @@ if (Is-Installed 'az') {
     if ($bicepVer) { Write-Ok "Bicep CLI $bicepVer" }
     else           { Write-Ok "Bicep CLI installed (run 'az bicep version' to verify)" }
 } else {
-    Write-Warn "az CLI not on PATH yet — run 'az bicep install' after reopening the terminal"
+    Write-Warn "az CLI not on PATH yet - run 'az bicep install' after reopening the terminal"
 }
 
 # ── VS Code extensions ────────────────────────────────────────────────────────
@@ -205,12 +209,12 @@ if ($codeCmd) {
         foreach ($m in $missing) {
             Write-Warn "Missing extension: $($m.Id) ($($m.Name))"
         }
-        Write-Warn "Reopen the terminal and re-run: ./scripts/Install-LabTools.ps1 -SkipLogin"
+        Write-Warn "Open a fresh terminal and run ./scripts/Authenticate-LabTools.ps1 to finish sign-in and extension setup."
     }
 
     Set-Variable -Name MissingExtensionsCount -Value $missing.Count -Scope Script
 } else {
-    Write-Warn "Skipped VS Code extensions — re-run this script after reopening the terminal."
+    Write-Warn "Skipped VS Code extensions - re-run this script after reopening the terminal."
     Set-Variable -Name MissingExtensionsCount -Value 5 -Scope Script
 }
 
@@ -305,94 +309,17 @@ if (Is-Installed 'git') {
     Write-Ok "git config: user.email = $GitEmail"
     Write-Ok "git config: defaultBranch=main, autocrlf=input, editor=code, credential.helper=manager"
 } else {
-    Write-Warn "git not on PATH — reopen the terminal and re-run to configure git identity."
+    Write-Warn "git not on PATH - reopen the terminal and re-run to configure git identity."
 }
 
-# ── Interactive logins ────────────────────────────────────────────────────────
+# ── Authentication follow-up ────────────────────────────────────────────────
 
-if (-not $SkipLogin) {
-    Write-Banner "Signing In"
-
-    # ── GitHub CLI ──
-    Write-Step "GitHub CLI (gh auth login)"
-    Write-Host "     A browser window will open. Sign in with your GitHub account." -ForegroundColor DarkCyan
-    if (Is-Installed 'gh') {
-        gh auth status 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Skip "Already signed in to GitHub CLI"
-        } else {
-            gh auth login --web --git-protocol https
-            if ($LASTEXITCODE -eq 0) { Write-Ok "GitHub CLI authenticated" }
-            else                     { Write-Warn "gh auth login did not complete — run 'gh auth login' manually" }
-        }
-    } else {
-        Write-Warn "gh not on PATH — reopen terminal and run: gh auth login"
-    }
-
-    # ── GitHub Copilot CLI extension (requires gh auth) ──
-    Write-Step "GitHub Copilot CLI extension (gh extension install github/gh-copilot)"
-    if (Is-Installed 'gh') {
-        $extList = gh extension list 2>$null
-        if ($extList -match 'gh-copilot') {
-            Write-Skip "gh copilot extension already installed"
-        } else {
-            gh extension install github/gh-copilot 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) { Write-Ok "gh copilot extension installed (try: gh copilot explain 'list files')" }
-            else                     { Write-Warn "Extension install failed — run manually: gh extension install github/gh-copilot" }
-        }
-    }
-
-    # ── Azure CLI ──
-    Write-Step "Azure CLI (az login)"
-    Write-Host "     A browser window will open. Sign in with your Azure account." -ForegroundColor DarkCyan
-    if (Is-Installed 'az') {
-        $alreadyIn = $false
-        az account show 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $alreadyIn = $true
-            $subName = az account show --query name -o tsv 2>$null
-            Write-Skip "Already signed in to Azure — subscription: $subName"
-        } else {
-            az login
-            if ($LASTEXITCODE -eq 0) {
-                $alreadyIn = $true
-                Write-Ok "Azure CLI authenticated"
-            } else {
-                Write-Warn "az login did not complete — run 'az login' manually"
-            }
-        }
-
-        # Subscription selection — show list if more than one is available
-        if ($alreadyIn) {
-            $subsJson = az account list --query "[].{Name:name,Id:id,Default:isDefault}" -o json 2>$null
-            $subs = $subsJson | ConvertFrom-Json
-            if ($subs.Count -gt 1) {
-                Write-Step "Select the target Azure subscription"
-                for ($i = 0; $i -lt $subs.Count; $i++) {
-                    $marker = if ($subs[$i].Default) { '  ◀ current default' } else { '' }
-                    $color  = if ($subs[$i].Default) { 'Green' } else { 'White' }
-                    Write-Host ("     [{0}]  {1}`n          {2}{3}" -f ($i + 1), $subs[$i].Name, $subs[$i].Id, $marker) -ForegroundColor $color
-                }
-                $choice = Read-Host "  Enter number to select (press Enter to keep current default)"
-                if ($choice -match '^\d+$') {
-                    $idx = [int]$choice - 1
-                    if ($idx -ge 0 -and $idx -lt $subs.Count) {
-                        az account set --subscription $subs[$idx].Id | Out-Null
-                        Write-Ok "Active subscription: $($subs[$idx].Name)"
-                    } else {
-                        Write-Warn "Invalid selection — keeping current default"
-                    }
-                } else {
-                    Write-Skip "Keeping default: $(az account show --query name -o tsv 2>$null)"
-                }
-            } else {
-                Write-Ok "Subscription: $(az account show --query name -o tsv 2>$null)"
-            }
-        }
-    } else {
-        Write-Warn "az not on PATH — reopen terminal and run: az login"
-    }
-}
+Write-Banner "Authentication Setup"
+Write-Step "Authentication is deferred to a follow-up script"
+Write-Host "  Fresh desktops are expected to be signed out, so this installer focuses on setting up tools first." -ForegroundColor DarkCyan
+Write-Host "  Run this after installation completes:" -ForegroundColor DarkCyan
+Write-Host "    ./scripts/Authenticate-LabTools.ps1" -ForegroundColor Cyan
+Write-Host "  That script will sign you into GitHub and Azure and install the Copilot CLI extension." -ForegroundColor DarkCyan
 
 # ── Final verification ────────────────────────────────────────────────────────
 
@@ -420,55 +347,39 @@ foreach ($c in $checks) {
 }
 
 Write-Host ""
-if (-not $SkipLogin) {
-    Write-Step "Login status"
-    $authOk = $true
-    try {
-        $ghUser = gh api user --jq .login 2>$null
-        if ($ghUser) { Write-Ok "GitHub:  signed in as @$ghUser" }
-        else         { Write-Warn "GitHub:  not authenticated — run: gh auth login"; $authOk = $false }
-    } catch { Write-Warn "GitHub:  not authenticated — run: gh auth login"; $authOk = $false }
-
-    try {
-        $azSub  = az account show --query name -o tsv 2>$null
-        if ($azSub) { Write-Ok "Azure:   signed in — subscription: $azSub" }
-        else        { Write-Warn "Azure:   not authenticated — run: az login"; $authOk = $false }
-    } catch { Write-Warn "Azure:   not authenticated — run: az login"; $authOk = $false }
-
-    if (-not $authOk) {
-        $allGood = $false
-    }
-}
-
 if ($MissingExtensionsCount -gt 0) {
     $allGood = $false
 }
 
 Write-Host ""
 if ($allGood) {
-    Write-Host "  🎉  All tools verified." -ForegroundColor Green
+    Write-Host "  [DONE]  Tool installation completed." -ForegroundColor Green
 } else {
-    Write-Host "  ⚠️   Readiness checks are not complete." -ForegroundColor Yellow
-    Write-Host "       Close this terminal, open a fresh PowerShell 7 window, and re-run:" -ForegroundColor Yellow
-    Write-Host "       ./scripts/Install-LabTools.ps1 -SkipLogin" -ForegroundColor Cyan
+    Write-Host "  [WARN]  Some setup steps need a fresh terminal or a follow-up run." -ForegroundColor Yellow
+    Write-Host "       Open a new PowerShell window and run:" -ForegroundColor Yellow
+    Write-Host "       ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
 }
 
 Write-Banner "Next Steps"
-Write-Host "  Complete these manually — they require the GUI:" -ForegroundColor DarkCyan
+Write-Host "  Complete these manually - they require the GUI:" -ForegroundColor DarkCyan
 Write-Host ""
 Write-Host "  1. Open VS Code" -ForegroundColor White
-Write-Host "     → Press  Ctrl+Alt+I  to open Copilot Chat" -ForegroundColor White
-Write-Host "     → Sign in with your GitHub account when prompted" -ForegroundColor White
-Write-Host "     → Confirm the Copilot icon appears in the sidebar" -ForegroundColor White
+Write-Host "     -> Press  Ctrl+Alt+I  to open Copilot Chat" -ForegroundColor White
+Write-Host "     -> Sign in with your GitHub account when prompted" -ForegroundColor White
+Write-Host "     -> Confirm the Copilot icon appears in the sidebar" -ForegroundColor White
 Write-Host ""
 Write-Host "  2. Fork + clone the lab repo" -ForegroundColor White
-Write-Host "     → https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode  (click Fork)" -ForegroundColor DarkCyan
-Write-Host "     → GitHub Desktop: File → Clone repository → pick your fork" -ForegroundColor White
-Write-Host "     → Open the cloned folder in VS Code (accept the recommended extensions prompt)" -ForegroundColor White
+Write-Host "     -> https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode  (click Fork)" -ForegroundColor DarkCyan
+Write-Host "     -> GitHub Desktop: File -> Clone repository -> pick your fork" -ForegroundColor White
+Write-Host "     -> Open the cloned folder in VS Code (accept the recommended extensions prompt)" -ForegroundColor White
 Write-Host ""
-Write-Host "  3. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
+Write-Host "  3. Sign in to GitHub and Azure:" -ForegroundColor White
+Write-Host "     ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  4. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
 Write-Host "     ./scripts/Setup-Oidc.ps1 -ResourceGroup `"rg-lab-<yourname>`" -Prefix `"<yourname>`"" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  4. Head to the workshop wiki to start Lab 1:" -ForegroundColor White
+Write-Host "  5. Head to the workshop wiki to start Lab 1:" -ForegroundColor White
 Write-Host "     https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki" -ForegroundColor DarkCyan
 Write-Host ""
+

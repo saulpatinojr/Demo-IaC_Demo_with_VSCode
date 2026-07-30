@@ -3,7 +3,7 @@
     Delete the workshop's Azure resources (and optionally the OIDC identity).
 
 .DESCRIPTION
-    The labs create real, billable resources — Azure Firewall, Bastion, Front
+    The labs create real, billable resources - Azure Firewall, Bastion, Front
     Door and SQL all bill while idle. This script tears them down.
 
     Classroom mode (-ResourceGroup): deletes ALL resources inside the shared
@@ -75,7 +75,7 @@ if ($LASTEXITCODE -ne 0) { Write-Host 'Run: az login' -ForegroundColor Red; exit
 if ($ResourceGroup) {
     Write-Step "Classroom mode: deleting all resources in '$ResourceGroup'"
     $rgExists = (az group exists --name $ResourceGroup) -eq 'true'
-    if (-not $rgExists) { Write-Host "Resource group '$ResourceGroup' not found." -ForegroundColor Red; exit 1 }
+    if (-not $rgExists) { Write-Skip "Resource group '$ResourceGroup' not found; nothing to delete"; return }
 
     $ids = az resource list --resource-group $ResourceGroup --query '[].id' -o tsv 2>$null
     if (-not $ids) { Write-Skip 'No resources found in the resource group'; return }
@@ -95,7 +95,7 @@ if ($ResourceGroup) {
         $idList | ForEach-Object { Write-Skip "would delete $_" }
     }
     Write-Host "`nDone." -ForegroundColor Green
-    if ($WhatIfPreference) { Write-Host 'DRY RUN — nothing was deleted.' -ForegroundColor Yellow }
+    if ($WhatIfPreference) { Write-Host 'DRY RUN - nothing was deleted.' -ForegroundColor Yellow }
     return
 }
 
@@ -103,11 +103,11 @@ if ($ResourceGroup) {
 # Delete order matters: L4 first (SQL failover group on L3), L2 before L1 (firewall in L1 hub).
 $order = if ($Level -eq 'All') { @('l4', 'l3', 'l2', 'l1') } else { @($Level.ToLower()) }
 
-Write-Step "Tearing down prefix '$Prefix' — levels: $($order -join ', ')"
+Write-Step "Tearing down prefix '$Prefix' - levels: $($order -join ', ')"
 foreach ($lvl in $order) {
     $rg = "rg-$Prefix-$lvl"
     $exists = (az group exists --name $rg) -eq 'true'
-    if (-not $exists) { Write-Skip "$rg does not exist"; continue }
+    if (-not $exists) { Write-Skip "$rg does not exist; nothing to delete"; continue }
     if ($PSCmdlet.ShouldProcess($rg, 'Delete resource group')) {
         Write-Host "    deleting $rg ..." -ForegroundColor Yellow
         az group delete --name $rg --yes | Out-Null
@@ -136,4 +136,4 @@ if ($RemoveOidc) {
 }
 
 Write-Host "`nDone." -ForegroundColor Green
-if ($WhatIfPreference) { Write-Host 'DRY RUN — nothing was deleted.' -ForegroundColor Yellow }
+if ($WhatIfPreference) { Write-Host 'DRY RUN - nothing was deleted.' -ForegroundColor Yellow }

@@ -16,7 +16,7 @@
 
     You normally run this with -ResourceGroup set to the resource group your
     instructor assigned. Everything else is derived from the tools you are
-    already signed in to. It is safe to re-run — each step checks for existing
+    already signed in to. It is safe to re-run - each step checks for existing
     objects first (idempotent).
 
 .PREREQUISITES
@@ -269,6 +269,11 @@ try {
             [string] $name,
             [string] $value
         )
+        $existingSecrets = @(gh secret list --repo $GitHubRepo --json name --jq '.[].name' 2>$null)
+        if ($existingSecrets -contains $name) {
+            Write-Skip "secret '$name' already exists"
+            return
+        }
         if ($TopLevelCmdlet.ShouldProcess("$GitHubRepo secret $name", 'Set')) {
             $value | gh secret set $name --repo $GitHubRepo --body - 2>$null
             if ($LASTEXITCODE -ne 0) {
@@ -283,6 +288,11 @@ try {
             [string] $name,
             [string] $value
         )
+        $existingVars = @(gh variable list --repo $GitHubRepo --json name --jq '.[].name' 2>$null)
+        if ($existingVars -contains $name) {
+            Write-Skip "variable '$name' already exists"
+            return
+        }
         if ($TopLevelCmdlet.ShouldProcess("$GitHubRepo variable $name", 'Set')) {
             gh variable set $name --repo $GitHubRepo --body $value 2>$null
             if ($LASTEXITCODE -ne 0) {
@@ -297,7 +307,6 @@ try {
     Set-RepoSecret 'VM_ADMIN_PASSWORD'  (New-ThrowawayPassword)
     Set-RepoSecret 'SQL_ADMIN_PASSWORD' (New-ThrowawayPassword)
     Set-RepoSecret 'AZURE_RESOURCE_GROUP' $ResourceGroup
-    
 
     # Prefix and location are non-secret variables (they appear in resource names/logs).
     Set-RepoVariable 'AZURE_PREFIX'   $Prefix
@@ -352,7 +361,7 @@ try {
     # --- Done ----------------------------------------------------------------
     Write-Host "`n============================================================" -ForegroundColor Green
     if ($WhatIfPreference) {
-        Write-Host ' DRY RUN complete — nothing was changed. Re-run without -WhatIf.' -ForegroundColor Yellow
+        Write-Host ' DRY RUN complete - nothing was changed. Re-run without -WhatIf.' -ForegroundColor Yellow
     } else {
         Write-Host ' OIDC handshake complete. GitHub can now deploy to Azure' -ForegroundColor Green
         Write-Host ' with no stored cloud credentials.' -ForegroundColor Green
