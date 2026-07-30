@@ -178,32 +178,36 @@ function Ensure-GitHubCopilotCli {
 
     Write-Step 'GitHub Copilot CLI'
     $verify = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
-    if ($verify.ExitCode -eq 0) {
-        Write-Ok 'GitHub Copilot CLI is available (built-in)'
+    $verifyText = @($verify.StdOut + $verify.StdErr) -join "`n"
+    if ($verify.ExitCode -eq 0 -and $verifyText -notmatch 'not installed|Would you like to install') {
+        Write-Ok 'GitHub Copilot CLI is available'
         return $true
     }
 
-    $install = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('extension', 'install', 'github/gh-copilot')
-    $installText = @($install.StdOut + $install.StdErr) -join "`n"
+    # gh copilot is a built-in stub that prompts for installation; pipe Y to install non-interactively.
+    Write-Info 'Triggering GitHub Copilot CLI installation (auto-answering install prompt)...'
+    $inputFile = New-TemporaryFile
+    $tmpOut    = New-TemporaryFile
+    $tmpErr    = New-TemporaryFile
+    try {
+        Set-Content -Path $inputFile.FullName -Value 'Y'
+        $proc = Start-Process -FilePath 'gh' -ArgumentList @('copilot', '--version') `
+            -RedirectStandardInput  $inputFile.FullName `
+            -RedirectStandardOutput $tmpOut.FullName `
+            -RedirectStandardError  $tmpErr.FullName `
+            -NoNewWindow -PassThru -Wait
+    } finally {
+        Remove-Item $inputFile.FullName, $tmpOut.FullName, $tmpErr.FullName -Force -ErrorAction SilentlyContinue
+    }
 
-    # Newer gh versions ship copilot as a built-in; the extension install will fail
-    # with "matches the name of a built-in command or alias" - that means it's already there.
-    if ($installText -match 'built-in command or alias') {
-        Write-Ok 'GitHub Copilot CLI is a built-in gh command (no extension install needed)'
+    $verify2     = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
+    $verify2Text = @($verify2.StdOut + $verify2.StdErr) -join "`n"
+    if ($verify2.ExitCode -eq 0 -and $verify2Text -notmatch 'not installed|Would you like to install') {
+        Write-Ok 'GitHub Copilot CLI installed'
         return $true
     }
 
-    if ($install.ExitCode -eq 0 -or $installText -match 'already installed') {
-        $verifyAgain = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
-        if ($verifyAgain.ExitCode -eq 0) {
-            Write-Ok 'GitHub Copilot CLI installed'
-            return $true
-        }
-    }
-
-    $errSummary = ($install.StdErr + $install.StdOut | Where-Object { $_ } | Select-Object -First 1)
-    if (-not $errSummary) { $errSummary = 'no error text returned' }
-    Write-Warn "GitHub Copilot CLI install did not complete: $errSummary"
+    Write-Warn "GitHub Copilot CLI install did not complete. Open a new terminal and run: gh copilot --version"
     return $false
 }
 

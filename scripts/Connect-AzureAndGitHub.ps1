@@ -54,27 +54,26 @@ if (-not $SkipGhLogin) {
         Write-Ok 'GitHub CLI authentication complete.'
 
         Write-Step 'Installing/verifying GitHub Copilot CLI'
-        Write-Host '    If prompted with "GitHub Copilot CLI is not installed. Would you like to install it? (Y/n)", choose Y.' -ForegroundColor DarkCyan
-        gh copilot --version 2>$null
-        if ($LASTEXITCODE -eq 0) {
+        $copilotCheck = (gh copilot --version 2>&1) -join "`n"
+        if ($LASTEXITCODE -eq 0 -and $copilotCheck -notmatch 'not installed|Would you like to install') {
             Write-Ok 'gh copilot command is available.'
         } else {
-            Write-Info 'Attempting to install the GitHub Copilot CLI extension.'
-            gh extension install github/gh-copilot 2>$null
-            if ($LASTEXITCODE -eq 0) {
-                gh copilot --version 2>$null
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Ok 'gh copilot command is available.'
-                } else {
-                    Write-Warn 'gh copilot setup did not complete. Re-run this script and accept the install prompt, or update GH CLI and retry.'
-                }
+            # gh copilot is a built-in stub that requires answering Y to install its payload.
+            Write-Info 'Triggering GitHub Copilot CLI installation (auto-answering install prompt)...'
+            $inputFile = New-TemporaryFile
+            try {
+                Set-Content -Path $inputFile.FullName -Value 'Y'
+                $proc = Start-Process -FilePath 'gh' -ArgumentList @('copilot', '--version') `
+                    -RedirectStandardInput $inputFile.FullName `
+                    -NoNewWindow -PassThru -Wait
+            } finally {
+                Remove-Item $inputFile.FullName -Force -ErrorAction SilentlyContinue
+            }
+            $copilotCheck2 = (gh copilot --version 2>&1) -join "`n"
+            if ($LASTEXITCODE -eq 0 -and $copilotCheck2 -notmatch 'not installed|Would you like to install') {
+                Write-Ok 'gh copilot command is available.'
             } else {
-                $extensionsOutput = gh extension list 2>$null
-                if ($LASTEXITCODE -eq 0 -and ($extensionsOutput -match 'gh-copilot')) {
-                    Write-Ok 'GitHub Copilot CLI extension is installed.'
-                } else {
-                    Write-Warn 'gh copilot setup did not complete. Re-run this script and accept the install prompt, or update GH CLI and retry.'
-                }
+                Write-Warn 'gh copilot setup did not complete. Open a new terminal and run: gh copilot --version'
             }
         }
     } else {
