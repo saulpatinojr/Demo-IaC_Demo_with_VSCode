@@ -154,28 +154,20 @@ function Get-CodeExtensions([string] $codeCmdPath) {
 }
 
 function Install-CodeExtension([string] $codeCmdPath, [string] $extensionId, [string] $extensionName) {
-    $attempts = 2
-    for ($attempt = 1; $attempt -le $attempts; $attempt++) {
-        $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--install-extension', $extensionId, '--force')
+    $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--install-extension', $extensionId, '--force')
 
-        $installedIds = Get-CodeExtensions $codeCmdPath
-        if ($result.ExitCode -eq 0 -or ($installedIds -contains $extensionId)) {
-            Write-Ok "$extensionName installed"
-            return $true
-        }
-
-        $errSummary = ($result.StdErr | Select-Object -First 1)
-        if (-not $errSummary) { $errSummary = 'no error text returned' }
-        if ($attempt -lt $attempts) {
-            Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
-            Write-Info "Retrying $extensionName install in 5 seconds..."
-            Start-Sleep -Seconds 5
-            continue
-        }
-
-        Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
-        return $false
+    # Verify by listing extensions; code --install-extension can exit 1 due to
+    # Node.js DEP0169 deprecation warnings even when the install succeeds.
+    $installedIds = Get-CodeExtensions $codeCmdPath
+    if ($installedIds | Where-Object { $_ -ieq $extensionId }) {
+        Write-Ok "$extensionName installed"
+        return $true
     }
+
+    $errSummary = ($result.StdErr | Where-Object { $_ -notmatch 'DeprecationWarning|DEP0' } | Select-Object -First 1)
+    if (-not $errSummary) { $errSummary = "exit $($result.ExitCode)" }
+    Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
+    return $false
 }
 
 function Ensure-GitHubCopilotCli {
@@ -187,13 +179,21 @@ function Ensure-GitHubCopilotCli {
     Write-Step 'GitHub Copilot CLI'
     $verify = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
     if ($verify.ExitCode -eq 0) {
-        Write-Ok 'GitHub Copilot CLI is available'
+        Write-Ok 'GitHub Copilot CLI is available (built-in)'
         return $true
     }
 
     $install = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('extension', 'install', 'github/gh-copilot')
     $installText = @($install.StdOut + $install.StdErr) -join "`n"
-    if ($install.ExitCode -eq 0 -or $installText -match 'installed|already installed|completed') {
+
+    # Newer gh versions ship copilot as a built-in; the extension install will fail
+    # with "matches the name of a built-in command or alias" - that means it's already there.
+    if ($installText -match 'built-in command or alias') {
+        Write-Ok 'GitHub Copilot CLI is a built-in gh command (no extension install needed)'
+        return $true
+    }
+
+    if ($install.ExitCode -eq 0 -or $installText -match 'already installed') {
         $verifyAgain = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
         if ($verifyAgain.ExitCode -eq 0) {
             Write-Ok 'GitHub Copilot CLI installed'
@@ -201,15 +201,7 @@ function Ensure-GitHubCopilotCli {
         }
     }
 
-    $list = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('extension', 'list')
-    $listText = @($list.StdOut + $list.StdErr) -join "`n"
-    if ($list.ExitCode -eq 0 -and $listText -match 'gh-copilot') {
-        Write-Ok 'GitHub Copilot CLI extension is available'
-        return $true
-    }
-
-    $errSummary = ($install.StdErr | Select-Object -First 1)
-    if (-not $errSummary) { $errSummary = ($install.StdOut | Select-Object -First 1) }
+    $errSummary = ($install.StdErr + $install.StdOut | Where-Object { $_ } | Select-Object -First 1)
     if (-not $errSummary) { $errSummary = 'no error text returned' }
     Write-Warn "GitHub Copilot CLI install did not complete: $errSummary"
     return $false
