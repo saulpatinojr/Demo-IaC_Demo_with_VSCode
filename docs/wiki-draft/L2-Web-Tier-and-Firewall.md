@@ -48,6 +48,7 @@ The Azure Firewall is the slow part (~10 min); the output includes your test URL
 
 > [!TIP]
 > **Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.
+> No `lab-settings.csv` needed — Actions uses the GitHub secrets from that setup.
 
 On GitHub: **Actions → "Deploy L2 - Web Tier & Firewall" → Run workflow** (or `gh workflow run deploy-l2.yml`). Signs in with OIDC, runs Lint → What-if → Deploy.
 
@@ -60,9 +61,11 @@ On GitHub: **Actions → "Deploy L2 - Web Tier & Firewall" → Run workflow** (o
 > [!IMPORTANT]
 > **Best if you'd rather describe the change** and have AI edit + deploy it.
 
+Copilot runs the deploy **locally**, so load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
+
 Open **Copilot Chat → Agent mode**:
 
-> Deploy `labs/L2-web-tier/main.bicep` to `rg-lab-<yourname>` with `az deployment group create`.
+> Deploy `labs/L2-web-tier/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
 
 **Want to harden it first?** Ask:
 

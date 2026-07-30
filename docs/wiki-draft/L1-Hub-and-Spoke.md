@@ -56,6 +56,7 @@ Takes ~10 minutes (Bastion is the slow part) and ends with `"provisioningState":
 
 > [!TIP]
 > **Best if you'd rather click a button** and let the cloud do the work — nothing installed locally.
+> No `lab-settings.csv` needed here — Actions uses the GitHub secrets from `Setup-Oidc.ps1`.
 
 **Do this once** — store your credentials in GitHub with the setup script:
 
@@ -76,9 +77,11 @@ That's it. It signs in with OIDC (no password anywhere) and runs **Lint → What
 > [!IMPORTANT]
 > **Best if you'd rather describe what you want** — and have AI change the template and deploy it for you.
 
+Copilot runs the deploy **locally**, so load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
+
 Open **Copilot Chat → Agent mode** and paste:
 
-> Deploy `labs/L1-hub-spoke/main.bicep` to my resource group `rg-lab-<yourname>` with `az deployment group create`.
+> Deploy `labs/L1-hub-spoke/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
 
 **Want to change something first?** Just ask — for example:
 
