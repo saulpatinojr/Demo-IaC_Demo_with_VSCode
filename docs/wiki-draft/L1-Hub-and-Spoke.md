@@ -4,79 +4,111 @@
 
 ![L1 hub and spoke network topology](diagram-l1.svg)
 
-Files: [labs/L1-hub-spoke/main.bicep](../blob/main/labs/L1-hub-spoke/main.bicep) and [labs/L1-hub-spoke/main.bicepparam](../blob/main/labs/L1-hub-spoke/main.bicepparam)
+Files: [labs/L1-hub-spoke/main.bicep](../blob/main/labs/L1-hub-spoke/main.bicep) · [labs/L1-hub-spoke/main.bicepparam](../blob/main/labs/L1-hub-spoke/main.bicepparam)
 
-> **Why Bastion and not a VPN Gateway?** A gateway is the real-world hybrid entry point, but takes 30–45 minutes to deploy. Bastion gives the same "no public IP on the VM" story in ~10 minutes. The commented-out gateway module at the bottom of `main.bicep` shows the real thing.
+> **Why Bastion and not a VPN Gateway?** A gateway is the real-world hybrid entry point, but takes 30–45 minutes. Bastion gives the same "no public IP on the VM" story in ~10 minutes. The commented-out gateway module at the bottom of `main.bicep` shows the real thing.
+
+<br>
+
+# 🚀 Deploy L1 — pick any one of three ways
+
+All three deploy the **same** template and give the **same** result. Choose the one you're most comfortable with.
+
+<table>
+<tr>
+<td align="center" width="240"><img src="bicep.png" width="70"><br><br><b>1 · Bicep CLI</b><br><sub>Copy-paste in the terminal</sub></td>
+<td align="center" width="240"><img src="gh-actions.png" width="70"><br><br><b>2 · GitHub Actions</b><br><sub>One button in the browser</sub></td>
+<td align="center" width="240"><img src="gh-copilot.png" width="70"><br><br><b>3 · GitHub Copilot</b><br><sub>Ask AI in plain English</sub></td>
+</tr>
+</table>
+
+<br>
 
 ---
 
-## Deploy the Bicep template
+## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-The simplest path: deploy straight from the VS Code terminal with `az`. You only need to be signed in (`az login`, done in the [Start-Here Checklist](Start-Here-Checklist)) and inside your cloned repo folder.
+> 💡 *Best if you like the command line and want to watch each step happen.*
 
-### 1. One-time — save your lab values (persists across terminals)
-
-Run this **once for the whole workshop**. It sets the values for this terminal *and* saves them so future terminals already have them — no re-pasting per lab:
+**Do this once** (saves your values for every lab — no re-typing later):
 
 ```powershell
 $vals = @{
   AZURE_PREFIX       = "<yourname>"                    # unique, max 12 chars, lowercase
   AZURE_LOCATION     = "eastus2"
   VM_ADMIN_PASSWORD  = "<Strong-Throwaway-Passw0rd!>"  # 12+ chars, 3 of 4 classes
-  SQL_ADMIN_PASSWORD = "<Another-Throwaway-Passw0rd!>" # used by L3/L4; must not contain 'sqladminuser'
+  SQL_ADMIN_PASSWORD = "<Another-Throwaway-Passw0rd!>" # used later by L3/L4
 }
 $vals.GetEnumerator() | ForEach-Object {
   Set-Item "env:$($_.Key)" $_.Value
   [Environment]::SetEnvironmentVariable($_.Key, $_.Value, 'User')
 }
-$RG = "rg-lab-<yourname>"   # your assigned resource group
 ```
 
-> **Self-hosted only** (no resource group yet)? `az group create --name $RG --location $env:AZURE_LOCATION`
-
-### 2. Preview, then deploy (two commands)
+**Then deploy** (preview first, then create):
 
 ```powershell
+$RG = "rg-lab-<yourname>"
 az deployment group what-if --resource-group $RG --parameters labs/L1-hub-spoke/main.bicepparam
 az deployment group create  --resource-group $RG --parameters labs/L1-hub-spoke/main.bicepparam
 ```
 
-The `what-if` shows `+ Create` for everything (nothing exists yet). The `create` takes ~10 minutes (Bastion) and ends with `"provisioningState": "Succeeded"`.
+Takes ~10 minutes (Bastion is the slow part) and ends with `"provisioningState": "Succeeded"`.
 
-> ### ⚙️ GitHub Actions — the hands-off alternative
-> Rather deploy from CI with nothing on your laptop? Do the one-time OIDC setup (stores your creds in GitHub, see the [Deployment Guide](Deployment-Guide)):
-> ```powershell
-> ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
-> ```
-> Then GitHub → **Actions → "Deploy L1 - Hub & Spoke" → Run workflow** (or `gh workflow run deploy-l1.yml`). It logs in with OIDC and reads the stored secrets — Lint → What-if → Deploy, no local input.
+<br>
 
 ---
 
-## Test it (3 ways)
+## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
+
+> 💡 *Best if you'd rather click a button and let the cloud do the work — nothing installed locally.*
+
+**Do this once** — store your credentials in GitHub with the setup script:
+
+```powershell
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
+```
+
+**Then deploy:** on GitHub go to **Actions → "Deploy L1 - Hub & Spoke" → Run workflow**.
+
+That's it. It signs in with OIDC (no password anywhere) and runs **Lint → What-if → Deploy** for you. Prefer the terminal? `gh workflow run deploy-l1.yml`.
+
+<br>
+
+---
+
+## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
+
+> 💡 *Best if you'd rather describe what you want — and have AI change the template and deploy it for you.*
+
+Open **Copilot Chat → Agent mode** and paste:
+
+> Deploy `labs/L1-hub-spoke/main.bicep` to my resource group `rg-lab-<yourname>` with `az deployment group create`.
+
+**Want to change something first?** Just ask — for example:
+
+> Add a `snet-data` subnet `10.1.2.0/24` to the spoke VNet, run `az bicep build` to check it, then deploy.
+
+Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command errors, paste the message back and it fixes it.
+
+<br>
+
+---
+
+## ✅ Test it (3 ways)
 
 1. **Bastion SSH** — Portal → `vm-$env:AZURE_PREFIX-test` → **Connect → Bastion** → log in with `azureuser` + your VM password.
 2. **Outbound works** — from that SSH session: `curl -s ifconfig.me` (works now; in L2 this same call is forced through the firewall).
 3. **Peering is Connected** —
    ```powershell
-   az network vnet peering list --resource-group $RG --vnet-name "vnet-$env:AZURE_PREFIX-spoke1" -o table
+   az network vnet peering list --resource-group "rg-lab-<yourname>" --vnet-name "vnet-$env:AZURE_PREFIX-spoke1" -o table
    ```
    `PeeringState` must be `Connected` in both directions.
 
----
-
-> ### <img src="copilot-logo.png" width="24" align="top">&nbsp; GitHub Copilot — the alternative path
->
-> Prefer to **let Copilot drive** the edits and deploy? Open **Copilot Chat → Agent mode** and paste:
->
-> > _Add a `snet-data` subnet `10.1.2.0/24` to the spoke VNet in `labs/L1-hub-spoke/main.bicep`, run `az bicep build` to verify, then deploy it with `az deployment group create --resource-group rg-lab-<yourname> --parameters labs/L1-hub-spoke/main.bicepparam`._
->
-> **Why reach for Copilot here?**
-> - **Change before you deploy** — it edits the Bicep, verifies with `az bicep build`, and runs the deploy for you.
-> - **Explain anything** — _"why does the hub already reserve an `AzureFirewallSubnet` that nothing uses yet?"_
-> - **Fix errors for you** — paste a red deploy error back into chat and it patches the template and retries.
+<br>
 
 ---
 
-## What carries forward
+## ➡️ What carries forward
 
-L2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet` and adds a `snet-web` subnet to this spoke. **Leave L1 deployed** → [continue to L2](L2-Web-Tier-and-Firewall).
+L2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet` and adds a `snet-web` subnet to this spoke. **Leave L1 deployed** → **[continue to L2](L2-Web-Tier-and-Firewall)**.

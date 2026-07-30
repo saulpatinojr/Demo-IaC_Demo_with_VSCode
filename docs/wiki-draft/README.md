@@ -6,18 +6,17 @@ live here on the feature branch to keep the whole change reviewable in one PR.
 
 ## What changed vs. the live wiki
 
-Each lab page (L1–L4) now leads with a **local `az` deploy** as the primary path:
-a **one-time** block (in L1) saves prefix, location, and the VM/SQL passwords to
-persistent user environment variables, so every later lab is just
-`what-if` + `create` with **nothing pasted per lab**. The `.bicepparam` files
-read those env vars.
+Each lab page (L1–L4) presents **three clearly separated deploy options** with a
+chooser table (icons) up top, then one divided section each, in fixed order:
 
-Two **alternative callouts** follow the same primary/alternative pattern:
-- **⚙️ GitHub Actions** — right after the deploy steps: run the one-time
-  `Setup-Oidc.ps1`, then trigger the workflow (`gh workflow run deploy-lN.yml`).
-  Logs in with OIDC, nothing local needed.
-- **Copilot** — badged callout (logo) placed after Test and before "What carries
-  forward"; its prompts edit the Bicep and run the local `az deployment` for you.
+1. **Bicep CLI** — local `az` deploy; a one-time block (L1) persists values so
+   later labs are just `what-if` + `create`.
+2. **GitHub Actions** — push-button via OIDC (`Setup-Oidc.ps1` one-shot).
+3. **GitHub Copilot** — plain-English agent prompt that edits + deploys.
+
+Each option has its own icon (`docs/art/*.png`), a `---` divider, and a
+plain-language "best if…" line so technical and non-technical readers can both
+find their lane and copy-paste along.
 
 ## Files
 
@@ -27,7 +26,7 @@ Two **alternative callouts** follow the same primary/alternative pattern:
 | `L2-Web-Tier-and-Firewall.md` | `L2-Web-Tier-and-Firewall.md` |
 | `L3-Containers-and-Data.md` | `L3-Containers-and-Data.md` |
 | `L4-Global-Scale.md` | `L4-Global-Scale.md` |
-| `copilot-logo.png` | `copilot-logo.png` (referenced by each page) |
+| `bicep.png`, `gh-actions.png`, `gh-copilot.png` | same names (referenced by each page) |
 
 ## Publish (after this PR is approved)
 

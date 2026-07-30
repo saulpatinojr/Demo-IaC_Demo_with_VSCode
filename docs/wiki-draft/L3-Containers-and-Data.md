@@ -4,13 +4,31 @@
 
 ![L3 containers and private networking](diagram-l3.svg)
 
-Files: [`labs/L3-containers/main.bicep`](../blob/main/labs/L3-containers/main.bicep) + `main.bicepparam`
+Files: [`labs/L3-containers/main.bicep`](../blob/main/labs/L3-containers/main.bicep) · `main.bicepparam`
+
+> ⚠️ **L1 must already be deployed** — L3 reuses the spoke network. L3 uses your **SQL** password (saved in L1's one-time block).
+
+<br>
+
+# 🚀 Deploy L3 — pick any one of three ways
+
+All three deploy the **same** template and give the **same** result.
+
+<table>
+<tr>
+<td align="center" width="240"><img src="bicep.png" width="70"><br><br><b>1 · Bicep CLI</b><br><sub>Copy-paste in the terminal</sub></td>
+<td align="center" width="240"><img src="gh-actions.png" width="70"><br><br><b>2 · GitHub Actions</b><br><sub>One button in the browser</sub></td>
+<td align="center" width="240"><img src="gh-copilot.png" width="70"><br><br><b>3 · GitHub Copilot</b><br><sub>Ask AI in plain English</sub></td>
+</tr>
+</table>
+
+<br>
 
 ---
 
-## Deploy the Bicep template
+## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**L1 must already be deployed** (L3 reuses the spoke network). L3 uses your **SQL** password — already saved by L1's one-time block. Set your resource group and run the two commands:
+> 💡 *Best if you like the command line. Values persist from L1 — nothing to re-type.*
 
 ```powershell
 $RG = "rg-lab-<yourname>"
@@ -18,16 +36,41 @@ az deployment group what-if --resource-group $RG --parameters labs/L3-containers
 az deployment group create  --resource-group $RG --parameters labs/L3-containers/main.bicepparam
 ```
 
-> Want the alert email? Set it once: `[Environment]::SetEnvironmentVariable('ALERT_EMAIL','you@yourdomain.com','User'); $env:ALERT_EMAIL='you@yourdomain.com'`
+The output prints the app URL (`https://ca-<prefix>-web...azurecontainerapps.io`). *(Want the alert email? Once: `[Environment]::SetEnvironmentVariable('ALERT_EMAIL','you@yourdomain.com','User'); $env:ALERT_EMAIL='you@yourdomain.com'`)*
 
-The deployment output prints the app URL (`https://ca-<prefix>-web...azurecontainerapps.io`).
-
-> ### ⚙️ GitHub Actions — the hands-off alternative
-> After the one-time OIDC setup (see the [Deployment Guide](Deployment-Guide)): GitHub → **Actions → "Deploy L3 - Containers & Data" → Run workflow** (or `gh workflow run deploy-l3.yml`). Logs in with OIDC, runs Lint → What-if → Deploy, no local input.
+<br>
 
 ---
 
-## Test it (3 ways)
+## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
+
+> 💡 *Best if you'd rather click a button. Needs the one-time `Setup-Oidc.ps1` from L1.*
+
+On GitHub: **Actions → "Deploy L3 - Containers & Data" → Run workflow** (or `gh workflow run deploy-l3.yml`). Signs in with OIDC, runs Lint → What-if → Deploy.
+
+<br>
+
+---
+
+## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
+
+> 💡 *Best if you'd rather describe the change and have AI edit + deploy it.*
+
+Open **Copilot Chat → Agent mode**:
+
+> Deploy `labs/L3-containers/main.bicep` to `rg-lab-<yourname>` with `az deployment group create`.
+
+**Want to scale it first?** Ask:
+
+> In `labs/L3-containers/main.bicep`, raise `maxReplicas` to 5 and add an env var `GREETING=Hello L3` to the container, run `az bicep build`, then deploy.
+
+Copilot edits, verifies, and deploys — and fixes any error you paste back.
+
+<br>
+
+---
+
+## ✅ Test it (3 ways)
 
 ```powershell
 $RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX
@@ -45,21 +88,10 @@ $RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX
    az containerapp update -n "ca-$PREFIX-web" -g $RG --min-replicas 2
    ```
 
----
-
-> ### <img src="copilot-logo.png" width="24" align="top">&nbsp; GitHub Copilot — the alternative path
->
-> Prefer to **let Copilot drive**? Open **Copilot Chat → Agent mode**:
->
-> > _In `labs/L3-containers/main.bicep`, raise `maxReplicas` to 5 and add an env var `GREETING=Hello L3` to the container, run `az bicep build`, then deploy with `az deployment group create --resource-group rg-lab-<yourname> --parameters labs/L3-containers/main.bicepparam`._
->
-> **Why reach for Copilot here?**
-> - **Scale + configure before deploy** — the prompt above edits, verifies, and redeploys in one shot.
-> - **Add observability** — _"add a metric alert when the SQL database CPU averages over 80% for 15 minutes, reusing the existing action group"_.
-> - **Explain private networking** — _"how do the private endpoints and DNS zones make SQL reachable only from the VNet?"_
+<br>
 
 ---
 
-## What carries forward
+## ➡️ What carries forward
 
-L4 treats this stack as the **primary region** — it adds a second-region copy, puts your SQL database in a failover group, and fronts both regions with Front Door. **Leave L3 deployed** → [continue to L4](L4-Global-Scale).
+L4 treats this stack as the **primary region** — it adds a second-region copy, puts your SQL database in a failover group, and fronts both regions with Front Door. **Leave L3 deployed** → **[continue to L4](L4-Global-Scale)**.
