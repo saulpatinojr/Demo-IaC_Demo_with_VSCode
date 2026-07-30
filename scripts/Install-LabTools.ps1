@@ -52,7 +52,7 @@
     Fully guided - prompts for name + email, then opens browser for Azure + GitHub login.
 
 .EXAMPLE
-    ./scripts/Install-LabTools.ps1 -GitName "Alice Smith" -GitEmail "alice@example.com"
+    ./scripts/Install-LabTools.ps1 -GitName "Student000001" -GitEmail "Student000001@npluslab.onmicrosoft.com"
 
 .EXAMPLE
     ./scripts/Install-LabTools.ps1 -SkipLogin
@@ -456,7 +456,7 @@ if (Is-Installed 'git') {
             Write-Skip "git user.name already set to: $current"
             $GitName = $current
         } else {
-            $GitName = Read-Host "  Enter your full name for git commits (e.g. Alice Smith)"
+            $GitName = Read-Host "  Enter your full name for git commits (e.g. Student000001)"
         }
     }
     if (-not $GitEmail) {
@@ -465,7 +465,7 @@ if (Is-Installed 'git') {
             Write-Skip "git user.email already set to: $current"
             $GitEmail = $current
         } else {
-            $GitEmail = Read-Host "  Enter your email for git commits (use your GitHub email)"
+            $GitEmail = Read-Host "  Enter your email for git commits (e.g. Student000001@npluslab.onmicrosoft.com)"
         }
     }
 
