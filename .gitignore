@@ -10,3 +10,5 @@ main.json
 .env
 *.env
 !.env.sample
+
+Demo-IaC_Demo_with_VSCode.wiki/
