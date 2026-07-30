@@ -118,20 +118,104 @@ function Is-Installed($cmd) {
     $null -ne (Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
-function Winget-Install($id, $name) {
-    Write-Step "$name"
-    $result = winget list --id $id --exact 2>$null
-    if ($LASTEXITCODE -eq 0 -and ($result -match $id)) {
-        Write-Skip "$name already installed"
+function Invoke-ProcessQuiet {
+    param(
+        [Parameter(Mandatory = $true)][string] $FilePath,
+        [Parameter(Mandatory = $true)][string[]] $ArgumentList
+    )
+
+    $tmpOut = New-TemporaryFile
+    $tmpErr = New-TemporaryFile
+    try {
+        $proc = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -NoNewWindow -PassThru -Wait -RedirectStandardOutput $tmpOut.FullName -RedirectStandardError $tmpErr.FullName
+        $stdout = @()
+        $stderr = @()
+        if (Test-Path $tmpOut.FullName) { $stdout = @(Get-Content -Path $tmpOut.FullName -ErrorAction SilentlyContinue) }
+        if (Test-Path $tmpErr.FullName) { $stderr = @(Get-Content -Path $tmpErr.FullName -ErrorAction SilentlyContinue) }
+
+        [pscustomobject]@{
+            ExitCode = $proc.ExitCode
+            StdOut   = $stdout
+            StdErr   = $stderr
+        }
+    } finally {
+        Remove-Item $tmpOut.FullName -Force -ErrorAction SilentlyContinue
+        Remove-Item $tmpErr.FullName -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Get-CodeExtensions([string] $codeCmdPath) {
+    $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--list-extensions')
+    if ($result.ExitCode -ne 0) {
+        Write-Warn "Failed to list VS Code extensions (exit $($result.ExitCode))"
+        return @()
+    }
+    return @($result.StdOut | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+}
+
+function Install-CodeExtension([string] $codeCmdPath, [string] $extensionId, [string] $extensionName) {
+    $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--install-extension', $extensionId, '--force')
+    if ($result.ExitCode -eq 0) {
+        Write-Ok "$extensionName installed"
+        return $true
+    }
+
+    $errSummary = ($result.StdErr | Select-Object -First 1)
+    if (-not $errSummary) { $errSummary = 'no error text returned' }
+    Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
+    return $false
+}
+
+function Ensure-CodeDesktopShortcut([string] $codeCmdPath) {
+    $desktop = [Environment]::GetFolderPath('Desktop')
+    $shortcutPath = Join-Path $desktop 'Visual Studio Code.lnk'
+    if (Test-Path $shortcutPath) {
+        Write-Skip 'VS Code desktop shortcut already exists'
         return
     }
 
-    # Use non-interactive mode and print heartbeat logs so long installs never
-    # look frozen in workshop environments.
+    $codeExe = $null
+    if ($codeCmdPath -like '*.cmd') {
+        $candidate = $codeCmdPath -replace '\\bin\\code\.cmd$', '\\Code.exe'
+        if (Test-Path $candidate) { $codeExe = $candidate }
+    }
+    if (-not $codeExe) {
+        $candidates = @(
+            "$env:LOCALAPPDATA\\Programs\\Microsoft VS Code\\Code.exe",
+            "$env:ProgramFiles\\Microsoft VS Code\\Code.exe"
+        )
+        $codeExe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    }
+
+    if (-not $codeExe) {
+        Write-Warn 'Could not determine VS Code executable path for desktop shortcut'
+        return
+    }
+
+    try {
+        $wsh = New-Object -ComObject WScript.Shell
+        $shortcut = $wsh.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = $codeExe
+        $shortcut.WorkingDirectory = Split-Path $codeExe -Parent
+        $shortcut.IconLocation = "$codeExe,0"
+        $shortcut.Save()
+        Write-Ok 'Created VS Code desktop shortcut'
+    } catch {
+        Write-Warn "Failed to create VS Code desktop shortcut: $($_.Exception.Message)"
+    }
+}
+
+function Winget-Install($id, $name) {
+    Write-Step "$name"
+
+    # Avoid `winget list` pre-checks here: on some lab images it can block for
+    # a long time with no visible output. Let `winget install --no-upgrade`
+    # handle idempotency instead.
     $arguments = @(
         'install',
         '--id', $id,
         '--exact',
+        '--no-upgrade',
         '--silent',
         '--disable-interactivity',
         '--accept-package-agreements',
@@ -144,7 +228,7 @@ function Winget-Install($id, $name) {
     $start = Get-Date
     $nextHeartbeat = $start.AddSeconds($heartbeatSeconds)
 
-    Write-Info "$name install started (this can take a few minutes)."
+    Write-Info "$name install/verify started (this can take a few minutes)."
     $proc = Start-Process -FilePath 'winget' -ArgumentList $arguments -NoNewWindow -PassThru
 
     while (-not $proc.HasExited) {
@@ -166,10 +250,11 @@ function Winget-Install($id, $name) {
     }
 
     if ($proc.ExitCode -eq 0) {
-        Write-Ok "$name installed"
+        Write-Ok "$name installed or already present"
     }
     else {
-        Write-Warn "$name install returned exit $($proc.ExitCode) (may still have succeeded)"
+        $exitHex = ('0x{0:X8}' -f ([uint32]$proc.ExitCode))
+        Write-Warn "$name install returned exit $($proc.ExitCode) ($exitHex)"
     }
 }
 
@@ -220,7 +305,13 @@ if (Is-Installed 'az') {
     if ($existingBicepVer) {
         Write-Skip "Bicep CLI already available: $existingBicepVer"
     } else {
-        az bicep install 2>&1 | Out-Null
+        # Run az as a child process so warning text on stderr does not surface
+        # as a terminating PowerShell error in older hosts.
+        $azInstallProc = Start-Process -FilePath 'az' -ArgumentList @('bicep', 'install', '--only-show-errors') -NoNewWindow -PassThru -Wait
+        if ($azInstallProc.ExitCode -ne 0) {
+            Write-Warn "az bicep install returned exit $($azInstallProc.ExitCode); continuing with version check"
+        }
+
         $bicepVer = Get-BicepVersionFromAz
         if ($bicepVer) {
             Write-Ok "Bicep CLI $bicepVer"
@@ -251,6 +342,9 @@ if (-not (Is-Installed $codeCmd)) {
 }
 
 if ($codeCmd) {
+    Write-Step 'Ensuring VS Code desktop shortcut'
+    Ensure-CodeDesktopShortcut $codeCmd
+
     $extensions = @(
         @{ Id = 'ms-azuretools.vscode-bicep';    Name = 'Bicep' },
         @{ Id = 'GitHub.copilot';                Name = 'GitHub Copilot' },
@@ -258,19 +352,23 @@ if ($codeCmd) {
         @{ Id = 'ms-vscode.azurecli';            Name = 'Azure CLI Tools' },
         @{ Id = 'github.vscode-github-actions';  Name = 'GitHub Actions' }
     )
+
+    $installedIds = Get-CodeExtensions $codeCmd
     foreach ($ext in $extensions) {
         Write-Step "$($ext.Name)"
-        $installed = & $codeCmd --list-extensions 2>$null | Where-Object { $_ -ieq $ext.Id }
+        $installed = $installedIds | Where-Object { $_ -ieq $ext.Id }
         if ($installed) {
             Write-Skip "$($ext.Name) already installed"
         } else {
-            & $codeCmd --install-extension $ext.Id --force 2>&1 | Out-Null
-            Write-Ok "$($ext.Name) installed"
+            $didInstall = Install-CodeExtension -codeCmdPath $codeCmd -extensionId $ext.Id -extensionName $ext.Name
+            if ($didInstall) {
+                $installedIds += $ext.Id
+            }
         }
     }
 
     Write-Step "Verifying VS Code extensions"
-    $installedIds = & $codeCmd --list-extensions 2>$null
+    $installedIds = Get-CodeExtensions $codeCmd
     $missing = @($extensions | Where-Object { $installedIds -notcontains $_.Id })
     if ($missing.Count -eq 0) {
         Write-Ok 'All required VS Code extensions are installed'
