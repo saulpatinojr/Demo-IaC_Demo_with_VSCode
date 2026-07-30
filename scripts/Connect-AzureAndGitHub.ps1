@@ -19,6 +19,7 @@ function Write-Step([string]$message) { Write-Host ""; Write-Host "  > $message"
 function Write-Ok([string]$message) { Write-Host "    [OK] $message" -ForegroundColor Green }
 function Write-Warn([string]$message) { Write-Host "    [WARN] $message" -ForegroundColor Yellow }
 function Write-Fail([string]$message) { Write-Host "    [FAIL] $message" -ForegroundColor Red }
+function Write-Info([string]$message) { Write-Host "    [INFO] $message" -ForegroundColor DarkCyan }
 
 Write-Banner 'Authentication Setup'
 Write-Step 'Connecting Azure CLI and GitHub CLI'
@@ -54,11 +55,27 @@ if (-not $SkipGhLogin) {
 
         Write-Step 'Installing/verifying GitHub Copilot CLI'
         Write-Host '    If prompted with "GitHub Copilot CLI is not installed. Would you like to install it? (Y/n)", choose Y.' -ForegroundColor DarkCyan
-        gh copilot --version
+        gh copilot --version 2>$null
         if ($LASTEXITCODE -eq 0) {
             Write-Ok 'gh copilot command is available.'
         } else {
-            Write-Warn 'gh copilot setup did not complete. Re-run this script and accept the install prompt, or update GH CLI and retry.'
+            Write-Info 'Attempting to install the GitHub Copilot CLI extension.'
+            gh extension install github/gh-copilot 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                gh copilot --version 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Ok 'gh copilot command is available.'
+                } else {
+                    Write-Warn 'gh copilot setup did not complete. Re-run this script and accept the install prompt, or update GH CLI and retry.'
+                }
+            } else {
+                $extensionsOutput = gh extension list 2>$null
+                if ($LASTEXITCODE -eq 0 -and ($extensionsOutput -match 'gh-copilot')) {
+                    Write-Ok 'GitHub Copilot CLI extension is installed.'
+                } else {
+                    Write-Warn 'gh copilot setup did not complete. Re-run this script and accept the install prompt, or update GH CLI and retry.'
+                }
+            }
         }
     } else {
         Write-Warn 'GitHub CLI was not found in PATH. Please install it first.'

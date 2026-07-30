@@ -154,15 +154,64 @@ function Get-CodeExtensions([string] $codeCmdPath) {
 }
 
 function Install-CodeExtension([string] $codeCmdPath, [string] $extensionId, [string] $extensionName) {
-    $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--install-extension', $extensionId, '--force')
-    if ($result.ExitCode -eq 0) {
-        Write-Ok "$extensionName installed"
+    $attempts = 2
+    for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+        $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--install-extension', $extensionId, '--force')
+
+        $installedIds = Get-CodeExtensions $codeCmdPath
+        if ($result.ExitCode -eq 0 -or ($installedIds -contains $extensionId)) {
+            Write-Ok "$extensionName installed"
+            return $true
+        }
+
+        $errSummary = ($result.StdErr | Select-Object -First 1)
+        if (-not $errSummary) { $errSummary = 'no error text returned' }
+        if ($attempt -lt $attempts) {
+            Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
+            Write-Info "Retrying $extensionName install in 5 seconds..."
+            Start-Sleep -Seconds 5
+            continue
+        }
+
+        Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
+        return $false
+    }
+}
+
+function Ensure-GitHubCopilotCli {
+    if (-not (Is-Installed 'gh')) {
+        Write-Warn 'GitHub CLI (gh) not available; skipping Copilot CLI install'
+        return $false
+    }
+
+    Write-Step 'GitHub Copilot CLI'
+    $verify = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
+    if ($verify.ExitCode -eq 0) {
+        Write-Ok 'GitHub Copilot CLI is available'
         return $true
     }
 
-    $errSummary = ($result.StdErr | Select-Object -First 1)
+    $install = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('extension', 'install', 'github/gh-copilot')
+    $installText = @($install.StdOut + $install.StdErr) -join "`n"
+    if ($install.ExitCode -eq 0 -or $installText -match 'installed|already installed|completed') {
+        $verifyAgain = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
+        if ($verifyAgain.ExitCode -eq 0) {
+            Write-Ok 'GitHub Copilot CLI installed'
+            return $true
+        }
+    }
+
+    $list = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('extension', 'list')
+    $listText = @($list.StdOut + $list.StdErr) -join "`n"
+    if ($list.ExitCode -eq 0 -and $listText -match 'gh-copilot') {
+        Write-Ok 'GitHub Copilot CLI extension is available'
+        return $true
+    }
+
+    $errSummary = ($install.StdErr | Select-Object -First 1)
+    if (-not $errSummary) { $errSummary = ($install.StdOut | Select-Object -First 1) }
     if (-not $errSummary) { $errSummary = 'no error text returned' }
-    Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
+    Write-Warn "GitHub Copilot CLI install did not complete: $errSummary"
     return $false
 }
 
@@ -305,6 +354,9 @@ Winget-Install 'Microsoft.WindowsTerminal' 'Windows Terminal'
 
 # Refresh PATH so all newly installed tools are reachable in this session
 Refresh-Path
+
+# ── GitHub Copilot CLI ──────────────────────────────────────────────────────
+Ensure-GitHubCopilotCli | Out-Null
 
 # ── Bicep CLI ─────────────────────────────────────────────────────────────────
 
