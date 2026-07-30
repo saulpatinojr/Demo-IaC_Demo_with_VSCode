@@ -53,6 +53,17 @@ if (-not $SkipGhLogin) {
         }
         Write-Ok 'GitHub CLI authentication complete.'
 
+        Write-Step 'Forking the lab repo to your account'
+        $forkResult = gh repo fork saulpatinojr/Demo-IaC_Demo_with_VSCode --clone=false 2>&1
+        $forkText   = ($forkResult | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0 -or $forkText -match 'Already forked|already exists') {
+            $ghUser = (gh api user --jq '.login' 2>$null)
+            Write-Ok "Fork is ready at: https://github.com/$ghUser/Demo-IaC_Demo_with_VSCode"
+            Write-Info 'Use that URL in Section E of the checklist when cloning your copy of the repo.'
+        } else {
+            Write-Warn 'Fork did not complete automatically. Open https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode and click Fork manually, then continue.'
+        }
+
         Write-Step 'Installing/verifying GitHub Copilot CLI'
         $copilotCheck = (gh copilot --version 2>&1) -join "`n"
         if ($LASTEXITCODE -eq 0 -and $copilotCheck -notmatch 'not installed|Would you like to install') {

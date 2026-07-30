@@ -543,7 +543,7 @@ Write-Step "Authentication is deferred to a follow-up script"
 Write-Host "  Fresh desktops are expected to be signed out, so this installer focuses on setting up tools first." -ForegroundColor DarkCyan
 Write-Host "  Run this after installation completes:" -ForegroundColor DarkCyan
 Write-Host "    ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
-Write-Host "  That script will sign you into GitHub and Azure, then install/verify the built-in gh copilot command." -ForegroundColor DarkCyan
+Write-Host "  That script will sign you into GitHub and Azure, fork the lab repo to your account, then install/verify the built-in gh copilot command." -ForegroundColor DarkCyan
 
 # ── Final verification ────────────────────────────────────────────────────────
 
