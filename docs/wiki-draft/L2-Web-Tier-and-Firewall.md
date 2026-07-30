@@ -31,15 +31,14 @@ All three deploy the **same** template and give the **same** result.
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
 > [!NOTE]
-> **Best if you like the command line.** Your values persist from L1 — nothing to re-type.
+> **Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1) — nothing to re-type.
 
 ```powershell
-$RG = "rg-lab-<yourname>"
-az deployment group what-if --resource-group $RG --parameters labs/L2-web-tier/main.bicepparam
-az deployment group create  --resource-group $RG --parameters labs/L2-web-tier/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L2-web-tier/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L2-web-tier/main.bicepparam
 ```
 
-The Azure Firewall is the slow part (~10 min); the output includes your test URL (the firewall's public IP). *(New terminal / skipped L1? Run L1's one-time values block first.)*
+The Azure Firewall is the slow part (~10 min); the output includes your test URL (the firewall's public IP). *(New terminal? Re-run `./scripts/Load-LabSettings.ps1`, or use `-Persist` once so it's automatic.)*
 
 <br>
 
@@ -78,7 +77,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 ## ✅ Test it (3 ways)
 
 ```powershell
-$RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX
+$RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
 ```
 
 1. **Round-robin through the firewall** — the page alternates `vm-$PREFIX-web0/1/2`:

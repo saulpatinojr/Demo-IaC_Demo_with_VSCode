@@ -31,27 +31,19 @@ All three deploy the **same** template and give the **same** result. Choose the 
 > [!NOTE]
 > **Best if you like the command line** and want to watch each step happen.
 
-**Do this once** (saves your values for every lab — no re-typing later):
+**Do this once** — fill in a small file instead of typing variables:
 
-```powershell
-$vals = @{
-  AZURE_PREFIX       = "<yourname>"                    # unique, max 12 chars, lowercase
-  AZURE_LOCATION     = "eastus2"
-  VM_ADMIN_PASSWORD  = "<Strong-Throwaway-Passw0rd!>"  # 12+ chars, 3 of 4 classes
-  SQL_ADMIN_PASSWORD = "<Another-Throwaway-Passw0rd!>" # used later by L3/L4
-}
-$vals.GetEnumerator() | ForEach-Object {
-  Set-Item "env:$($_.Key)" $_.Value
-  [Environment]::SetEnvironmentVariable($_.Key, $_.Value, 'User')
-}
-```
+1. Copy **`lab-settings.csv.example`** to **`lab-settings.csv`** (repo root) and fill in your values — open it in Excel or VS Code, it's just one row.
+2. Load them (add `-Persist` to keep them in future terminals too):
+   ```powershell
+   ./scripts/Load-LabSettings.ps1 -Persist
+   ```
 
 **Then deploy** (preview first, then create):
 
 ```powershell
-$RG = "rg-lab-<yourname>"
-az deployment group what-if --resource-group $RG --parameters labs/L1-hub-spoke/main.bicepparam
-az deployment group create  --resource-group $RG --parameters labs/L1-hub-spoke/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L1-hub-spoke/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L1-hub-spoke/main.bicepparam
 ```
 
 Takes ~10 minutes (Bastion is the slow part) and ends with `"provisioningState": "Succeeded"`.
@@ -104,7 +96,7 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
 2. **Outbound works** — from that SSH session: `curl -s ifconfig.me` (works now; in L2 this same call is forced through the firewall).
 3. **Peering is Connected** —
    ```powershell
-   az network vnet peering list --resource-group "rg-lab-<yourname>" --vnet-name "vnet-$env:AZURE_PREFIX-spoke1" -o table
+   az network vnet peering list --resource-group $env:AZURE_RESOURCE_GROUP --vnet-name "vnet-$env:AZURE_PREFIX-spoke1" -o table
    ```
    `PeeringState` must be `Connected` in both directions.
 

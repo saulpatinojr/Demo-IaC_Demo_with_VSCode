@@ -1,0 +1,2 @@
+AZURE_PREFIX,AZURE_LOCATION,AZURE_RESOURCE_GROUP,VM_ADMIN_PASSWORD,SQL_ADMIN_PASSWORD,ALERT_EMAIL
+yourname,eastus2,rg-lab-yourname,ChangeMe-VmPass123!,ChangeMe-SqlPass123!,you@example.com

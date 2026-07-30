@@ -29,12 +29,11 @@ All three deploy the **same** template and give the **same** result.
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
 > [!NOTE]
-> **Best if you like the command line.** Values persist from L1 — nothing to re-type.
+> **Best if you like the command line.** Values are already loaded from `lab-settings.csv` (set up in L1) — nothing to re-type.
 
 ```powershell
-$RG = "rg-lab-<yourname>"
-az deployment group what-if --resource-group $RG --parameters labs/L4-global/main.bicepparam
-az deployment group create  --resource-group $RG --parameters labs/L4-global/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L4-global/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L4-global/main.bicepparam
 ```
 
 The output prints your Front Door endpoint (`<name>.azurefd.net`). Front Door propagation can take ~10 minutes after the first deploy.
@@ -76,7 +75,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 ## ✅ Test it (3 ways)
 
 ```powershell
-$RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX; $FDE = "<your-fde-endpoint>.azurefd.net"
+$RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX; $FDE = "<your-fde-endpoint>.azurefd.net"
 ```
 
 1. **Global entry point** —
@@ -110,8 +109,8 @@ $RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX; $FDE = "<your-fde-endpoi
 Tear everything down when finished — Front Door, Firewall, Bastion and SQL all bill while idle:
 
 ```powershell
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>" -WhatIf
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>"
+./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP -WhatIf
+./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP
 ```
 
 Then check **[Troubleshooting](Troubleshooting)** and **[Tools and References](Tools-and-References)** for going further.

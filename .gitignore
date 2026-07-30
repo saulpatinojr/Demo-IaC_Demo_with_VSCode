@@ -11,4 +11,7 @@ main.json
 *.env
 !.env.sample
 
+# Your filled-in lab values (throwaway creds). Commit lab-settings.csv.example only.
+lab-settings.csv
+
 Demo-IaC_Demo_with_VSCode.wiki/

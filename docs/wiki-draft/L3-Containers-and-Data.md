@@ -29,15 +29,14 @@ All three deploy the **same** template and give the **same** result.
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
 > [!NOTE]
-> **Best if you like the command line.** Values persist from L1 — nothing to re-type.
+> **Best if you like the command line.** Values are already loaded from `lab-settings.csv` (set up in L1) — nothing to re-type.
 
 ```powershell
-$RG = "rg-lab-<yourname>"
-az deployment group what-if --resource-group $RG --parameters labs/L3-containers/main.bicepparam
-az deployment group create  --resource-group $RG --parameters labs/L3-containers/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L3-containers/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L3-containers/main.bicepparam
 ```
 
-The output prints the app URL (`https://ca-<prefix>-web...azurecontainerapps.io`). *(Want the alert email? Once: `[Environment]::SetEnvironmentVariable('ALERT_EMAIL','you@yourdomain.com','User'); $env:ALERT_EMAIL='you@yourdomain.com'`)*
+The output prints the app URL (`https://ca-<prefix>-web...azurecontainerapps.io`). *(The alert email comes from the `ALERT_EMAIL` column in `lab-settings.csv`.)*
 
 <br>
 
@@ -76,7 +75,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 ## ✅ Test it (3 ways)
 
 ```powershell
-$RG = "rg-lab-<yourname>"; $PREFIX = $env:AZURE_PREFIX
+$RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
 ```
 
 1. **Hit the app** — open the printed URL; the quickstart page loads.
