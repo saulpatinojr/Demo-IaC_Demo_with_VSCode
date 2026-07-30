@@ -251,11 +251,20 @@ function Winget-Install($id, $name) {
 
     if ($proc.ExitCode -eq 0) {
         Write-Ok "$name installed or already present"
+        return
     }
-    else {
-        $exitHex = ('0x{0:X8}' -f ([uint32]$proc.ExitCode))
-        Write-Warn "$name install returned exit $($proc.ExitCode) ($exitHex)"
+
+    # Some winget outcomes are non-zero but expected for idempotent runs.
+    $exitCode = [int]$proc.ExitCode
+    $exitHex = ('0x{0:X8}' -f ($exitCode -band 0xFFFFFFFF))
+    $allText = @($result.StdOut + $result.StdErr) -join "`n"
+
+    if ($allText -match 'already installed|installation cancelled|No available upgrade found|No applicable upgrade found') {
+        Write-Skip "$name already installed ($exitHex)"
+        return
     }
+
+    Write-Warn "$name install returned exit $exitCode ($exitHex)"
 }
 
 # ── Admin check ───────────────────────────────────────────────────────────────
@@ -485,7 +494,7 @@ Write-Banner "Authentication Setup"
 Write-Step "Authentication is deferred to a follow-up script"
 Write-Host "  Fresh desktops are expected to be signed out, so this installer focuses on setting up tools first." -ForegroundColor DarkCyan
 Write-Host "  Run this after installation completes:" -ForegroundColor DarkCyan
-Write-Host "    ./scripts/Authenticate-LabTools.ps1" -ForegroundColor Cyan
+Write-Host "    ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
 Write-Host "  That script will sign you into GitHub and Azure and install the Copilot CLI extension." -ForegroundColor DarkCyan
 
 # ── Final verification ────────────────────────────────────────────────────────
@@ -528,25 +537,27 @@ if ($allGood) {
 }
 
 Write-Banner "Next Steps"
-Write-Host "  Complete these manually - they require the GUI:" -ForegroundColor DarkCyan
+Write-Host "  Follow these steps in order:" -ForegroundColor DarkCyan
 Write-Host ""
-Write-Host "  1. Open VS Code" -ForegroundColor White
-Write-Host "     -> Press  Ctrl+Alt+I  to open Copilot Chat" -ForegroundColor White
-Write-Host "     -> Sign in with your GitHub account when prompted" -ForegroundColor White
-Write-Host "     -> Confirm the Copilot icon appears in the sidebar" -ForegroundColor White
+Write-Host "  1) Open VS Code and confirm Copilot Chat works" -ForegroundColor White
+Write-Host "     - Press Ctrl+Alt+I to open Copilot Chat" -ForegroundColor White
+Write-Host "     - Sign in with GitHub when prompted" -ForegroundColor White
+Write-Host "     - Send a test message to confirm chat is active" -ForegroundColor White
 Write-Host ""
-Write-Host "  2. Fork + clone the lab repo" -ForegroundColor White
-Write-Host "     -> https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode  (click Fork)" -ForegroundColor DarkCyan
-Write-Host "     -> GitHub Desktop: File -> Clone repository -> pick your fork" -ForegroundColor White
-Write-Host "     -> Open the cloned folder in VS Code (accept the recommended extensions prompt)" -ForegroundColor White
+Write-Host "  2) Make sure you are in YOUR forked repo" -ForegroundColor White
+Write-Host "     - Repo to fork: https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode" -ForegroundColor DarkCyan
+Write-Host "     - Clone your fork locally (GitHub Desktop or gh repo clone)" -ForegroundColor White
+Write-Host "     - Open that cloned folder in VS Code" -ForegroundColor White
 Write-Host ""
-Write-Host "  3. Sign in to GitHub and Azure:" -ForegroundColor White
+Write-Host "  3) Sign in to GitHub and Azure from this repo:" -ForegroundColor White
 Write-Host "     ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  4. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
-Write-Host "     ./scripts/Setup-Oidc.ps1 -ResourceGroup `"rg-lab-<yourname>`" -Prefix `"<yourname>`"" -ForegroundColor Cyan
+Write-Host "  4) Configure GitHub Actions access to Azure (OIDC):" -ForegroundColor White
+Write-Host "     - If your instructor already pre-configured this, skip to step 5" -ForegroundColor White
+Write-Host "     - Otherwise run:" -ForegroundColor White
+Write-Host "       ./scripts/Setup-Oidc.ps1 -ResourceGroup `"rg-lab-<yourname>`" -Prefix `"<yourname>`"" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  5. Head to the workshop wiki to start Lab 1:" -ForegroundColor White
+Write-Host "  5) Start Lab 1 in the wiki:" -ForegroundColor White
 Write-Host "     https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki" -ForegroundColor DarkCyan
 Write-Host ""
 
