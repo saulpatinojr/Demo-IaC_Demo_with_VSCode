@@ -22,6 +22,14 @@ The demo is four **cumulative lab stages**. Each stage builds on the infrastruct
 
 Everything installs on Windows via `winget` (or use the download links). macOS/Linux users: use the links.
 
+No execution-policy bypass command is required for this lab setup.
+
+Recommended one-shot path on Windows (run in an elevated PowerShell window):
+
+```powershell
+./scripts/Install-LabTools.ps1
+```
+
 | Tool | Why you need it | winget | Download |
 |------|-----------------|--------|----------|
 | **Visual Studio Code** | Editor + Copilot agent mode home | `winget install Microsoft.VisualStudioCode` | [code.visualstudio.com](https://code.visualstudio.com/download) |
@@ -73,10 +81,14 @@ GitHub Actions logs into Azure with a **federated credential** — nothing but n
 ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
 ```
 
+`-ResourceGroup` is required for real runs in this repo because deploy workflows expect the `AZURE_RESOURCE_GROUP` secret.
+
 This creates the Entra app + service principal, adds a federated credential for your fork's branch, grants Contributor on your assigned resource group, and pushes all the required repo secrets and variables (including strong throwaway VM/SQL passwords it generates for you). Re-run any time to rotate.
 
 **Secrets set:** `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD`  
 **Variables set:** `AZURE_PREFIX` (your unique prefix), `AZURE_LOCATION` (defaults to `eastus2`)
+
+After setup succeeds, trigger **Deploy L1 - Hub & Spoke** in GitHub Actions (`Actions` tab -> select workflow -> `Run workflow`).
 
 > Want to understand each step, or on macOS/Linux? The manual `az`/`gh` walkthrough is in **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**. New to secrets vs. variables? See **[Wiki → GitHub Essentials](../../wiki/GitHub-Essentials)**.
 

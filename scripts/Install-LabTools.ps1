@@ -60,6 +60,7 @@
 
 .NOTES
     Requires: Windows 10/11 with winget, local Administrator rights.
+    No execution-policy bypass command is required for this workshop.
     Run from PowerShell 5 or PowerShell 7 — the script works in both.
 #>
 [CmdletBinding()]
@@ -116,10 +117,9 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
 Write-Banner "Lab Workstation Setup — IaC with GitHub Copilot Workshop"
 
 if (-not $isAdmin) {
-    Write-Warn "Not running as Administrator. Some installs may fail."
+    Write-Fail "Not running as Administrator. This script requires elevation for reliable one-shot setup."
     Write-Warn "Right-click PowerShell → 'Run as administrator' and re-run this script."
-    $cont = Read-Host "  Continue anyway? [y/N]"
-    if ($cont -notmatch '^[Yy]') { exit 1 }
+    exit 1
 }
 
 # ── winget availability check ─────────────────────────────────────────────────
@@ -195,8 +195,23 @@ if ($codeCmd) {
             Write-Ok "$($ext.Name) installed"
         }
     }
+
+    Write-Step "Verifying VS Code extensions"
+    $installedIds = & $codeCmd --list-extensions 2>$null
+    $missing = @($extensions | Where-Object { $installedIds -notcontains $_.Id })
+    if ($missing.Count -eq 0) {
+        Write-Ok 'All required VS Code extensions are installed'
+    } else {
+        foreach ($m in $missing) {
+            Write-Warn "Missing extension: $($m.Id) ($($m.Name))"
+        }
+        Write-Warn "Reopen the terminal and re-run: ./scripts/Install-LabTools.ps1 -SkipLogin"
+    }
+
+    Set-Variable -Name MissingExtensionsCount -Value $missing.Count -Scope Script
 } else {
     Write-Warn "Skipped VS Code extensions — re-run this script after reopening the terminal."
+    Set-Variable -Name MissingExtensionsCount -Value 5 -Scope Script
 }
 
 # ── VS Code settings ──────────────────────────────────────────────────────────
@@ -407,24 +422,33 @@ foreach ($c in $checks) {
 Write-Host ""
 if (-not $SkipLogin) {
     Write-Step "Login status"
+    $authOk = $true
     try {
         $ghUser = gh api user --jq .login 2>$null
         if ($ghUser) { Write-Ok "GitHub:  signed in as @$ghUser" }
-        else         { Write-Warn "GitHub:  not authenticated — run: gh auth login" }
-    } catch { Write-Warn "GitHub:  not authenticated — run: gh auth login" }
+        else         { Write-Warn "GitHub:  not authenticated — run: gh auth login"; $authOk = $false }
+    } catch { Write-Warn "GitHub:  not authenticated — run: gh auth login"; $authOk = $false }
 
     try {
         $azSub  = az account show --query name -o tsv 2>$null
         if ($azSub) { Write-Ok "Azure:   signed in — subscription: $azSub" }
-        else        { Write-Warn "Azure:   not authenticated — run: az login" }
-    } catch { Write-Warn "Azure:   not authenticated — run: az login" }
+        else        { Write-Warn "Azure:   not authenticated — run: az login"; $authOk = $false }
+    } catch { Write-Warn "Azure:   not authenticated — run: az login"; $authOk = $false }
+
+    if (-not $authOk) {
+        $allGood = $false
+    }
+}
+
+if ($MissingExtensionsCount -gt 0) {
+    $allGood = $false
 }
 
 Write-Host ""
 if ($allGood) {
     Write-Host "  🎉  All tools verified." -ForegroundColor Green
 } else {
-    Write-Host "  ⚠️   Some tools were not found on PATH." -ForegroundColor Yellow
+    Write-Host "  ⚠️   Readiness checks are not complete." -ForegroundColor Yellow
     Write-Host "       Close this terminal, open a fresh PowerShell 7 window, and re-run:" -ForegroundColor Yellow
     Write-Host "       ./scripts/Install-LabTools.ps1 -SkipLogin" -ForegroundColor Cyan
 }
