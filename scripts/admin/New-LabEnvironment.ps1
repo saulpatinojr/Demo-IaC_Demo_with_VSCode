@@ -22,10 +22,11 @@
     Use -InstructorUpnOverride to specify a different instructor UPN.
 
     Expected CSV columns (all required):
-        Entra ID Username, TAP, Entra Password, GitHub Username, GH Password, Type
+        Entra ID Username, TAP, Entra Password, GitHub Username, GH Password, Type, SubscriptionId
 
     The Type column must contain exactly  Instructor  or  Student.
-    All other columns are read but only Entra ID Username and Type are used.
+    SubscriptionId is read from the CSV — the same value is expected on every row.
+    All other columns are read but only Entra ID Username, Type, and SubscriptionId are used.
 
     All steps are idempotent (check-before-act). Re-running is safe.
     ALWAYS preview first with -WhatIf before applying for real.
@@ -40,12 +41,10 @@
         - User Access Administrator or Owner on each resource group
           (Microsoft.Authorization/roleAssignments/write)
 
-.PARAMETER SubscriptionId
-    Target Azure subscription ID. Required — not stored in the CSV.
-
 .PARAMETER CsvPath
     Path to the lab-user-data.csv file.
     Default: lab-user-data.csv in the same folder as this script.
+    SubscriptionId is read from this file — no need to pass it as a parameter.
 
 .PARAMETER EventName
     Value written to the 'Event' tag on every resource group. Default: PennConn.
@@ -66,28 +65,20 @@
 
 .EXAMPLE
     # Preview all changes (reads CSV from default location)
-    ./scripts/admin/New-LabEnvironment.ps1 `
-        -SubscriptionId "a66afdab-e353-4499-b148-bf42c65b562b" `
-        -WhatIf
+    ./scripts/admin/New-LabEnvironment.ps1 -WhatIf
 
 .EXAMPLE
     # Apply for real, include managed identities
-    ./scripts/admin/New-LabEnvironment.ps1 `
-        -SubscriptionId "a66afdab-e353-4499-b148-bf42c65b562b" `
-        -IncludeManagedIdentity
+    ./scripts/admin/New-LabEnvironment.ps1 -IncludeManagedIdentity
 
 .EXAMPLE
     # Use a different CSV location
     ./scripts/admin/New-LabEnvironment.ps1 `
-        -SubscriptionId "a66afdab-e353-4499-b148-bf42c65b562b" `
         -CsvPath "C:\LabAdmin\session-2\lab-user-data.csv" `
         -EventName "TechCon2026"
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [Parameter(Mandatory = $true)]
-    [string] $SubscriptionId,
-
     [string] $CsvPath = (Join-Path $PSScriptRoot 'lab-user-data.csv'),
     [string] $EventName              = 'PennConn',
     [string] $Location               = 'eastus2',
@@ -127,13 +118,30 @@ $Roster = Import-Csv -Path $CsvPath |
     }, @{
         Name       = 'Type'
         Expression = { $_.Type.Trim() }
+    }, @{
+        Name       = 'SubscriptionId'
+        Expression = { $_.SubscriptionId.Trim() }
     }
 
 # Validate required columns exist
 $SampleRow = $Roster | Select-Object -First 1
 if ($null -eq $SampleRow.'Entra ID Username' -and $null -eq $SampleRow.Type) {
-    Fail "CSV is missing required columns. Expected: 'Entra ID Username', 'GitHub Username', 'Type'"
+    Fail "CSV is missing required columns. Expected: 'Entra ID Username', 'GitHub Username', 'Type', 'SubscriptionId'"
 }
+
+# Extract SubscriptionId from CSV — validate all rows agree
+$SubIds = $Roster | Where-Object { $_.SubscriptionId } |
+    Select-Object -ExpandProperty SubscriptionId -Unique
+
+if (-not $SubIds) {
+    Fail "No SubscriptionId found in CSV. Add a 'SubscriptionId' column with the target subscription GUID."
+}
+if ($SubIds.Count -gt 1) {
+    Write-Warn "Multiple SubscriptionIds found in CSV: $($SubIds -join ', ')"
+    Write-Warn "Using the first value: $($SubIds[0])"
+}
+$SubscriptionId = $SubIds[0]
+Write-Ok "SubscriptionId read from CSV: $SubscriptionId"
 
 # Detect instructor from CSV (Type = Instructor)
 $InstructorRow = $Roster | Where-Object { $_.Type -eq 'Instructor' }

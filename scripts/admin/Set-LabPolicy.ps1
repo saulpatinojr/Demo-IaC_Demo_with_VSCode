@@ -27,8 +27,10 @@
         - Resource Policy Contributor or Owner on each target resource group
           (Microsoft.Authorization/policyAssignments/write)
 
-.PARAMETER SubscriptionId
-    Target Azure subscription ID.
+.PARAMETER CsvPath
+    Path to the lab-user-data.csv file.
+    Default: lab-user-data.csv in the same folder as this script.
+    SubscriptionId and ResourceGroupPrefix pattern are read from this file.
 
 .PARAMETER ResourceGroupPrefix
     Prefix used to filter which resource groups receive policy assignments.
@@ -42,20 +44,19 @@
 
 .EXAMPLE
     # Preview
-    ./scripts/admin/Set-LabPolicy.ps1 `
-        -SubscriptionId "a66afdab-e353-4499-b148-bf42c65b562b" `
-        -WhatIf
+    ./scripts/admin/Set-LabPolicy.ps1 -WhatIf
 
 .EXAMPLE
     # Apply
-    ./scripts/admin/Set-LabPolicy.ps1 `
-        -SubscriptionId "a66afdab-e353-4499-b148-bf42c65b562b"
+    ./scripts/admin/Set-LabPolicy.ps1
+
+.EXAMPLE
+    # Use a different CSV location
+    ./scripts/admin/Set-LabPolicy.ps1 -CsvPath "C:\LabAdmin\session-2\lab-user-data.csv"
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [Parameter(Mandatory = $true)]
-    [string] $SubscriptionId,
-
+    [string] $CsvPath             = (Join-Path $PSScriptRoot 'lab-user-data.csv'),
     [string] $ResourceGroupPrefix = 'rg-techdemo-',
     [string] $Location            = 'eastus2'
 )
@@ -67,6 +68,34 @@ function Write-Ok($msg)   { Write-Host "    [ok]   $msg" -ForegroundColor Green 
 function Write-Skip($msg) { Write-Host "    [skip] $msg" -ForegroundColor DarkGray }
 function Write-Warn($msg) { Write-Host "    [warn] $msg" -ForegroundColor Yellow }
 function Fail($msg)       { Write-Host "`nERROR: $msg" -ForegroundColor Red; exit 1 }
+
+# ---------------------------------------------------------------------------- #
+#  Read SubscriptionId from CSV                                                 #
+# ---------------------------------------------------------------------------- #
+Write-Step "Reading configuration from CSV"
+
+if (-not (Test-Path $CsvPath)) {
+    Fail "CSV file not found: $CsvPath`n  Expected: lab-user-data.csv in the same folder as this script."
+}
+
+$CsvData = Import-Csv -Path $CsvPath |
+    Select-Object -Property @{
+        Name = 'SubscriptionId'; Expression = { $_.SubscriptionId.Trim() }
+    }, @{
+        Name = 'Type'; Expression = { $_.Type.Trim() }
+    }
+
+$SubIds = $CsvData | Where-Object { $_.SubscriptionId } |
+    Select-Object -ExpandProperty SubscriptionId -Unique
+
+if (-not $SubIds) {
+    Fail "No SubscriptionId found in CSV. Add a 'SubscriptionId' column with the target subscription GUID."
+}
+if ($SubIds.Count -gt 1) {
+    Write-Warn "Multiple SubscriptionIds in CSV: $($SubIds -join ', '). Using first: $($SubIds[0])"
+}
+$SubscriptionId = $SubIds[0]
+Write-Ok "SubscriptionId from CSV: $SubscriptionId"
 
 # ---------------------------------------------------------------------------- #
 #  Allowed resource types — all L1–L4 lab resources                            #
