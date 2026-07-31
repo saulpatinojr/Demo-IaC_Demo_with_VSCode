@@ -1,4 +1,4 @@
-Entra ID Username,TAP,Entra Password,GitHub Username,GH Password,Type,SubscriptionId
-Instructor@yourdomain.onmicrosoft.com,,YourPassword,Instructor@yourdomain.onmicrosoft.com,YourGHPassword,Instructor,00000000-0000-0000-0000-000000000000
-Student001@yourdomain.onmicrosoft.com,,YourPassword,Student001@yourdomain.onmicrosoft.com,YourGHPassword,Student,00000000-0000-0000-0000-000000000000
-Student002@yourdomain.onmicrosoft.com,,YourPassword,Student002@yourdomain.onmicrosoft.com,YourGHPassword,Student,00000000-0000-0000-0000-000000000000
+Entra ID Username,TAP,Entra Password,GitHub Username,GH Password,Type,SubscriptionId,Event
+Instructor@yourdomain.onmicrosoft.com,,YourPassword,Instructor@yourdomain.onmicrosoft.com,YourGHPassword,Instructor,00000000-0000-0000-0000-000000000000,YourEventName
+Student001@yourdomain.onmicrosoft.com,,YourPassword,Student001@yourdomain.onmicrosoft.com,YourGHPassword,Student,00000000-0000-0000-0000-000000000000,YourEventName
+Student002@yourdomain.onmicrosoft.com,,YourPassword,Student002@yourdomain.onmicrosoft.com,YourGHPassword,Student,00000000-0000-0000-0000-000000000000,YourEventName

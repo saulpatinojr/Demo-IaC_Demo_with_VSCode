@@ -22,11 +22,11 @@
     Use -InstructorUpnOverride to specify a different instructor UPN.
 
     Expected CSV columns (all required):
-        Entra ID Username, TAP, Entra Password, GitHub Username, GH Password, Type, SubscriptionId
+        Entra ID Username, TAP, Entra Password, GitHub Username, GH Password, Type, SubscriptionId, Event
 
     The Type column must contain exactly  Instructor  or  Student.
-    SubscriptionId is read from the CSV — the same value is expected on every row.
-    All other columns are read but only Entra ID Username, Type, and SubscriptionId are used.
+    SubscriptionId and Event are read from the CSV and must be the same on every row.
+    All other columns are read but only Entra ID Username, Type, SubscriptionId, and Event are used.
 
     All steps are idempotent (check-before-act). Re-running is safe.
     ALWAYS preview first with -WhatIf before applying for real.
@@ -44,10 +44,7 @@
 .PARAMETER CsvPath
     Path to the lab-user-data.csv file.
     Default: lab-user-data.csv in the same folder as this script.
-    SubscriptionId is read from this file — no need to pass it as a parameter.
-
-.PARAMETER EventName
-    Value written to the 'Event' tag on every resource group. Default: PennConn.
+    SubscriptionId, Event tag, and instructor identity are all read from this file.
 
 .PARAMETER Location
     Azure region for all resource groups and managed identities. Default: eastus2.
@@ -74,13 +71,11 @@
 .EXAMPLE
     # Use a different CSV location
     ./scripts/admin/New-LabEnvironment.ps1 `
-        -CsvPath "C:\LabAdmin\session-2\lab-user-data.csv" `
-        -EventName "TechCon2026"
+        -CsvPath "C:\LabAdmin\session-2\lab-user-data.csv"
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [string] $CsvPath = (Join-Path $PSScriptRoot 'lab-user-data.csv'),
-    [string] $EventName              = 'PennConn',
+    [string] $CsvPath                = (Join-Path $PSScriptRoot 'lab-user-data.csv'),
     [string] $Location               = 'eastus2',
     [string] $InstructorUpnOverride  = '',
 
@@ -121,12 +116,15 @@ $Roster = Import-Csv -Path $CsvPath |
     }, @{
         Name       = 'SubscriptionId'
         Expression = { $_.SubscriptionId.Trim() }
+    }, @{
+        Name       = 'Event'
+        Expression = { $_.Event.Trim() }
     }
 
 # Validate required columns exist
 $SampleRow = $Roster | Select-Object -First 1
 if ($null -eq $SampleRow.'Entra ID Username' -and $null -eq $SampleRow.Type) {
-    Fail "CSV is missing required columns. Expected: 'Entra ID Username', 'GitHub Username', 'Type', 'SubscriptionId'"
+    Fail "CSV is missing required columns. Expected: 'Entra ID Username', 'GitHub Username', 'Type', 'SubscriptionId', 'Event'"
 }
 
 # Extract SubscriptionId from CSV — validate all rows agree
@@ -142,6 +140,13 @@ if ($SubIds.Count -gt 1) {
 }
 $SubscriptionId = $SubIds[0]
 Write-Ok "SubscriptionId read from CSV: $SubscriptionId"
+
+# Extract Event from CSV
+$EventName = ($Roster | Where-Object { $_.Event } | Select-Object -First 1 -ExpandProperty Event)
+if (-not $EventName) {
+    Fail "No Event value found in CSV. Add an 'Event' column (e.g. TechConn)."
+}
+Write-Ok "Event tag read from CSV: $EventName"
 
 # Detect instructor from CSV (Type = Instructor)
 $InstructorRow = $Roster | Where-Object { $_.Type -eq 'Instructor' }
@@ -190,7 +195,7 @@ $Today = (Get-Date -Format 'yyyy-MM-dd')
 
 Write-Ok "Subscription: $SubscriptionId"
 Write-Ok "Instructor:   $InstructorPrefix"
-Write-Ok "Event tag:    $EventName"
+Write-Ok "Event tag:    $EventName (from CSV)"
 Write-Ok "Date tag:     $Today"
 Write-Ok "Location:     $Location"
 if ($WhatIfPreference) { Write-Host "`n  *** DRY RUN — no changes will be made ***`n" -ForegroundColor Yellow }
