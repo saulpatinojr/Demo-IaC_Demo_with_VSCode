@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 AZURE_RESOURCE_GROUP,AZURE_PREFIX,AZURE_LOCATION,ALERT_EMAIL
-rg-lab-yourname,yourname,eastus2,you@example.com
+<your-resource-group>,<your-prefix>,eastus2,<your-email@example.com>
+=======
+AZURE_PREFIX,AZURE_LOCATION,AZURE_RESOURCE_GROUP,VM_ADMIN_PASSWORD,SQL_ADMIN_PASSWORD,ALERT_EMAIL
+yourname,eastus2,rg-lab-yourname,ChangeMe-VmPass123!,ChangeMe-SqlPass123!,you@example.com
+>>>>>>> origin/main
