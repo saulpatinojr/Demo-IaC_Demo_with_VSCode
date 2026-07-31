@@ -1,50 +1,41 @@
 <#
 .SYNOPSIS
-    Connects lab prerequisites by creating your fork and cloning it locally.
+    Connects lab prerequisites: validates auth and forks the workshop repo to your account.
 
 .DESCRIPTION
-    This script uses your signed-in GitHub CLI session to:
-      1) Confirm your GitHub username
-      2) Create your fork of the workshop repo (if it does not exist)
-      3) Clone your fork to your local machine (if it is not already cloned)
-      4) Add the instructor repo as the 'upstream' remote
+    This script uses your signed-in GitHub and Azure CLI sessions to:
+      1) Validate GitHub CLI authentication
+      2) Validate Azure CLI authentication
+      3) Fork the workshop repo to your GitHub account (if not already forked)
+      4) Install/verify the GitHub Copilot CLI extension
 
-    It is safe to re-run (idempotent): existing fork, clone, and upstream remote
-    are detected and reused.
+    After this script completes, use the fork URL printed at the end to clone the
+    repo in the next step (Section E.2 in the checklist).
+
+    It is safe to re-run (idempotent): existing fork and Copilot CLI are detected
+    and reused.
 
 .PARAMETER UpstreamRepo
     Source repo to fork (owner/name). Defaults to the workshop repo.
 
-.PARAMETER CloneRoot
-    Folder where the fork is cloned. Defaults to the current user's Desktop.
-
-.PARAMETER SkipClone
-    Creates/verifies the fork but skips local clone operations.
-
-.PARAMETER OpenCode
-    Opens the cloned repo in VS Code at the end.
+.EXAMPLE
+    ./Connect-AzureAndGitHub.ps1
 
 .EXAMPLE
     ./scripts/Connect-AzureAndGitHub.ps1
-
-.EXAMPLE
-    ./scripts/Connect-AzureAndGitHub.ps1 -CloneRoot "$HOME\source" -OpenCode
 #>
 [CmdletBinding()]
 param(
-    [string] $UpstreamRepo = 'saulpatinojr/Demo-IaC_Demo_with_VSCode',
-    [string] $CloneRoot = (Join-Path $HOME 'Desktop'),
-    [switch] $SkipClone,
-    [switch] $OpenCode
+    [string] $UpstreamRepo = 'saulpatinojr/Demo-IaC_Demo_with_VSCode'
 )
 
 $ErrorActionPreference = 'Stop'
 
-function Write-Step($msg) { Write-Host "`n> $msg" -ForegroundColor White }
-function Write-Ok($msg)   { Write-Host "  [OK] $msg" -ForegroundColor Green }
-function Write-Info($msg) { Write-Host "  [INFO] $msg" -ForegroundColor DarkCyan }
-function Write-Warn($msg) { Write-Host "  [WARN] $msg" -ForegroundColor Yellow }
-function Write-Fail($msg) { Write-Host "  [FAIL] $msg" -ForegroundColor Red }
+function Write-Step($msg) { Write-Host "`n  > $msg" -ForegroundColor White }
+function Write-Ok($msg)   { Write-Host "    [OK] $msg" -ForegroundColor Green }
+function Write-Info($msg) { Write-Host "    [INFO] $msg" -ForegroundColor DarkCyan }
+function Write-Warn($msg) { Write-Host "    [WARN] $msg" -ForegroundColor Yellow }
+function Write-Fail($msg) { Write-Host "    [FAIL] $msg" -ForegroundColor Red }
 
 function Require-Command([string]$Name) {
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
@@ -53,39 +44,51 @@ function Require-Command([string]$Name) {
     }
 }
 
-Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host " Connect Azure + GitHub (fork and clone setup) " -ForegroundColor Cyan
-Write-Host "===============================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Connecting Azure CLI and GitHub CLI" -ForegroundColor Cyan
+Write-Host ""
 
 Require-Command 'gh'
 Require-Command 'git'
 
-Write-Step "Validating GitHub CLI authentication"
-gh auth status 2>$null | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    Write-Fail "GitHub CLI is not authenticated."
-    Write-Host "  Run: gh auth login" -ForegroundColor Cyan
-    exit 1
-}
-$ghUser = gh api user --jq .login 2>$null
-if (-not $ghUser) {
-    Write-Fail "Could not detect GitHub username from gh."
-    exit 1
-}
-Write-Ok "Authenticated as @$ghUser"
+# ── Azure CLI authentication ───────────────────────────────────────────────────
 
-Write-Step "Checking Azure CLI authentication (required later for Setup-Oidc)"
+Write-Step "Authenticating to Azure"
 if (Get-Command az -ErrorAction SilentlyContinue) {
     az account show 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
         $subName = az account show --query name -o tsv 2>$null
-        Write-Ok "Azure CLI authenticated (subscription: $subName)"
+        Write-Ok "Azure CLI authentication complete. (subscription: $subName)"
     } else {
-        Write-Warn "Azure CLI is not authenticated yet. Run 'az login' before Setup-Oidc."
+        az login
+        if ($LASTEXITCODE -eq 0) {
+            $subName = az account show --query name -o tsv 2>$null
+            Write-Ok "Azure CLI authentication complete. (subscription: $subName)"
+        } else {
+            Write-Fail "Azure login did not complete. Run 'az login' and try again."
+            exit 1
+        }
     }
 } else {
-    Write-Warn "Azure CLI was not found on PATH. Install and sign in before Setup-Oidc."
+    Write-Warn "Azure CLI not found. Install it from Section C and re-run."
 }
+
+# ── GitHub CLI authentication ──────────────────────────────────────────────────
+
+Write-Step "Authenticating to GitHub CLI"
+gh auth status 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Fail "GitHub CLI is not authenticated. Run 'gh auth login' from Section D first."
+    exit 1
+}
+$ghUser = gh api user --jq .login 2>$null
+if (-not $ghUser) {
+    Write-Fail "Could not read GitHub username. Re-run 'gh auth login' and try again."
+    exit 1
+}
+Write-Ok "GitHub CLI authentication complete. (signed in as @$ghUser)"
+
+# ── Fork ───────────────────────────────────────────────────────────────────────
 
 $repoName = ($UpstreamRepo -split '/', 2)[1]
 if (-not $repoName) {
@@ -93,72 +96,45 @@ if (-not $repoName) {
     exit 1
 }
 $forkRepo = "$ghUser/$repoName"
-$forkUrl = "https://github.com/$forkRepo"
+$forkUrl  = "https://github.com/$forkRepo"
 
-Write-Step "Ensuring fork exists: $forkRepo"
+Write-Step "Forking the lab repo to your account"
 gh repo view $forkRepo --json name --jq .name 2>$null | Out-Null
 if ($LASTEXITCODE -eq 0) {
-    Write-Ok "Fork already exists: $forkUrl"
+    Write-Ok "Fork is ready at: $forkUrl"
 } else {
     gh repo fork $UpstreamRepo --clone=false --remote=false
     if ($LASTEXITCODE -ne 0) {
-        Write-Fail "Failed to create fork for $UpstreamRepo."
+        Write-Fail "Fork failed. Check your GitHub permissions and try again."
         exit 1
     }
-    Write-Ok "Fork created: $forkUrl"
+    Write-Ok "Fork is ready at: $forkUrl"
 }
+Write-Info "Use that URL in Section E.2 of the checklist when cloning your copy of the repo."
 
-$targetPath = Join-Path $CloneRoot $repoName
+# ── GitHub Copilot CLI extension ───────────────────────────────────────────────
 
-if (-not $SkipClone) {
-    Write-Step "Ensuring local clone exists"
-    if (-not (Test-Path $CloneRoot)) {
-        $null = New-Item -Path $CloneRoot -ItemType Directory -Force
-    }
-
-    if (Test-Path (Join-Path $targetPath '.git')) {
-        Write-Ok "Clone already exists: $targetPath"
-    } elseif (Test-Path $targetPath) {
-        Write-Fail "Target path exists but is not a git repo: $targetPath"
-        Write-Host "  Choose a different CloneRoot or remove that folder and re-run." -ForegroundColor Cyan
-        exit 1
+Write-Step "Installing/verifying GitHub Copilot CLI"
+$extList = gh extension list 2>$null
+if ($extList -match 'gh-copilot') {
+    Write-Ok "gh copilot command is available."
+} else {
+    gh extension install github/gh-copilot 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Ok "gh copilot command is available."
     } else {
-        gh repo clone $forkRepo $targetPath
-        if ($LASTEXITCODE -ne 0) {
-            Write-Fail "Clone failed."
-            exit 1
-        }
-        Write-Ok "Cloned: $targetPath"
-    }
-
-    Write-Step "Configuring 'upstream' remote"
-    $upstreamUrl = git -C $targetPath remote get-url upstream 2>$null
-    if ($LASTEXITCODE -eq 0 -and $upstreamUrl) {
-        if ($upstreamUrl -notmatch [regex]::Escape($UpstreamRepo)) {
-            git -C $targetPath remote set-url upstream "https://github.com/$UpstreamRepo.git"
-            Write-Ok "Updated upstream remote to https://github.com/$UpstreamRepo.git"
-        } else {
-            Write-Ok "Upstream remote already configured"
-        }
-    } else {
-        git -C $targetPath remote add upstream "https://github.com/$UpstreamRepo.git"
-        Write-Ok "Added upstream remote"
+        Write-Warn "Extension install failed. Run: gh extension install github/gh-copilot"
     }
 }
+Write-Ok "Authentication helper completed."
+
+# ── Summary ────────────────────────────────────────────────────────────────────
 
 Write-Host ""
-Write-Host "Next step inside your forked repo:" -ForegroundColor Cyan
-if (-not $SkipClone) {
-    Write-Host "  cd `"$targetPath`"" -ForegroundColor White
-}
-Write-Host '  ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>" -WhatIf' -ForegroundColor White
-Write-Host '  ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"' -ForegroundColor White
-
-if ($OpenCode -and -not $SkipClone) {
-    if (Get-Command code -ErrorAction SilentlyContinue) {
-        code $targetPath | Out-Null
-        Write-Info "Opened VS Code: $targetPath"
-    } else {
-        Write-Warn "VS Code command 'code' not found on PATH."
-    }
-}
+Write-Host "  Done. Copy this URL and use it in the next step (E.2 - Clone):" -ForegroundColor Cyan
+Write-Host "    $forkUrl" -ForegroundColor White
+Write-Host ""
+Write-Host "  Then open the checklist for the clone step:" -ForegroundColor DarkGray
+$wikiUrl = 'https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist-Part-2-E-to-G'
+Write-Host "  $wikiUrl" -ForegroundColor DarkGray
+Write-Host ""
