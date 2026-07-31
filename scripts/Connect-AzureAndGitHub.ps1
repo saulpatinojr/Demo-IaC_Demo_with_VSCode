@@ -10,7 +10,7 @@
       4) Install/verify the GitHub Copilot CLI extension
 
     After this script completes, use the fork URL printed at the end to clone the
-    repo in the next step (Section E.2 in the checklist).
+    repo in the next step (Section F in the checklist).
 
     It is safe to re-run (idempotent): existing fork and Copilot CLI are detected
     and reused.
@@ -110,7 +110,7 @@ if ($LASTEXITCODE -eq 0) {
     }
     Write-Ok "Fork is ready at: $forkUrl"
 }
-Write-Info "Use that URL in Section E.2 of the checklist when cloning your copy of the repo."
+Write-Info "Use that URL in Section F of the checklist when cloning your copy of the repo."
 
 # ── GitHub Copilot CLI extension ───────────────────────────────────────────────
 
@@ -131,7 +131,7 @@ Write-Ok "Authentication helper completed."
 # ── Summary ────────────────────────────────────────────────────────────────────
 
 Write-Host ""
-Write-Host "  Done. Copy this URL and use it in the next step (E.2 - Clone):" -ForegroundColor Cyan
+Write-Host "  Done. Copy this URL and use it in Section F (Clone):" -ForegroundColor Cyan
 Write-Host "    $forkUrl" -ForegroundColor White
 Write-Host ""
 Write-Host "  Then open the checklist for the clone step:" -ForegroundColor DarkGray
