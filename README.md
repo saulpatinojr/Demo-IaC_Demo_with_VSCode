@@ -49,9 +49,12 @@ This repo recommends the right VS Code extensions automatically — accept the p
 
 ## 2. Get the code
 
-1. **Fork** this repo (top-right on GitHub) to your personal account or your org. You need your own fork so workflows can use *your* secrets and variables.
-2. Clone it with **GitHub Desktop**: `File → Clone repository`, pick your fork.
-3. Open the folder in **VS Code** and sign in to Copilot when prompted.
+1. Download and run `Connect-AzureAndGitHub.ps1` to auto-fork and clone:
+   ```powershell
+   Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/main/scripts/Connect-AzureAndGitHub.ps1" -OutFile .\Connect-AzureAndGitHub.ps1
+   .\Connect-AzureAndGitHub.ps1
+   ```
+2. Open the cloned folder in **VS Code** and sign in to Copilot when prompted.
 
 ## 3. Sign in to everything
 
@@ -94,6 +97,7 @@ labs/
   L4-global/        second region, SQL failover group, Front Door
   modules/          the only two non-AVM modules (subnet-on-existing-VNet, failover group)
 scripts/
+  Connect-AzureAndGitHub.ps1  auto-fork + clone helper (sets upstream remote)
   Setup-Oidc.ps1    one-command GitHub↔Azure OIDC handshake (+ repo secrets)
   Cleanup-Labs.ps1  tear down lab resource groups (and optionally the OIDC identity)
 .github/workflows/  deploy-l1..l4.yml + teardown.yml (all OIDC, all manual dispatch)

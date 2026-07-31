@@ -33,7 +33,8 @@
 
       NEXT STEPS REMINDER (printed at the end — require the GUI)
         Open VS Code → Ctrl+Alt+I → sign in to Copilot Chat
-        Fork + clone the lab repo → run Setup-Oidc.ps1
+        Download + run Connect-AzureAndGitHub.ps1 (auto fork + clone)
+        Run Setup-Oidc.ps1 from inside your cloned fork
 
     The script is idempotent: already-installed tools are skipped. Re-running
     after an interrupted install is safe.
@@ -437,13 +438,13 @@ Write-Host "     → Press  Ctrl+Alt+I  to open Copilot Chat" -ForegroundColor W
 Write-Host "     → Sign in with your GitHub account when prompted" -ForegroundColor White
 Write-Host "     → Confirm the Copilot icon appears in the sidebar" -ForegroundColor White
 Write-Host ""
-Write-Host "  2. Fork + clone the lab repo" -ForegroundColor White
-Write-Host "     → https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode  (click Fork)" -ForegroundColor DarkCyan
-Write-Host "     → GitHub Desktop: File → Clone repository → pick your fork" -ForegroundColor White
-Write-Host "     → Open the cloned folder in VS Code (accept the recommended extensions prompt)" -ForegroundColor White
+Write-Host "  2. Download and run Connect-AzureAndGitHub.ps1 (auto fork + clone)" -ForegroundColor White
+Write-Host '     Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/main/scripts/Connect-AzureAndGitHub.ps1" -OutFile .\Connect-AzureAndGitHub.ps1' -ForegroundColor Cyan
+Write-Host "     .\Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
+Write-Host "     → This creates your fork, clones it to Desktop, and adds upstream" -ForegroundColor White
 Write-Host ""
 Write-Host "  3. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
-Write-Host "     ./scripts/Setup-Oidc.ps1 -ResourceGroup `"rg-lab-<yourname>`" -Prefix `"<yourname>`"" -ForegroundColor Cyan
+Write-Host '     ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"' -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  4. Head to the workshop wiki to start Lab 1:" -ForegroundColor White
 Write-Host "     https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki" -ForegroundColor DarkCyan
