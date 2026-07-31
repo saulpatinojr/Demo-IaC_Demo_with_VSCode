@@ -135,6 +135,6 @@ Write-Host "  Done. Copy this URL and use it in the next step (E.2 - Clone):" -F
 Write-Host "    $forkUrl" -ForegroundColor White
 Write-Host ""
 Write-Host "  Then open the checklist for the clone step:" -ForegroundColor DarkGray
-$wikiUrl = 'https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist-Part-2-E-to-G'
+$wikiUrl = 'https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist-Part-2'
 Write-Host "  $wikiUrl" -ForegroundColor DarkGray
 Write-Host ""
