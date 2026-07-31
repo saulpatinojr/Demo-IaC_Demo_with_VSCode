@@ -10,3 +10,7 @@ main.json
 .env
 *.env
 !.env.sample
+
+# Personal lab settings — copy lab-settings.csv.example to lab-settings.csv
+# and fill in your values. This file is intentionally not committed.
+lab-settings.csv

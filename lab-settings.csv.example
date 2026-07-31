@@ -1,0 +1,2 @@
+AZURE_RESOURCE_GROUP,AZURE_PREFIX,AZURE_LOCATION,ALERT_EMAIL
+<your-resource-group>,<your-prefix>,eastus2,<your-email@example.com>
