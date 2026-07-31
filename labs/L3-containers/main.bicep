@@ -228,7 +228,7 @@ module webApp 'br/public:avm/res/app/container-app:0.23.0' = {
   }
 }
 
-// --- Alerting: email when the app's CPU runs hot ----------------------------
+// --- Alerting: email when replica count stays elevated ----------------------
 module actionGroup 'br/public:avm/res/insights/action-group:0.8.0' = {
   name: 'l3-action-group'
   params: {

@@ -25,15 +25,15 @@
       CONFIGURATION
         git config  user.name / user.email / sensible defaults
         VS Code     auto-save, format on save, PS7 as default terminal
-        gh copilot  CLI extension (installed after gh auth login)
+                gh copilot  built-in GH CLI command (installed/verified after gh auth login)
 
       SIGN-IN (interactive, opens browser)
-        gh auth login   — GitHub (+ installs gh copilot extension after)
-        az login        — Azure (then prompts to select the right subscription)
+                gh auth login   - GitHub (+ triggers gh copilot install prompt when needed)
+        az login        - Azure (then prompts to select the right subscription)
 
-      NEXT STEPS REMINDER (printed at the end — require the GUI)
-        Open VS Code → Ctrl+Alt+I → sign in to Copilot Chat
-        Fork + clone the lab repo → run Setup-Oidc.ps1
+      NEXT STEPS REMINDER (printed at the end - require the GUI)
+        Open VS Code -> Ctrl+Alt+I -> sign in to Copilot Chat
+        Fork + clone the lab repo -> run Setup-Oidc.ps1
 
     The script is idempotent: already-installed tools are skipped. Re-running
     after an interrupted install is safe.
@@ -49,10 +49,10 @@
 
 .EXAMPLE
     ./scripts/Install-LabTools.ps1
-    Fully guided — prompts for name + email, then opens browser for Azure + GitHub login.
+    Fully guided - prompts for name + email, then opens browser for Azure + GitHub login.
 
 .EXAMPLE
-    ./scripts/Install-LabTools.ps1 -GitName "Alice Smith" -GitEmail "alice@example.com"
+    ./scripts/Install-LabTools.ps1 -GitName "Student000001" -GitEmail "Student000001@npluslab.onmicrosoft.com"
 
 .EXAMPLE
     ./scripts/Install-LabTools.ps1 -SkipLogin
@@ -60,7 +60,8 @@
 
 .NOTES
     Requires: Windows 10/11 with winget, local Administrator rights.
-    Run from PowerShell 5 or PowerShell 7 — the script works in both.
+    No execution-policy bypass command is required for this workshop.
+    Run from PowerShell 5 or PowerShell 7 - the script works in both.
 #>
 [CmdletBinding()]
 param(
@@ -71,21 +72,42 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Off
+$MissingExtensionsCount = 0
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 function Write-Banner($text) {
-    $line = '─' * ($text.Length + 4)
-    Write-Host "`n$line" -ForegroundColor Cyan
-    Write-Host "  $text" -ForegroundColor Cyan
-    Write-Host "$line" -ForegroundColor Cyan
+    $line = '=' * ($text.Length + 8)
+    Write-Host ""
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host "  === $text ===" -ForegroundColor Yellow
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host ""
 }
 
-function Write-Step($msg)  { Write-Host "`n  ▶  $msg" -ForegroundColor White }
-function Write-Ok($msg)    { Write-Host "     ✅  $msg" -ForegroundColor Green }
-function Write-Skip($msg)  { Write-Host "     ⏭   $msg" -ForegroundColor DarkGray }
-function Write-Warn($msg)  { Write-Host "     ⚠️   $msg" -ForegroundColor Yellow }
-function Write-Fail($msg)  { Write-Host "     ❌  $msg" -ForegroundColor Red }
+function Write-Step($msg) {
+    Write-Host ""
+    Write-Host "  > $msg" -ForegroundColor White
+}
+function Write-Ok($msg)    { Write-Host "    [OK] $msg" -ForegroundColor Green }
+function Write-Skip($msg)  { Write-Host "    [SKIP] $msg" -ForegroundColor DarkGray }
+function Write-Warn($msg)  { Write-Host "    [WARN] $msg" -ForegroundColor Yellow }
+function Write-Fail($msg)  { Write-Host "    [FAIL] $msg" -ForegroundColor Red }
+function Write-Info($msg)  { Write-Host "    [INFO] $msg" -ForegroundColor DarkCyan }
+
+function Get-BicepVersionFromAz {
+    try {
+        $raw = az bicep version 2>$null
+        if (-not $raw) { return $null }
+        $combined = ($raw | Out-String).Trim()
+        if ($combined -match 'Bicep CLI version\s+([0-9]+\.[0-9]+\.[0-9]+)') {
+            return $Matches[1]
+        }
+        return $combined
+    } catch {
+        return $null
+    }
+}
 
 function Refresh-Path {
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
@@ -96,16 +118,198 @@ function Is-Installed($cmd) {
     $null -ne (Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
-function Winget-Install($id, $name) {
-    Write-Step "$name"
-    $result = winget list --id $id --exact 2>$null
-    if ($LASTEXITCODE -eq 0 -and ($result -match $id)) {
-        Write-Skip "$name already installed"
+function Invoke-ProcessQuiet {
+    param(
+        [Parameter(Mandatory = $true)][string] $FilePath,
+        [Parameter(Mandatory = $true)][string[]] $ArgumentList
+    )
+
+    $tmpOut = New-TemporaryFile
+    $tmpErr = New-TemporaryFile
+    try {
+        $proc = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -NoNewWindow -PassThru -Wait -RedirectStandardOutput $tmpOut.FullName -RedirectStandardError $tmpErr.FullName
+        $stdout = @()
+        $stderr = @()
+        if (Test-Path $tmpOut.FullName) { $stdout = @(Get-Content -Path $tmpOut.FullName -ErrorAction SilentlyContinue) }
+        if (Test-Path $tmpErr.FullName) { $stderr = @(Get-Content -Path $tmpErr.FullName -ErrorAction SilentlyContinue) }
+
+        [pscustomobject]@{
+            ExitCode = $proc.ExitCode
+            StdOut   = $stdout
+            StdErr   = $stderr
+        }
+    } finally {
+        Remove-Item $tmpOut.FullName -Force -ErrorAction SilentlyContinue
+        Remove-Item $tmpErr.FullName -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Get-CodeExtensions([string] $codeCmdPath) {
+    $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--list-extensions')
+    if ($result.ExitCode -ne 0) {
+        Write-Warn "Failed to list VS Code extensions (exit $($result.ExitCode))"
+        return @()
+    }
+    return @($result.StdOut | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+}
+
+function Install-CodeExtension([string] $codeCmdPath, [string] $extensionId, [string] $extensionName) {
+    $result = Invoke-ProcessQuiet -FilePath $codeCmdPath -ArgumentList @('--install-extension', $extensionId, '--force')
+
+    # Verify by listing extensions; code --install-extension can exit 1 due to
+    # Node.js DEP0169 deprecation warnings even when the install succeeds.
+    $installedIds = Get-CodeExtensions $codeCmdPath
+    if ($installedIds | Where-Object { $_ -ieq $extensionId }) {
+        Write-Ok "$extensionName installed"
+        return $true
+    }
+
+    $errSummary = ($result.StdErr | Where-Object { $_ -notmatch 'DeprecationWarning|DEP0' } | Select-Object -First 1)
+    if (-not $errSummary) { $errSummary = "exit $($result.ExitCode)" }
+    Write-Warn "$extensionName install returned exit $($result.ExitCode): $errSummary"
+    return $false
+}
+
+function Ensure-GitHubCopilotCli {
+    if (-not (Is-Installed 'gh')) {
+        Write-Warn 'GitHub CLI (gh) not available; skipping Copilot CLI install'
+        return $false
+    }
+
+    Write-Step 'GitHub Copilot CLI'
+    $verify = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
+    $verifyText = @($verify.StdOut + $verify.StdErr) -join "`n"
+    if ($verify.ExitCode -eq 0 -and $verifyText -notmatch 'not installed|Would you like to install') {
+        Write-Ok 'GitHub Copilot CLI is available'
+        return $true
+    }
+
+    # gh copilot is a built-in stub that prompts for installation; pipe Y to install non-interactively.
+    Write-Info 'Triggering GitHub Copilot CLI installation (auto-answering install prompt)...'
+    $inputFile = New-TemporaryFile
+    $tmpOut    = New-TemporaryFile
+    $tmpErr    = New-TemporaryFile
+    try {
+        Set-Content -Path $inputFile.FullName -Value 'Y'
+        $proc = Start-Process -FilePath 'gh' -ArgumentList @('copilot', '--version') `
+            -RedirectStandardInput  $inputFile.FullName `
+            -RedirectStandardOutput $tmpOut.FullName `
+            -RedirectStandardError  $tmpErr.FullName `
+            -NoNewWindow -PassThru -Wait
+    } finally {
+        Remove-Item $inputFile.FullName, $tmpOut.FullName, $tmpErr.FullName -Force -ErrorAction SilentlyContinue
+    }
+
+    $verify2     = Invoke-ProcessQuiet -FilePath 'gh' -ArgumentList @('copilot', '--version')
+    $verify2Text = @($verify2.StdOut + $verify2.StdErr) -join "`n"
+    if ($verify2.ExitCode -eq 0 -and $verify2Text -notmatch 'not installed|Would you like to install') {
+        Write-Ok 'GitHub Copilot CLI installed'
+        return $true
+    }
+
+    Write-Warn "GitHub Copilot CLI install did not complete. Open a new terminal and run: gh copilot --version"
+    return $false
+}
+
+function Ensure-CodeDesktopShortcut([string] $codeCmdPath) {
+    $desktop = [Environment]::GetFolderPath('Desktop')
+    $shortcutPath = Join-Path $desktop 'Visual Studio Code.lnk'
+    if (Test-Path $shortcutPath) {
+        Write-Skip 'VS Code desktop shortcut already exists'
         return
     }
-    winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements
-    if ($LASTEXITCODE -eq 0) { Write-Ok "$name installed" }
-    else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
+
+    $codeExe = $null
+    if ($codeCmdPath -like '*.cmd') {
+        $candidate = $codeCmdPath -replace '\\bin\\code\.cmd$', '\\Code.exe'
+        if (Test-Path $candidate) { $codeExe = $candidate }
+    }
+    if (-not $codeExe) {
+        $candidates = @(
+            "$env:LOCALAPPDATA\\Programs\\Microsoft VS Code\\Code.exe",
+            "$env:ProgramFiles\\Microsoft VS Code\\Code.exe"
+        )
+        $codeExe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    }
+
+    if (-not $codeExe) {
+        Write-Warn 'Could not determine VS Code executable path for desktop shortcut'
+        return
+    }
+
+    try {
+        $wsh = New-Object -ComObject WScript.Shell
+        $shortcut = $wsh.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = $codeExe
+        $shortcut.WorkingDirectory = Split-Path $codeExe -Parent
+        $shortcut.IconLocation = "$codeExe,0"
+        $shortcut.Save()
+        Write-Ok 'Created VS Code desktop shortcut'
+    } catch {
+        Write-Warn "Failed to create VS Code desktop shortcut: $($_.Exception.Message)"
+    }
+}
+
+function Winget-Install($id, $name) {
+    Write-Step "$name"
+
+    # Avoid `winget list` pre-checks here: on some lab images it can block for
+    # a long time with no visible output. Let `winget install --no-upgrade`
+    # handle idempotency instead.
+    $arguments = @(
+        'install',
+        '--id', $id,
+        '--exact',
+        '--no-upgrade',
+        '--silent',
+        '--disable-interactivity',
+        '--accept-package-agreements',
+        '--accept-source-agreements',
+        '--source', 'winget'
+    )
+
+    $maxInstallSeconds = 1800
+    $heartbeatSeconds = 20
+    $start = Get-Date
+    $nextHeartbeat = $start.AddSeconds($heartbeatSeconds)
+
+    Write-Info "$name install/verify started (this can take a few minutes)."
+    $proc = Start-Process -FilePath 'winget' -ArgumentList $arguments -NoNewWindow -PassThru
+
+    while (-not $proc.HasExited) {
+        Start-Sleep -Seconds 2
+        $proc.Refresh()
+
+        $now = Get-Date
+        if ($now -ge $nextHeartbeat) {
+            $elapsed = [int]($now - $start).TotalSeconds
+            Write-Info "$name install still running (${elapsed}s elapsed)..."
+            $nextHeartbeat = $now.AddSeconds($heartbeatSeconds)
+        }
+
+        if (($now - $start).TotalSeconds -ge $maxInstallSeconds) {
+            try { $proc.Kill() } catch { }
+            Write-Fail "$name install exceeded $maxInstallSeconds seconds and was stopped. Re-run to retry."
+            return
+        }
+    }
+
+    if ($proc.ExitCode -eq 0) {
+        Write-Ok "$name installed or already present"
+        return
+    }
+
+    # Some winget outcomes are non-zero but expected for idempotent runs.
+    $exitCode = [int]$proc.ExitCode
+    $exitHex = ('0x{0:X8}' -f ($exitCode -band 0xFFFFFFFF))
+    $allText = @($result.StdOut + $result.StdErr) -join "`n"
+
+    if ($allText -match 'already installed|installation cancelled|No available upgrade found|No applicable upgrade found') {
+        Write-Skip "$name already installed ($exitHex)"
+        return
+    }
+
+    Write-Warn "$name install returned exit $exitCode ($exitHex)"
 }
 
 # ── Admin check ───────────────────────────────────────────────────────────────
@@ -113,13 +317,12 @@ function Winget-Install($id, $name) {
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Write-Banner "Lab Workstation Setup — IaC with GitHub Copilot Workshop"
+Write-Banner "Lab Workstation Setup - IaC with GitHub Copilot Workshop"
 
 if (-not $isAdmin) {
-    Write-Warn "Not running as Administrator. Some installs may fail."
-    Write-Warn "Right-click PowerShell → 'Run as administrator' and re-run this script."
-    $cont = Read-Host "  Continue anyway? [y/N]"
-    if ($cont -notmatch '^[Yy]') { exit 1 }
+    Write-Fail "Not running as Administrator. This script requires elevation for reliable one-shot setup."
+    Write-Warn "Right-click PowerShell -> 'Run as administrator' and re-run this script."
+    exit 1
 }
 
 # ── winget availability check ─────────────────────────────────────────────────
@@ -131,6 +334,7 @@ if (-not (Is-Installed 'winget')) {
 }
 $wingetVer = (winget --version) -replace '[^0-9.]',''
 Write-Ok "winget $wingetVer available"
+Write-Info 'Installs run in silent mode; heartbeat messages will print during long operations.'
 
 # ── Software installs ─────────────────────────────────────────────────────────
 
@@ -147,16 +351,33 @@ Winget-Install 'Microsoft.WindowsTerminal' 'Windows Terminal'
 # Refresh PATH so all newly installed tools are reachable in this session
 Refresh-Path
 
+# ── GitHub Copilot CLI ──────────────────────────────────────────────────────
+Ensure-GitHubCopilotCli | Out-Null
+
 # ── Bicep CLI ─────────────────────────────────────────────────────────────────
 
 Write-Step "Bicep CLI (via az bicep install)"
 if (Is-Installed 'az') {
-    az bicep install 2>&1 | Out-Null
-    $bicepVer = az bicep version --query version -o tsv 2>$null
-    if ($bicepVer) { Write-Ok "Bicep CLI $bicepVer" }
-    else           { Write-Ok "Bicep CLI installed (run 'az bicep version' to verify)" }
+    $existingBicepVer = Get-BicepVersionFromAz
+    if ($existingBicepVer) {
+        Write-Skip "Bicep CLI already available: $existingBicepVer"
+    } else {
+        # Run az as a child process so warning text on stderr does not surface
+        # as a terminating PowerShell error in older hosts.
+        $azInstallProc = Start-Process -FilePath 'az' -ArgumentList @('bicep', 'install', '--only-show-errors') -NoNewWindow -PassThru -Wait
+        if ($azInstallProc.ExitCode -ne 0) {
+            Write-Warn "az bicep install returned exit $($azInstallProc.ExitCode); continuing with version check"
+        }
+
+        $bicepVer = Get-BicepVersionFromAz
+        if ($bicepVer) {
+            Write-Ok "Bicep CLI $bicepVer"
+        } else {
+            Write-Warn "Bicep install attempted but version could not be detected. Reopen terminal and run: az bicep version"
+        }
+    }
 } else {
-    Write-Warn "az CLI not on PATH yet — run 'az bicep install' after reopening the terminal"
+    Write-Warn "az CLI not on PATH yet - run 'az bicep install' after reopening the terminal"
 }
 
 # ── VS Code extensions ────────────────────────────────────────────────────────
@@ -178,6 +399,9 @@ if (-not (Is-Installed $codeCmd)) {
 }
 
 if ($codeCmd) {
+    Write-Step 'Ensuring VS Code desktop shortcut'
+    Ensure-CodeDesktopShortcut $codeCmd
+
     $extensions = @(
         @{ Id = 'ms-azuretools.vscode-bicep';    Name = 'Bicep' },
         @{ Id = 'GitHub.copilot';                Name = 'GitHub Copilot' },
@@ -185,18 +409,37 @@ if ($codeCmd) {
         @{ Id = 'ms-vscode.azurecli';            Name = 'Azure CLI Tools' },
         @{ Id = 'github.vscode-github-actions';  Name = 'GitHub Actions' }
     )
+
+    $installedIds = Get-CodeExtensions $codeCmd
     foreach ($ext in $extensions) {
         Write-Step "$($ext.Name)"
-        $installed = & $codeCmd --list-extensions 2>$null | Where-Object { $_ -ieq $ext.Id }
+        $installed = $installedIds | Where-Object { $_ -ieq $ext.Id }
         if ($installed) {
             Write-Skip "$($ext.Name) already installed"
         } else {
-            & $codeCmd --install-extension $ext.Id --force 2>&1 | Out-Null
-            Write-Ok "$($ext.Name) installed"
+            $didInstall = Install-CodeExtension -codeCmdPath $codeCmd -extensionId $ext.Id -extensionName $ext.Name
+            if ($didInstall) {
+                $installedIds += $ext.Id
+            }
         }
     }
+
+    Write-Step "Verifying VS Code extensions"
+    $installedIds = Get-CodeExtensions $codeCmd
+    $missing = @($extensions | Where-Object { $installedIds -notcontains $_.Id })
+    if ($missing.Count -eq 0) {
+        Write-Ok 'All required VS Code extensions are installed'
+    } else {
+        foreach ($m in $missing) {
+            Write-Warn "Missing extension: $($m.Id) ($($m.Name))"
+        }
+        Write-Warn "Open a fresh terminal and run ./scripts/Authenticate-LabTools.ps1 to finish sign-in and extension setup."
+    }
+
+    Set-Variable -Name MissingExtensionsCount -Value $missing.Count -Scope Script
 } else {
-    Write-Warn "Skipped VS Code extensions — re-run this script after reopening the terminal."
+    Write-Warn "Skipped VS Code extensions - re-run this script after reopening the terminal."
+    Set-Variable -Name MissingExtensionsCount -Value 5 -Scope Script
 }
 
 # ── VS Code settings ──────────────────────────────────────────────────────────
@@ -261,7 +504,7 @@ if (Is-Installed 'git') {
             Write-Skip "git user.name already set to: $current"
             $GitName = $current
         } else {
-            $GitName = Read-Host "  Enter your full name for git commits (e.g. Alice Smith)"
+            $GitName = Read-Host "  Enter your full name for git commits (e.g. Student000001)"
         }
     }
     if (-not $GitEmail) {
@@ -270,7 +513,7 @@ if (Is-Installed 'git') {
             Write-Skip "git user.email already set to: $current"
             $GitEmail = $current
         } else {
-            $GitEmail = Read-Host "  Enter your email for git commits (use your GitHub email)"
+            $GitEmail = Read-Host "  Enter your email for git commits (e.g. Student000001@npluslab.onmicrosoft.com)"
         }
     }
 
@@ -290,94 +533,17 @@ if (Is-Installed 'git') {
     Write-Ok "git config: user.email = $GitEmail"
     Write-Ok "git config: defaultBranch=main, autocrlf=input, editor=code, credential.helper=manager"
 } else {
-    Write-Warn "git not on PATH — reopen the terminal and re-run to configure git identity."
+    Write-Warn "git not on PATH - reopen the terminal and re-run to configure git identity."
 }
 
-# ── Interactive logins ────────────────────────────────────────────────────────
+# ── Authentication follow-up ────────────────────────────────────────────────
 
-if (-not $SkipLogin) {
-    Write-Banner "Signing In"
-
-    # ── GitHub CLI ──
-    Write-Step "GitHub CLI (gh auth login)"
-    Write-Host "     A browser window will open. Sign in with your GitHub account." -ForegroundColor DarkCyan
-    if (Is-Installed 'gh') {
-        gh auth status 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Skip "Already signed in to GitHub CLI"
-        } else {
-            gh auth login --web --git-protocol https
-            if ($LASTEXITCODE -eq 0) { Write-Ok "GitHub CLI authenticated" }
-            else                     { Write-Warn "gh auth login did not complete — run 'gh auth login' manually" }
-        }
-    } else {
-        Write-Warn "gh not on PATH — reopen terminal and run: gh auth login"
-    }
-
-    # ── GitHub Copilot CLI extension (requires gh auth) ──
-    Write-Step "GitHub Copilot CLI extension (gh extension install github/gh-copilot)"
-    if (Is-Installed 'gh') {
-        $extList = gh extension list 2>$null
-        if ($extList -match 'gh-copilot') {
-            Write-Skip "gh copilot extension already installed"
-        } else {
-            gh extension install github/gh-copilot 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) { Write-Ok "gh copilot extension installed (try: gh copilot explain 'list files')" }
-            else                     { Write-Warn "Extension install failed — run manually: gh extension install github/gh-copilot" }
-        }
-    }
-
-    # ── Azure CLI ──
-    Write-Step "Azure CLI (az login)"
-    Write-Host "     A browser window will open. Sign in with your Azure account." -ForegroundColor DarkCyan
-    if (Is-Installed 'az') {
-        $alreadyIn = $false
-        az account show 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $alreadyIn = $true
-            $subName = az account show --query name -o tsv 2>$null
-            Write-Skip "Already signed in to Azure — subscription: $subName"
-        } else {
-            az login
-            if ($LASTEXITCODE -eq 0) {
-                $alreadyIn = $true
-                Write-Ok "Azure CLI authenticated"
-            } else {
-                Write-Warn "az login did not complete — run 'az login' manually"
-            }
-        }
-
-        # Subscription selection — show list if more than one is available
-        if ($alreadyIn) {
-            $subsJson = az account list --query "[].{Name:name,Id:id,Default:isDefault}" -o json 2>$null
-            $subs = $subsJson | ConvertFrom-Json
-            if ($subs.Count -gt 1) {
-                Write-Step "Select the target Azure subscription"
-                for ($i = 0; $i -lt $subs.Count; $i++) {
-                    $marker = if ($subs[$i].Default) { '  ◀ current default' } else { '' }
-                    $color  = if ($subs[$i].Default) { 'Green' } else { 'White' }
-                    Write-Host ("     [{0}]  {1}`n          {2}{3}" -f ($i + 1), $subs[$i].Name, $subs[$i].Id, $marker) -ForegroundColor $color
-                }
-                $choice = Read-Host "  Enter number to select (press Enter to keep current default)"
-                if ($choice -match '^\d+$') {
-                    $idx = [int]$choice - 1
-                    if ($idx -ge 0 -and $idx -lt $subs.Count) {
-                        az account set --subscription $subs[$idx].Id | Out-Null
-                        Write-Ok "Active subscription: $($subs[$idx].Name)"
-                    } else {
-                        Write-Warn "Invalid selection — keeping current default"
-                    }
-                } else {
-                    Write-Skip "Keeping default: $(az account show --query name -o tsv 2>$null)"
-                }
-            } else {
-                Write-Ok "Subscription: $(az account show --query name -o tsv 2>$null)"
-            }
-        }
-    } else {
-        Write-Warn "az not on PATH — reopen terminal and run: az login"
-    }
-}
+Write-Banner "Authentication Setup"
+Write-Step "Authentication is deferred to a follow-up script"
+Write-Host "  Fresh desktops are expected to be signed out, so this installer focuses on setting up tools first." -ForegroundColor DarkCyan
+Write-Host "  Run this after installation completes:" -ForegroundColor DarkCyan
+Write-Host "    ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
+Write-Host "  That script will sign you into GitHub and Azure, fork the lab repo to your account, then install/verify the built-in gh copilot command." -ForegroundColor DarkCyan
 
 # ── Final verification ────────────────────────────────────────────────────────
 
@@ -405,46 +571,41 @@ foreach ($c in $checks) {
 }
 
 Write-Host ""
-if (-not $SkipLogin) {
-    Write-Step "Login status"
-    try {
-        $ghUser = gh api user --jq .login 2>$null
-        if ($ghUser) { Write-Ok "GitHub:  signed in as @$ghUser" }
-        else         { Write-Warn "GitHub:  not authenticated — run: gh auth login" }
-    } catch { Write-Warn "GitHub:  not authenticated — run: gh auth login" }
-
-    try {
-        $azSub  = az account show --query name -o tsv 2>$null
-        if ($azSub) { Write-Ok "Azure:   signed in — subscription: $azSub" }
-        else        { Write-Warn "Azure:   not authenticated — run: az login" }
-    } catch { Write-Warn "Azure:   not authenticated — run: az login" }
+if ($MissingExtensionsCount -gt 0) {
+    $allGood = $false
 }
 
 Write-Host ""
 if ($allGood) {
-    Write-Host "  🎉  All tools verified." -ForegroundColor Green
+    Write-Host "  [DONE]  Tool installation completed." -ForegroundColor Green
 } else {
-    Write-Host "  ⚠️   Some tools were not found on PATH." -ForegroundColor Yellow
-    Write-Host "       Close this terminal, open a fresh PowerShell 7 window, and re-run:" -ForegroundColor Yellow
-    Write-Host "       ./scripts/Install-LabTools.ps1 -SkipLogin" -ForegroundColor Cyan
+    Write-Host "  [WARN]  Some setup steps need a fresh terminal or a follow-up run." -ForegroundColor Yellow
+    Write-Host "       Open a new PowerShell window and run:" -ForegroundColor Yellow
+    Write-Host "       ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
 }
 
 Write-Banner "Next Steps"
-Write-Host "  Complete these manually — they require the GUI:" -ForegroundColor DarkCyan
+Write-Host "  Follow these steps in order:" -ForegroundColor DarkCyan
 Write-Host ""
-Write-Host "  1. Open VS Code" -ForegroundColor White
-Write-Host "     → Press  Ctrl+Alt+I  to open Copilot Chat" -ForegroundColor White
-Write-Host "     → Sign in with your GitHub account when prompted" -ForegroundColor White
-Write-Host "     → Confirm the Copilot icon appears in the sidebar" -ForegroundColor White
+Write-Host "  1) Open VS Code and confirm Copilot Chat works" -ForegroundColor White
+Write-Host "     - Press Ctrl+Alt+I to open Copilot Chat" -ForegroundColor White
+Write-Host "     - Sign in with GitHub when prompted" -ForegroundColor White
+Write-Host "     - Send a test message to confirm chat is active" -ForegroundColor White
 Write-Host ""
-Write-Host "  2. Fork + clone the lab repo" -ForegroundColor White
-Write-Host "     → https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode  (click Fork)" -ForegroundColor DarkCyan
-Write-Host "     → GitHub Desktop: File → Clone repository → pick your fork" -ForegroundColor White
-Write-Host "     → Open the cloned folder in VS Code (accept the recommended extensions prompt)" -ForegroundColor White
+Write-Host "  2) Make sure you are in YOUR forked repo" -ForegroundColor White
+Write-Host "     - Repo to fork: https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode" -ForegroundColor DarkCyan
+Write-Host "     - Clone your fork locally (GitHub Desktop or gh repo clone)" -ForegroundColor White
+Write-Host "     - Open that cloned folder in VS Code" -ForegroundColor White
 Write-Host ""
-Write-Host "  3. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
-Write-Host "     ./scripts/Setup-Oidc.ps1 -ResourceGroup `"rg-lab-<yourname>`" -Prefix `"<yourname>`"" -ForegroundColor Cyan
+Write-Host "  3) Sign in to GitHub and Azure from this repo:" -ForegroundColor White
+Write-Host "     ./scripts/Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  4. Head to the workshop wiki to start Lab 1:" -ForegroundColor White
+Write-Host "  4) Configure GitHub Actions access to Azure (OIDC):" -ForegroundColor White
+Write-Host "     - If your instructor already pre-configured this, skip to step 5" -ForegroundColor White
+Write-Host "     - Otherwise run:" -ForegroundColor White
+Write-Host "       ./scripts/Setup-Oidc.ps1 -ResourceGroup `"rg-lab-<yourname>`" -Prefix `"<yourname>`"" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  5) Start Lab 1 in the wiki:" -ForegroundColor White
 Write-Host "     https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki" -ForegroundColor DarkCyan
 Write-Host ""
+

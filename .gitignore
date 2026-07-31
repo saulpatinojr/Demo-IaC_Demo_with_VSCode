@@ -11,6 +11,13 @@ main.json
 *.env
 !.env.sample
 
+<<<<<<< HEAD
 # Personal lab settings — copy lab-settings.csv.example to lab-settings.csv
 # and fill in your values. This file is intentionally not committed.
 lab-settings.csv
+=======
+# Your filled-in lab values (throwaway creds). Commit lab-settings.csv.example only.
+lab-settings.csv
+
+Demo-IaC_Demo_with_VSCode.wiki/
+>>>>>>> origin/main

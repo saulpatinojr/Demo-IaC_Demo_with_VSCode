@@ -3,7 +3,7 @@
     Delete the workshop's Azure resources (and optionally the OIDC identity).
 
 .DESCRIPTION
-    The labs create real, billable resources — Azure Firewall, Bastion, Front
+    The labs create real, billable resources - Azure Firewall, Bastion, Front
     Door and SQL all bill while idle. This script tears them down.
 
     Classroom mode (-ResourceGroup): deletes ALL resources inside the shared
@@ -61,27 +61,39 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-function Write-Step($m) { Write-Host "`n==> $m" -ForegroundColor Cyan }
-function Write-Ok($m)   { Write-Host "    [ok] $m" -ForegroundColor Green }
-function Write-Skip($m) { Write-Host "    [skip] $m" -ForegroundColor DarkGray }
+function Write-Banner($text) {
+    $line = '=' * ($text.Length + 8)
+    Write-Host ""
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host "  === $text ===" -ForegroundColor Yellow
+    Write-Host "  $line" -ForegroundColor Yellow
+    Write-Host ""
+}
+function Write-Step($m) { Write-Host ""; Write-Host "  > $m" -ForegroundColor White }
+function Write-Ok($m)   { Write-Host "    [OK] $m" -ForegroundColor Green }
+function Write-Skip($m) { Write-Host "    [SKIP] $m" -ForegroundColor DarkGray }
+function Write-Warn($m) { Write-Host "    [WARN] $m" -ForegroundColor Yellow }
+function Write-Fail($m) { Write-Host "    [FAIL] $m" -ForegroundColor Red }
 
 if (-not $AppName) { $AppName = "iac-demo-$Prefix" }
 
-if (-not (Get-Command az -ErrorAction SilentlyContinue)) { Write-Host 'az not found.' -ForegroundColor Red; exit 1 }
-try { az account show -o none 2>$null } catch { Write-Host 'Run: az login' -ForegroundColor Red; exit 1 }
-if ($LASTEXITCODE -ne 0) { Write-Host 'Run: az login' -ForegroundColor Red; exit 1 }
+Write-Banner 'Lab Cleanup'
+
+if (-not (Get-Command az -ErrorAction SilentlyContinue)) { Write-Fail 'az not found.'; exit 1 }
+try { az account show -o none 2>$null } catch { Write-Fail 'Run: az login'; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Fail 'Run: az login'; exit 1 }
 
 # ---- Classroom mode: delete resources inside a shared RG -------------------
 if ($ResourceGroup) {
     Write-Step "Classroom mode: deleting all resources in '$ResourceGroup'"
     $rgExists = (az group exists --name $ResourceGroup) -eq 'true'
-    if (-not $rgExists) { Write-Host "Resource group '$ResourceGroup' not found." -ForegroundColor Red; exit 1 }
+    if (-not $rgExists) { Write-Skip "Resource group '$ResourceGroup' not found; nothing to delete"; return }
 
     $ids = az resource list --resource-group $ResourceGroup --query '[].id' -o tsv 2>$null
     if (-not $ids) { Write-Skip 'No resources found in the resource group'; return }
 
     $idList = ($ids -split "`n") -replace '\r', '' | Where-Object { $_ }
-    Write-Host "    Found $($idList.Count) resource(s) to delete." -ForegroundColor Yellow
+    Write-Warn "Found $($idList.Count) resource(s) to delete."
 
     if ($PSCmdlet.ShouldProcess($ResourceGroup, "Delete $($idList.Count) resources")) {
         # Delete in one batch; ARM handles dependency ordering within the group.
@@ -89,13 +101,13 @@ if ($ResourceGroup) {
         if ($LASTEXITCODE -eq 0) {
             Write-Ok "All resources deleted from '$ResourceGroup'"
         } else {
-            Write-Host '    Some resources may not have deleted (dependency ordering). Re-run to clean up.' -ForegroundColor Yellow
+            Write-Warn 'Some resources may not have deleted (dependency ordering). Re-run to clean up.'
         }
     } else {
         $idList | ForEach-Object { Write-Skip "would delete $_" }
     }
-    Write-Host "`nDone." -ForegroundColor Green
-    if ($WhatIfPreference) { Write-Host 'DRY RUN — nothing was deleted.' -ForegroundColor Yellow }
+    Write-Ok 'Done.'
+    if ($WhatIfPreference) { Write-Warn 'DRY RUN - nothing was deleted.' }
     return
 }
 
@@ -103,13 +115,13 @@ if ($ResourceGroup) {
 # Delete order matters: L4 first (SQL failover group on L3), L2 before L1 (firewall in L1 hub).
 $order = if ($Level -eq 'All') { @('l4', 'l3', 'l2', 'l1') } else { @($Level.ToLower()) }
 
-Write-Step "Tearing down prefix '$Prefix' — levels: $($order -join ', ')"
+Write-Step "Tearing down prefix '$Prefix' - levels: $($order -join ', ')"
 foreach ($lvl in $order) {
     $rg = "rg-$Prefix-$lvl"
     $exists = (az group exists --name $rg) -eq 'true'
-    if (-not $exists) { Write-Skip "$rg does not exist"; continue }
+    if (-not $exists) { Write-Skip "$rg does not exist; nothing to delete"; continue }
     if ($PSCmdlet.ShouldProcess($rg, 'Delete resource group')) {
-        Write-Host "    deleting $rg ..." -ForegroundColor Yellow
+        Write-Warn "Deleting $rg ..."
         az group delete --name $rg --yes | Out-Null
         Write-Ok "deleted $rg"
     } else {
@@ -135,5 +147,5 @@ if ($RemoveOidc) {
     }
 }
 
-Write-Host "`nDone." -ForegroundColor Green
-if ($WhatIfPreference) { Write-Host 'DRY RUN — nothing was deleted.' -ForegroundColor Yellow }
+Write-Ok 'Done.'
+if ($WhatIfPreference) { Write-Warn 'DRY RUN - nothing was deleted.' }
