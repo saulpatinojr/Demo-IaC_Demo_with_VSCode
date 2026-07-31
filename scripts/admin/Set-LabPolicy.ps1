@@ -6,12 +6,12 @@
     For every resource group matching the -ResourceGroupPrefix pattern this
     script assigns six Azure Policy assignments:
 
-        1. Allowed locations        — deployments must target eastus2 only
-        2. Allowed resource types   — only the resource types used by L1–L4
-        3. Inherit tag: Owner       — resources inherit Owner from their RG
-        4. Inherit tag: Event       — resources inherit Event from their RG
-        5. Inherit tag: Date        — resources inherit Date from their RG
-        6. Inherit tag: Instructor  — resources inherit Instructor from their RG
+        1. Allowed locations        -- deployments must target eastus2 only
+        2. Allowed resource types   -- only the resource types used by L1-L4
+        3. Inherit tag: Owner       -- resources inherit Owner from their RG
+        4. Inherit tag: Event       -- resources inherit Event from their RG
+        5. Inherit tag: Date        -- resources inherit Date from their RG
+        6. Inherit tag: Instructor  -- resources inherit Instructor from their RG
 
     All assignments are scoped to the individual resource group so they do not
     affect other resource groups in the subscription.
@@ -98,10 +98,10 @@ $SubscriptionId = $SubIds[0]
 Write-Ok "SubscriptionId from CSV: $SubscriptionId"
 
 # ---------------------------------------------------------------------------- #
-#  Allowed resource types — all L1–L4 lab resources                            #
+#  Allowed resource types -- all L1-L4 lab resources                            #
 # ---------------------------------------------------------------------------- #
 $AllowedResourceTypes = @(
-    # Networking — L1 (hub/spoke, Bastion, peering)
+    # Networking -- L1 (hub/spoke, Bastion, peering)
     'Microsoft.Network/virtualNetworks'
     'Microsoft.Network/virtualNetworks/subnets'
     'Microsoft.Network/virtualNetworkPeerings'
@@ -110,19 +110,19 @@ $AllowedResourceTypes = @(
     'Microsoft.Network/publicIPAddresses'
     'Microsoft.Network/bastionHosts'
 
-    # Networking — L2 (Firewall, route tables, LB)
+    # Networking -- L2 (Firewall, route tables, LB)
     'Microsoft.Network/azureFirewalls'
     'Microsoft.Network/firewallPolicies'
     'Microsoft.Network/firewallPolicies/ruleCollectionGroups'
     'Microsoft.Network/routeTables'
     'Microsoft.Network/loadBalancers'
 
-    # Networking — L3 (private endpoints, DNS)
+    # Networking -- L3 (private endpoints, DNS)
     'Microsoft.Network/privateDnsZones'
     'Microsoft.Network/privateDnsZones/virtualNetworkLinks'
     'Microsoft.Network/privateEndpoints'
 
-    # Networking — L4 (Front Door — both classic and Standard/Premium)
+    # Networking -- L4 (Front Door -- both classic and Standard/Premium)
     'Microsoft.Network/frontdoors'
     'Microsoft.Cdn/profiles'
     'Microsoft.Cdn/profiles/afdEndpoints'
@@ -130,16 +130,16 @@ $AllowedResourceTypes = @(
     'Microsoft.Cdn/profiles/originGroups/origins'
     'Microsoft.Cdn/profiles/routes'
 
-    # Compute — L1 / L2 VMs
+    # Compute -- L1 / L2 VMs
     'Microsoft.Compute/virtualMachines'
     'Microsoft.Compute/disks'
     'Microsoft.Compute/virtualMachineExtensions'
 
-    # Containers — L3
+    # Containers -- L3
     'Microsoft.App/managedEnvironments'
     'Microsoft.App/containerApps'
 
-    # Data — L3/L4
+    # Data -- L3/L4
     'Microsoft.Sql/servers'
     'Microsoft.Sql/servers/databases'
     'Microsoft.Sql/servers/failoverGroups'
@@ -149,7 +149,7 @@ $AllowedResourceTypes = @(
     # Identity
     'Microsoft.ManagedIdentity/userAssignedIdentities'
 
-    # Monitoring — L3
+    # Monitoring -- L3
     'Microsoft.OperationalInsights/workspaces'
     'Microsoft.Insights/components'
     'Microsoft.Insights/metricAlerts'
@@ -172,23 +172,34 @@ $PolicyInheritTag           = 'ea3f2387-9b95-492a-a190-fcdc54f7b070' # Inherit a
 # ---------------------------------------------------------------------------- #
 Write-Step 'Checking prerequisites'
 
-if (-not (Get-Module -ListAvailable -Name Az.Resources)) {
-    Fail 'Az PowerShell module not found. Run: Install-Module Az -Scope CurrentUser -Force'
-}
-try {
-    $ctx = Get-AzContext
-    if (-not $ctx -or $ctx.Subscription.Id -ne $SubscriptionId) {
-        Set-AzContext -SubscriptionId $SubscriptionId | Out-Null
+# Verify both required Az modules (Az.Accounts for context, Az.Resources for policy)
+foreach ($ModuleName in 'Az.Accounts', 'Az.Resources') {
+    if (-not (Get-Module -ListAvailable -Name $ModuleName)) {
+        Fail "Required module '$ModuleName' not found.`n  Run: Install-Module Az -Scope CurrentUser -Force"
     }
-} catch {
+}
+
+# Check Azure sign-in and subscription context -- guard against null context
+$ctx = Get-AzContext
+if (-not $ctx) {
     Fail 'Not signed in to Azure. Run: Connect-AzAccount'
+}
+if (-not $ctx.Subscription) {
+    Fail 'Azure context has no subscription selected. Run: Connect-AzAccount, then Set-AzContext -SubscriptionId <id>'
+}
+if ($ctx.Subscription.Id -ne $SubscriptionId) {
+    Write-Warn "Active subscription ($($ctx.Subscription.Id)) differs from CSV ($SubscriptionId). Switching..."
+    try {
+        Set-AzContext -SubscriptionId $SubscriptionId -ErrorAction Stop | Out-Null
+        Write-Ok "Switched to subscription $SubscriptionId"
+    } catch {
+        Fail "Cannot switch to subscription '$SubscriptionId'. Verify the ID in the CSV.`n  $($_.Exception.Message)"
+    }
 }
 Write-Ok "Subscription: $SubscriptionId"
 
-# Resolve built-in policy definitions once (they live at subscription scope but
-# the definition IDs are globally unique so any scope works for the lookup)
+# Resolve built-in policy definitions once
 Write-Step 'Resolving built-in policy definitions'
-$SubScope = "/subscriptions/$SubscriptionId"
 
 $DefAllowedLocations     = Get-AzPolicyDefinition -Id "/providers/Microsoft.Authorization/policyDefinitions/$PolicyAllowedLocations"
 $DefAllowedResourceTypes = Get-AzPolicyDefinition -Id "/providers/Microsoft.Authorization/policyDefinitions/$PolicyAllowedResourceTypes"
@@ -198,7 +209,7 @@ Write-Ok "Allowed locations:     $($DefAllowedLocations.Properties.DisplayName)"
 Write-Ok "Allowed resource types: $($DefAllowedResourceTypes.Properties.DisplayName)"
 Write-Ok "Inherit tag:           $($DefInheritTag.Properties.DisplayName)"
 
-if ($WhatIfPreference) { Write-Host "`n  *** DRY RUN — no changes will be made ***`n" -ForegroundColor Yellow }
+if ($WhatIfPreference) { Write-Host "`n  *** DRY RUN -- no changes will be made ***`n" -ForegroundColor Yellow }
 
 # ---------------------------------------------------------------------------- #
 #  Helper: ensure one policy assignment on a given scope                       #
@@ -228,14 +239,14 @@ function Ensure-PolicyAssignment {
             PolicyParameterObject = $Parameters
         }
         New-AzPolicyAssignment @NewAssignArgs | Out-Null
-        Write-Ok "Assigned: $DisplayName  →  $Scope"
+        Write-Ok "Assigned: $DisplayName  ->  $Scope"
     } else {
-        Write-Skip "Would assign: $DisplayName  →  $Scope"
+        Write-Skip "Would assign: $DisplayName  ->  $Scope"
     }
 }
 
 # ---------------------------------------------------------------------------- #
-#  Main loop — one set of assignments per matching resource group               #
+#  Main loop -- one set of assignments per matching resource group               #
 # ---------------------------------------------------------------------------- #
 Write-Step "Finding resource groups matching prefix '$ResourceGroupPrefix'"
 
@@ -272,9 +283,9 @@ foreach ($RG in $TargetRGs) {
         -Scope          $RgScope `
         -Parameters     @{ listOfAllowedResourceTypes = @{ value = $AllowedResourceTypes } }
 
-    # 3–6. Tag inheritance (one assignment per tag)
+    # 3-6. Tag inheritance (one assignment per tag)
     foreach ($TagName in 'Owner', 'Event', 'Date', 'Instructor') {
-        # Shorten assignment name — Azure limit is 64 chars
+        # Shorten assignment name -- Azure limit is 64 chars
         $ShortRg = $RgName -replace '^rg-techdemo-', ''
         Ensure-PolicyAssignment `
             -AssignmentName "lab-tag-$TagName-$ShortRg" `
@@ -298,6 +309,6 @@ Write-Host "  Assignments per group     : 6  (location + resource types + 4 tags
 Write-Host "  Allowed location          : $Location"
 Write-Host "  Resource type whitelist   : $($AllowedResourceTypes.Count) types"
 if ($WhatIfPreference) {
-    Write-Host "`n  *** DRY RUN — no changes were made ***" -ForegroundColor Yellow
+    Write-Host "`n  *** DRY RUN -- no changes were made ***" -ForegroundColor Yellow
 }
 Write-Host ''

@@ -9,7 +9,7 @@
       1. Creates a resource group  rg-techdemo-<entra-prefix>  in the target location.
       2. Tags the resource group with four required tags:
              Owner       = Entra UPN prefix of the account (e.g. Student140801)
-             Event       = value of -EventName parameter (default: PennConn)
+             Event       = value from the CSV 'Event' column
              Date        = UTC date this script ran (yyyy-MM-dd)
              Instructor  = Entra UPN prefix of the row where Type = Instructor
       3. Assigns the student Contributor on their own resource group.
@@ -104,7 +104,7 @@ if (-not (Test-Path $CsvPath)) {
 
 $Roster = Import-Csv -Path $CsvPath |
     Select-Object -Property @{
-        # Trim all column values — the CSV has trailing spaces on many UPNs
+        # Trim all column values -- the CSV has trailing spaces on many UPNs
         Name       = 'Entra ID Username'
         Expression = { $_.'Entra ID Username'.Trim() }
     }, @{
@@ -121,13 +121,13 @@ $Roster = Import-Csv -Path $CsvPath |
         Expression = { $_.Event.Trim() }
     }
 
-# Validate required columns exist
+# Validate required columns exist (fail if EITHER key column is missing)
 $SampleRow = $Roster | Select-Object -First 1
-if ($null -eq $SampleRow.'Entra ID Username' -and $null -eq $SampleRow.Type) {
+if ($null -eq $SampleRow.'Entra ID Username' -or $null -eq $SampleRow.Type) {
     Fail "CSV is missing required columns. Expected: 'Entra ID Username', 'GitHub Username', 'Type', 'SubscriptionId', 'Event'"
 }
 
-# Extract SubscriptionId from CSV — validate all rows agree
+# Extract SubscriptionId from CSV -- validate all rows agree
 $SubIds = $Roster | Where-Object { $_.SubscriptionId } |
     Select-Object -ExpandProperty SubscriptionId -Unique
 
@@ -178,17 +178,32 @@ Write-Ok "  Students   : $($($Roster | Where-Object { $_.Type -eq 'Student' }).C
 # ---------------------------------------------------------------------------- #
 Write-Step 'Checking prerequisites'
 
-if (-not (Get-Module -ListAvailable -Name Az.Accounts)) {
-    Fail 'Az PowerShell module not found. Run: Install-Module Az -Scope CurrentUser -Force'
-}
-try {
-    $ctx = Get-AzContext
-    if (-not $ctx -or $ctx.Subscription.Id -ne $SubscriptionId) {
-        Write-Warn "Setting subscription context to $SubscriptionId"
-        Set-AzContext -SubscriptionId $SubscriptionId | Out-Null
+# Verify required Az PowerShell modules are installed
+foreach ($ModuleName in 'Az.Accounts', 'Az.Resources', 'Az.Authorization') {
+    if (-not (Get-Module -ListAvailable -Name $ModuleName)) {
+        Fail "Required module '$ModuleName' not found.`n  Run: Install-Module Az -Scope CurrentUser -Force"
     }
-} catch {
+}
+if ($IncludeManagedIdentity -and -not (Get-Module -ListAvailable -Name Az.ManagedServiceIdentity)) {
+    Fail "Module 'Az.ManagedServiceIdentity' is required for -IncludeManagedIdentity.`n  Run: Install-Module Az -Scope CurrentUser -Force"
+}
+
+# Check Azure sign-in and subscription context
+$ctx = Get-AzContext
+if (-not $ctx) {
     Fail 'Not signed in to Azure. Run: Connect-AzAccount'
+}
+if (-not $ctx.Subscription) {
+    Fail 'Azure context has no subscription selected. Run: Connect-AzAccount, then Set-AzContext -SubscriptionId <id>'
+}
+if ($ctx.Subscription.Id -ne $SubscriptionId) {
+    Write-Warn "Active subscription ($($ctx.Subscription.Id)) differs from CSV ($SubscriptionId). Switching..."
+    try {
+        Set-AzContext -SubscriptionId $SubscriptionId -ErrorAction Stop | Out-Null
+        Write-Ok "Switched to subscription $SubscriptionId"
+    } catch {
+        Fail "Cannot switch to subscription '$SubscriptionId'. Verify the ID in the CSV and that your account has access.`n  $($_.Exception.Message)"
+    }
 }
 
 $Today = (Get-Date -Format 'yyyy-MM-dd')
@@ -198,7 +213,7 @@ Write-Ok "Instructor:   $InstructorPrefix"
 Write-Ok "Event tag:    $EventName (from CSV)"
 Write-Ok "Date tag:     $Today"
 Write-Ok "Location:     $Location"
-if ($WhatIfPreference) { Write-Host "`n  *** DRY RUN — no changes will be made ***`n" -ForegroundColor Yellow }
+if ($WhatIfPreference) { Write-Host "`n  *** DRY RUN -- no changes will be made ***`n" -ForegroundColor Yellow }
 
 # ---------------------------------------------------------------------------- #
 #  Main loop                                                                    #
@@ -212,9 +227,9 @@ foreach ($Row in $AllUsers) {
     $Scope    = "/subscriptions/$SubscriptionId/resourceGroups/$RgName"
     $IsStudent = ($Row.Type -eq 'Student')
 
-    Write-Step "[$($Row.Type)] $UserUpn  →  $RgName"
+    Write-Step "[$($Row.Type)] $UserUpn  ->  $RgName"
 
-    # ── 1. Resource Group ──────────────────────────────────────────────────── #
+    # -- 1. Resource Group ---------------------------------------------------- #
     $Rg = Get-AzResourceGroup -Name $RgName -ErrorAction SilentlyContinue
 
     $Tags = @{
@@ -234,13 +249,13 @@ foreach ($Row in $AllUsers) {
     } else {
         if ($PSCmdlet.ShouldProcess($RgName, 'Merge tags on existing resource group')) {
             Update-AzTag -ResourceId $Rg.ResourceId -Tag $Tags -Operation Merge | Out-Null
-            Write-Skip "$RgName already exists — tags merged"
+            Write-Skip "$RgName already exists -- tags merged"
         } else {
             Write-Skip "Would merge tags on existing: $RgName"
         }
     }
 
-    # ── 2. Student Contributor on their own RG ─────────────────────────────── #
+    # -- 2. Student Contributor on their own RG ------------------------------- #
     if ($IsStudent) {
         $ExistingUserRole = Get-AzRoleAssignment `
             -SignInName $UserUpn `
@@ -249,21 +264,35 @@ foreach ($Row in $AllUsers) {
             -ErrorAction SilentlyContinue
 
         if (-not $ExistingUserRole) {
-            if ($PSCmdlet.ShouldProcess($RgName, "Assign Contributor → $Prefix")) {
-                New-AzRoleAssignment `
-                    -SignInName $UserUpn `
-                    -RoleDefinitionName Contributor `
-                    -ResourceGroupName $RgName | Out-Null
-                Write-Ok "Granted Contributor → $Prefix on $RgName"
+            if ($PSCmdlet.ShouldProcess($RgName, "Assign Contributor -> $Prefix")) {
+                $Assigned = $false
+                for ($Attempt = 1; $Attempt -le 5; $Attempt++) {
+                    try {
+                        New-AzRoleAssignment `
+                            -SignInName $UserUpn `
+                            -RoleDefinitionName Contributor `
+                            -ResourceGroupName $RgName `
+                            -ErrorAction Stop | Out-Null
+                        $Assigned = $true
+                        break
+                    } catch {
+                        if ($Attempt -lt 5) {
+                            Write-Warn "[$Prefix] Role assign attempt $Attempt/5 failed -- Entra propagation lag. Retrying in 10 s..."
+                            Start-Sleep -Seconds 10
+                        }
+                    }
+                }
+                if ($Assigned) { Write-Ok "Granted Contributor -> $Prefix on $RgName" }
+                else { Write-Warn "FAILED to assign Contributor -> $Prefix on $RgName after 5 attempts. Re-run the script to retry." }
             } else {
-                Write-Skip "Would grant Contributor → $Prefix on $RgName"
+                Write-Skip "Would grant Contributor -> $Prefix on $RgName"
             }
         } else {
             Write-Skip "Contributor for $Prefix already exists on $RgName"
         }
     }
 
-    # ── 3. Instructor Contributor on every RG (except their own, handled above) #
+    # -- 3. Instructor Contributor on every RG ------------------------------- #
     if ($IsStudent) {
         $ExistingInstructorRole = Get-AzRoleAssignment `
             -SignInName $InstructorUpn `
@@ -272,21 +301,35 @@ foreach ($Row in $AllUsers) {
             -ErrorAction SilentlyContinue
 
         if (-not $ExistingInstructorRole) {
-            if ($PSCmdlet.ShouldProcess($RgName, "Assign Contributor → instructor $InstructorPrefix")) {
-                New-AzRoleAssignment `
-                    -SignInName $InstructorUpn `
-                    -RoleDefinitionName Contributor `
-                    -ResourceGroupName $RgName | Out-Null
-                Write-Ok "Granted Contributor → $InstructorPrefix (instructor) on $RgName"
+            if ($PSCmdlet.ShouldProcess($RgName, "Assign Contributor -> instructor $InstructorPrefix")) {
+                $Assigned = $false
+                for ($Attempt = 1; $Attempt -le 5; $Attempt++) {
+                    try {
+                        New-AzRoleAssignment `
+                            -SignInName $InstructorUpn `
+                            -RoleDefinitionName Contributor `
+                            -ResourceGroupName $RgName `
+                            -ErrorAction Stop | Out-Null
+                        $Assigned = $true
+                        break
+                    } catch {
+                        if ($Attempt -lt 5) {
+                            Write-Warn "[$InstructorPrefix] Instructor role assign attempt $Attempt/5 failed -- retrying in 10 s..."
+                            Start-Sleep -Seconds 10
+                        }
+                    }
+                }
+                if ($Assigned) { Write-Ok "Granted Contributor -> $InstructorPrefix (instructor) on $RgName" }
+                else { Write-Warn "FAILED to assign Instructor Contributor on $RgName after 5 attempts. Re-run to retry." }
             } else {
-                Write-Skip "Would grant Contributor → $InstructorPrefix (instructor) on $RgName"
+                Write-Skip "Would grant Contributor -> $InstructorPrefix (instructor) on $RgName"
             }
         } else {
             Write-Skip "Instructor Contributor already exists on $RgName"
         }
     }
 
-    # ── 4. User Assigned Managed Identity (optional) ──────────────────────── #
+    # -- 4. User Assigned Managed Identity (optional) ------------------------ #
     $MiEntry = $null
 
     if ($IncludeManagedIdentity) {
@@ -321,7 +364,7 @@ foreach ($Row in $AllUsers) {
                 -ErrorAction SilentlyContinue
 
             if (-not $ExistingMiRole) {
-                if ($PSCmdlet.ShouldProcess($RgName, "Assign Contributor → UAMI $MiName")) {
+                if ($PSCmdlet.ShouldProcess($RgName, "Assign Contributor -> UAMI $MiName")) {
                     $Retries = 0
                     do {
                         try {
@@ -333,13 +376,13 @@ foreach ($Row in $AllUsers) {
                         } catch {
                             $Retries++
                             if ($Retries -ge 5) { throw }
-                            Write-Warn "MI principal not yet propagated — retrying in 10 s ($Retries/5)"
+                            Write-Warn "MI principal not yet propagated -- retrying in 10 s ($Retries/5)"
                             Start-Sleep -Seconds 10
                         }
                     } while ($Retries -lt 5)
-                    Write-Ok "Granted Contributor → UAMI $MiName on $RgName"
+                    Write-Ok "Granted Contributor -> UAMI $MiName on $RgName"
                 } else {
-                    Write-Skip "Would grant Contributor → UAMI $MiName on $RgName"
+                    Write-Skip "Would grant Contributor -> UAMI $MiName on $RgName"
                 }
             } else {
                 Write-Skip "UAMI Contributor already exists on $RgName"
@@ -376,43 +419,49 @@ $Results | Format-Table -AutoSize
 #  Uniqueness verification (only meaningful when -IncludeManagedIdentity)      #
 # ---------------------------------------------------------------------------- #
 if ($IncludeManagedIdentity -and -not $WhatIfPreference) {
-    Write-Step 'Verifying UAMI identity uniqueness'
+    Write-Step 'Verifying UAMI identity uniqueness (scoped to lab resource groups)'
 
-    $AllIdentities = Get-AzUserAssignedIdentity |
-        Where-Object { $_.Name -match '-mi$' }
+    # Scope the query to only the lab RGs created by this script -- avoids
+    # false collisions with identities in unrelated resource groups.
+    $LabRgNames = $AllUsers | ForEach-Object {
+        "rg-techdemo-$($_.'Entra ID Username'.Split('@')[0])"
+    }
+    $AllIdentities = $LabRgNames | ForEach-Object {
+        Get-AzUserAssignedIdentity -ResourceGroupName $_ -ErrorAction SilentlyContinue
+    } | Where-Object { $_ }
 
     $ClientIdDupes = $AllIdentities | Group-Object ClientId  | Where-Object { $_.Count -gt 1 }
     $PrincipalDupes = $AllIdentities | Group-Object PrincipalId | Where-Object { $_.Count -gt 1 }
 
     if ($ClientIdDupes) {
         Write-Warn 'DUPLICATE ClientIds detected:'
-        $ClientIdDupes | ForEach-Object { Write-Warn "  $($_.Name) — $($_.Group.Name -join ', ')" }
+        $ClientIdDupes | ForEach-Object { Write-Warn "  $($_.Name) -- $($_.Group.Name -join ', ')" }
     } else { Write-Ok 'All ClientIds are unique' }
 
     if ($PrincipalDupes) {
         Write-Warn 'DUPLICATE PrincipalIds detected:'
-        $PrincipalDupes | ForEach-Object { Write-Warn "  $($_.Name) — $($_.Group.Name -join ', ')" }
+        $PrincipalDupes | ForEach-Object { Write-Warn "  $($_.Name) -- $($_.Group.Name -join ', ')" }
     } else { Write-Ok 'All PrincipalIds are unique' }
 }
 
 # ---------------------------------------------------------------------------- #
-#  OIDC reference — what Setup-Oidc.ps1 creates per student                   #
+#  OIDC reference -- what Setup-Oidc.ps1 creates per student                   #
 # ---------------------------------------------------------------------------- #
 Write-Host "`n$('=' * 72)" -ForegroundColor Cyan
 Write-Host ' OIDC FEDERATED CREDENTIAL REFERENCE' -ForegroundColor Cyan
-Write-Host ' (each student runs Setup-Oidc.ps1 in Section G — output shown for reference)' -ForegroundColor DarkGray
+Write-Host ' (each student runs Setup-Oidc.ps1 in Section G -- output shown for reference)' -ForegroundColor DarkGray
 Write-Host "$('=' * 72)" -ForegroundColor Cyan
 
 $SampleStudent = $Roster | Where-Object { $_.Type -eq 'Student' } | Select-Object -First 1
 if ($SampleStudent) {
     $SamplePrefix = $SampleStudent.'Entra ID Username'.Split('@')[0]
-    Write-Host "`n  Federated credential subject format:"
-    Write-Host "    repo:<github-org>/$SamplePrefix/Demo-IaC_Demo_with_VSCode:ref:refs/heads/main" -ForegroundColor White
-    Write-Host "`n  Student runs:"
+    Write-Host "`n  Federated credential subject format (two-segment owner/repo path):"
+    Write-Host "    repo:$SamplePrefix/Demo-IaC_Demo_with_VSCode:ref:refs/heads/main" -ForegroundColor White
+    Write-Host "`n  Student runs Setup-Oidc.ps1 from inside their clone:"
     Write-Host "    ./scripts/Setup-Oidc.ps1 -ResourceGroup rg-techdemo-$SamplePrefix -Prefix $SamplePrefix" -ForegroundColor White
 }
 
 Write-Host ''
 if ($WhatIfPreference) {
-    Write-Host '  *** DRY RUN — no changes were made ***' -ForegroundColor Yellow
+    Write-Host '  *** DRY RUN -- no changes were made ***' -ForegroundColor Yellow
 }
