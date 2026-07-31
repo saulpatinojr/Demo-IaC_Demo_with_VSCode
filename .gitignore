@@ -1,16 +1,20 @@
 .DS_Store
 *.log
 
-# Bicep build output (ARM JSON) — the .bicep is the source of truth
+# Bicep build output
 main.json
 *.build.json
 
-# Never commit secrets. Credentials live in GitHub secrets / Key Vault,
-# not in the repo. A .env is only for throwaway local values.
+# Credentials stay out of the repo
 .env
 *.env
 !.env.sample
 
-# Personal lab settings — copy lab-settings.csv.example to lab-settings.csv
-# and fill in your values. This file is intentionally not committed.
+# Personal lab settings (copy from .example and fill in your values)
 lab-settings.csv
+
+# Admin roster file — contains credentials, never commit the real one
+scripts/admin/lab-user-data.csv
+
+# Local wiki clone
+Demo-IaC_Demo_with_VSCode.wiki/
