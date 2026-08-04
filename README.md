@@ -111,8 +111,10 @@ labs/
 scripts/
   Connect-AzureAndGitHub.ps1  auto-fork + clone helper (sets upstream remote)
   Setup-Oidc.ps1    one-command GitHub↔Azure OIDC handshake (+ repo secrets)
-  Cleanup-Labs.ps1  tear down lab resource groups (and optionally the OIDC identity)
+  Cleanup-Labs.ps1  tear down lab resources (and optionally the OIDC identity)
 .github/workflows/  deploy-l1..l4.yml + teardown.yml (all OIDC, all manual dispatch)
+unit cost/
+  Build-CostDocs.ps1  regenerates both cost handouts from one unit-rate table
 bicepconfig.json    linter settings
 ```
 
@@ -120,7 +122,20 @@ All Azure resources come from [Azure Verified Modules](https://aka.ms/avm) (`br/
 
 ## ⚠️ Cost & cleanup
 
-These labs create real, billable resources — **Azure Firewall (~$1.25/hr) and Bastion are the big ones**. When you're done (or pausing overnight), tear everything down:
+These labs create real, billable resources. Running totals in East US 2, verified against the Azure retail price list on 4 Aug 2026:
+
+| After deploying | Cost per hour |
+|---|---|
+| L1 — hub & spoke | ~$0.24 |
+| L2 — web tier & firewall | ~$1.65 |
+| L3 — containers & data | ~$1.73 |
+| L4 — global scale | ~$1.84 |
+
+**Azure Firewall Standard is $1.25/hr of that on its own** — more than everything else in all four labs combined — and Bastion adds $0.19/hr. Both bill while deployed, whether or not anyone is using the lab. Budget ~$2.00–$2.25 for a full L4 demo hour including traffic.
+
+Full breakdown: [`unit cost/`](unit%20cost/) — regenerate the handouts after any price or template change with `./unit\ cost/Build-CostDocs.ps1`.
+
+When you're done (or pausing overnight), tear everything down:
 
 **Classroom participants** (shared resource group — deletes resources, not the RG):
 ```powershell
@@ -128,14 +143,7 @@ These labs create real, billable resources — **Azure Firewall (~$1.25/hr) and 
 ./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>"
 ```
 
-**Standard / self-hosted** (deletes the lab resource groups entirely):
-```powershell
-./scripts/Cleanup-Labs.ps1 -WhatIf   # preview, then run without -WhatIf
-```
+Or via the **Teardown labs** workflow in GitHub Actions — it runs against your `AZURE_RESOURCE_GROUP` secret, defaults to a dry run, and needs `DELETE` typed in to actually delete.
 
-Or via **Teardown labs** workflow in GitHub Actions (type `DELETE` to confirm), or the raw CLI:
-
-```bash
-az group delete -n rg-iacdemo-l4 -y; az group delete -n rg-iacdemo-l3 -y
-az group delete -n rg-iacdemo-l2 -y; az group delete -n rg-iacdemo-l1 -y
-```
+> [!WARNING]
+> Don't delete just the firewall to save money. After L2 both spoke subnets route `0.0.0.0/0` at its private IP, so removing it alone black-holes the surviving VMs while they keep billing. Tear down the whole lab, or leave it running.
