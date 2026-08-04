@@ -97,6 +97,6 @@ Docs: https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode
 
 You can open the repo, read Bicep, compile a template, and drive Copilot. That is everything the labs assume.
 
-→ Head to the [Start-Here Checklist](Start-Here-Checklist) to finish setup, then [L1 — Hub & Spoke](L1-Hub-and-Spoke).
+→ Head to the [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) to finish setup, then [L1 — Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke).
 
-For install links and deeper CLI reference, see [Tools and References](Tools-and-References).
+For install links and deeper CLI reference, see [Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References).

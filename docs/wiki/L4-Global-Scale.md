@@ -4,7 +4,7 @@
 
 ![L4 global scale with Front Door and SQL failover](diagram-l4.svg)
 
-Files: [`labs/L4-global/main.bicep`](../blob/main/labs/L4-global/main.bicep) · [`labs/modules/sql-failover-group.bicep`](../blob/main/labs/modules/sql-failover-group.bicep)
+Files: [`labs/L4-global/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L4-global/main.bicep) · [`labs/modules/sql-failover-group.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/modules/sql-failover-group.bicep)
 
 > ⚠️ **L3 must already be deployed** — L4 reuses the **same** SQL password so the failover group's two servers match.
 
@@ -83,7 +83,7 @@ $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX; $FDE = "<your-fde-
 
 1. **Global entry point** —
    ```powershell
-   curl -sI "https://$FDE/"
+   curl.exe -sI "https://$FDE/"
    ```
    You should see an HTTP success response from the primary region.
 2. **Simulated regional failure** — stop the primary app and watch Front Door reroute to the secondary region (probes take 30–90 s):
@@ -91,7 +91,7 @@ $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX; $FDE = "<your-fde-
    $APP = "ca-$PREFIX-web"
    $REVISION = az containerapp revision list -g $RG -n $APP --query "[0].name" -o tsv
    az containerapp revision deactivate -g $RG -n $APP --revision $REVISION
-   curl -s "https://$FDE/"
+   curl.exe -s "https://$FDE/"
    ```
    The endpoint still responds, now through the secondary region. Reactivate the revision afterwards.
 3. **Database failover** —
@@ -116,4 +116,4 @@ Tear everything down when finished — Front Door, Firewall, Bastion and SQL all
 ./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP
 ```
 
-Then check **[Troubleshooting](Troubleshooting)** and **[Tools and References](Tools-and-References)** for going further.
+Then check **[Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting)** and **[Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References)** for going further.

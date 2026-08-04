@@ -54,7 +54,7 @@ Learn more: https://docs.github.com/actions
 The **Wiki** (what you are reading) is a separate git repository attached to the main repo, used for long-form docs. Pages are Markdown files and `_Sidebar.md` controls the navigation.
 
 - Edit in the browser (**Edit** button on any page) or clone it: `git clone https://github.com/<owner>/<repo>.wiki.git`
-- Links between pages: `[L1](L1-Hub-and-Spoke)` (page name without extension)
+- Links between pages: `[L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)` (page name without extension)
 
 ---
 

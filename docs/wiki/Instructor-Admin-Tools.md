@@ -205,4 +205,4 @@ All three scripts check before acting:
 
 ---
 
-*Full instructor pre-lab guide including GitHub org settings: [Instructor Setup Guide](Instructor-Setup)*
+*Full instructor pre-lab guide including GitHub org settings: [Instructor Setup Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup)*

@@ -4,7 +4,7 @@
 
 ![L2 web tier and firewall traffic flow](diagram-l2.svg)
 
-Files: [`labs/L2-web-tier/main.bicep`](../blob/main/labs/L2-web-tier/main.bicep) · [`labs/modules/subnet.bicep`](../blob/main/labs/modules/subnet.bicep)
+Files: [`labs/L2-web-tier/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L2-web-tier/main.bicep) · [`labs/modules/subnet.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/modules/subnet.bicep)
 
 > **Design note — why an internal LB?** A *public* LB in front of the VMs while a route table forces egress through the firewall causes asymmetric routing — return traffic takes a different path than inbound and connections silently die. The correct hub/spoke pattern used here: inbound through a firewall **DNAT rule** to an internal LB, egress through the firewall via the route table.
 
@@ -88,7 +88,7 @@ $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
 1. **Round-robin through the firewall** — the page alternates `vm-$PREFIX-web0/1/2`:
    ```powershell
    $FW_IP = az network public-ip show -g $RG -n "pip-$PREFIX-fw" --query ipAddress -o tsv
-   1..6 | ForEach-Object { curl -s "http://$FW_IP/" }
+   1..6 | ForEach-Object { curl.exe -s "http://$FW_IP/" }
    ```
 2. **Blocked vs allowed egress** — run on a web VM (source IP is the **firewall's** public IP):
    ```powershell
@@ -119,7 +119,7 @@ $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
 
 ## ➡️ What carries forward
 
-L3 keeps the hub and firewall, but replaces "VMs for apps" with containers and adds the data tier. → **[continue to L3](L3-Containers-and-Data)**.
+L3 keeps the hub and firewall, but replaces "VMs for apps" with containers and adds the data tier. → **[continue to L3](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L3-Containers-and-Data)**.
 
 > [!WARNING]
-> **Don't delete just the firewall to save money.** Both spoke subnets now have a `0.0.0.0/0` route pointing at its private IP, so deleting it alone black-holes all their outbound traffic — the web tier and L1's test VM go dark while still billing. L3 doesn't depend on L2, so if cost is the concern tear down **all of L2** (`rt-<prefix>-web` included) or run the full teardown — see [Cost & cleanup](../blob/main/README.md) in the README.
+> **Don't delete just the firewall to save money.** Both spoke subnets now have a `0.0.0.0/0` route pointing at its private IP, so deleting it alone black-holes all their outbound traffic — the web tier and L1's test VM go dark while still billing. L3 doesn't depend on L2, so if cost is the concern tear down **all of L2** (`rt-<prefix>-web` included) or run the full teardown — see [Cost & cleanup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/README.md) in the README.

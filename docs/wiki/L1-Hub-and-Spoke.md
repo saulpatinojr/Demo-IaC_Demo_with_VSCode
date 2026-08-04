@@ -4,7 +4,7 @@
 
 ![L1 hub and spoke network topology](diagram-l1.svg)
 
-Files: [labs/L1-hub-spoke/main.bicep](../blob/main/labs/L1-hub-spoke/main.bicep) · [labs/L1-hub-spoke/main.bicepparam](../blob/main/labs/L1-hub-spoke/main.bicepparam)
+Files: [labs/L1-hub-spoke/main.bicep](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L1-hub-spoke/main.bicep) · [labs/L1-hub-spoke/main.bicepparam](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L1-hub-spoke/main.bicepparam)
 
 > **Why Bastion and not a VPN Gateway?** A gateway is the real-world hybrid entry point, but takes 30–45 minutes. Bastion gives the same "no public IP on the VM" story in ~10 minutes. The commented-out gateway module at the bottom of `main.bicep` shows the real thing.
 
@@ -113,4 +113,4 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
 
 ## ➡️ What carries forward
 
-L2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet`, adds a `snet-web` subnet to this spoke, and routes **this** subnet's traffic through the firewall too — which is what finally gives the test VM its internet access. **Leave L1 deployed** → **[continue to L2](L2-Web-Tier-and-Firewall)**.
+L2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet`, adds a `snet-web` subnet to this spoke, and routes **this** subnet's traffic through the firewall too — which is what finally gives the test VM its internet access. **Leave L1 deployed** → **[continue to L2](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L2-Web-Tier-and-Firewall)**.

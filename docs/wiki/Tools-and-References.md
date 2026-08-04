@@ -1,6 +1,6 @@
 # Tools and References
 
-> For a hands-on warm-up instead of a reference, see [Getting Comfortable with the Tools](Getting-Comfortable-with-the-Tools).
+> For a hands-on warm-up instead of a reference, see [Getting Comfortable with the Tools](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Getting-Comfortable-with-the-Tools).
 
 ---
 
@@ -77,7 +77,7 @@ PowerShell helpers you run on your own machine (requires PowerShell 7 + signed-i
 ### `Setup-Oidc.ps1`
 - One-command GitHub↔Azure OIDC handshake: creates the Entra app registration, adds the federated credential, grants Contributor on your resource group, and pushes all repo secrets and variables.
 - Always preview first: `./scripts/Setup-Oidc.ps1 -WhatIf` · Idempotent — safe to re-run to rotate passwords.
-- Full walkthrough: [Deployment Guide](Deployment-Guide).
+- Full walkthrough: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide).
 
 ### `Cleanup-Labs.ps1`
 - Deletes all resources inside your lab resource group (classroom mode) or deletes the whole lab resource groups (standard mode).
@@ -103,7 +103,7 @@ These scripts require the **Az PowerShell module** (`Install-Module Az -Scope Cu
 - Optional: creates a User Assigned Managed Identity (`<username>-mi`) per student (`-IncludeManagedIdentity`).
 - Always preview first: `./scripts/admin/New-LabEnvironment.ps1 -WhatIf`
 - Idempotent — safe to re-run; existing resources are detected and skipped.
-- Full guide: [Instructor Setup](Instructor-Setup).
+- Full guide: [Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup).
 
 ### `Set-LabPolicy.ps1`
 - Assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:

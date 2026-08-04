@@ -4,7 +4,7 @@
 
 ![L3 containers and private networking](diagram-l3.svg)
 
-Files: [`labs/L3-containers/main.bicep`](../blob/main/labs/L3-containers/main.bicep) · `main.bicepparam`
+Files: [`labs/L3-containers/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L3-containers/main.bicep) · `main.bicepparam`
 
 > ⚠️ **L1 must already be deployed** — L3 reuses the spoke network. L3 uses your **SQL** password (saved in L1's one-time block).
 
@@ -99,4 +99,4 @@ $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
 
 ## ➡️ What carries forward
 
-L4 treats this stack as the **primary region** — it adds a second-region copy, puts your SQL database in a failover group, and fronts both regions with Front Door. **Leave L3 deployed** → **[continue to L4](L4-Global-Scale)**.
+L4 treats this stack as the **primary region** — it adds a second-region copy, puts your SQL database in a failover group, and fronts both regions with Front Door. **Leave L3 deployed** → **[continue to L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)**.

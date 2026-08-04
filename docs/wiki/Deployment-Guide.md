@@ -89,7 +89,7 @@ echo "AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)"
 echo "AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)"
 ```
 
-> ⚠️ The `subject` string must match your fork **exactly** — owner, repo name (`Demo-IaC_Demo_with_VSCode`), and branch. A typo here is the #1 cause of `AADSTS700213` errors. See [Troubleshooting](Troubleshooting).
+> ⚠️ The `subject` string must match your fork **exactly** — owner, repo name (`Demo-IaC_Demo_with_VSCode`), and branch. A typo here is the #1 cause of `AADSTS700213` errors. See [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting).
 
 **Deploying from a branch other than `main`, or from a Pull Request?** The token's `subject` changes, so add a matching credential:
 

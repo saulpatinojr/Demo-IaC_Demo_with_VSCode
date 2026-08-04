@@ -2,7 +2,7 @@
 
 Work top to bottom. Each item is one small, checkable thing. If you can tick every box, your first deploy will work.
 
-> New to the vocabulary (repo, fork, secret, OIDC)? Skim [Understanding IaC](Understanding-IaC) and [GitHub Essentials](GitHub-Essentials) first — 10 minutes that make everything below make sense.
+> New to the vocabulary (repo, fork, secret, OIDC)? Skim [Understanding IaC](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Understanding-IaC) and [GitHub Essentials](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials) first — 10 minutes that make everything below make sense.
 
 ---
 
@@ -215,4 +215,4 @@ az account show --query "{subscription:name, tenant:tenantId}" -o table
 
 This completes Part 1 (A–D).
 
-➡️ Continue with **[Start Here Checklist — Part 2](Start-Here-Checklist-Part-2)**
+➡️ Continue with **[Start Here Checklist — Part 2](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist-Part-2)**

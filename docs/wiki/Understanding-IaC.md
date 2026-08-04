@@ -36,7 +36,7 @@ That "do nothing if already correct" property is called **idempotency**: running
 | **Bicep** | The language you describe Azure resources in — compiles to ARM JSON | Every lab |
 | **Azure Verified Modules (AVM)** | Pre-built, Microsoft-maintained Bicep building blocks (`br/public:avm/res/...`), version-pinned for reproducibility | Every `main.bicep` |
 | **GitHub Actions** | Runs your deploy in the cloud on a button press. Lint → What-if → Deploy lives here. | Every lab, Step 3 |
-| **OIDC federation** | Lets Actions log into Azure with a short-lived token instead of a stored password | [Deployment Guide](Deployment-Guide) |
+| **OIDC federation** | Lets Actions log into Azure with a short-lived token instead of a stored password | [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide) |
 | **Azure CLI (`az`) + Bicep CLI** | The commands that compile and deploy. Copilot runs these; so can you. | Everywhere |
 
 ---
@@ -82,4 +82,4 @@ Every deployment in this workshop follows the same three-step pattern. This is t
 
 ---
 
-Ready? → [Start-Here Checklist](Start-Here-Checklist) → [L1 — Hub & Spoke](L1-Hub-and-Spoke)
+Ready? → [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) → [L1 — Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)
