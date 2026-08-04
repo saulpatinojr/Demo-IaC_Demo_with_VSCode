@@ -4,7 +4,42 @@ Everything the workflows need to talk to Azure, end to end. Do this **once** bef
 
 The goal of this page is a **passwordless "handshake"** between GitHub and Azure: GitHub Actions proves its identity to Microsoft Entra ID on every run using a short-lived token (OIDC), so there is **no cloud password stored anywhere** — not in the repo, not in a secret, nowhere to leak. This is the same one-time setup described in the repository README and driven by the setup script in the repo.
 
-![OIDC handshake flow](diagram-deployment-guide.svg)
+```mermaid
+sequenceDiagram
+    autonumber
+    participant W as GitHub Actions<br/>workflow run
+    participant G as GitHub<br/>OIDC issuer
+    participant E as Microsoft Entra ID<br/>federated credential
+    participant A as Azure<br/>resource group
+
+    W->>G: request a signed token for this run
+    G-->>W: token stating repo, branch and workflow
+    W->>E: present the token
+    Note over E: Does the subject match<br/>repo:owner/repo:ref:refs/heads/main ?
+    E-->>W: yes — here is an Azure token,<br/>valid about one hour
+    W->>A: deploy with that token
+    Note over W,A: No password or client secret<br/>is stored anywhere
+```
+
+<details><summary>Text description of this diagram</summary>
+
+Four steps, and no stored credential at any point.
+
+The workflow asks GitHub for a **signed token describing itself** — which
+repository, which branch, which workflow. It presents that token to Microsoft
+Entra ID, which checks it against a **federated credential** you registered
+once: a rule saying "trust tokens from this exact repository and branch."
+
+If the subject matches, Entra issues an Azure access token valid for about an
+hour, and the workflow deploys with it. If someone forks the repo, their
+workflow's token names *their* repository, the subject doesn't match, and the
+exchange fails.
+
+That's the whole point: there is no client secret in the repository, nothing to
+leak in a log, and nothing to rotate. `Setup-Oidc.ps1` registers the federated
+credential for you.
+
+</details>
 
 ---
 

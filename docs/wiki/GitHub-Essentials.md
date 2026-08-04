@@ -6,7 +6,47 @@
 
 ## 🧭 The mental model
 
-![GitHub repository mental model](diagram-github-essentials.svg)
+```mermaid
+flowchart TB
+  UP["The original repository<br/>saulpatinojr/Demo-IaC_Demo_with_VSCode"]
+  FORK["Your fork<br/>your own copy, your own Actions"]
+
+  subgraph INSIDE["What lives inside a repository"]
+    REPO["Code<br/>the Bicep templates and scripts"]
+    WIKI["Wiki<br/>these pages"]
+    ACT["Actions<br/>the workflows that deploy"]
+    CFG["Settings · Secrets and variables<br/>configuration the workflows read"]
+  end
+
+  UP -->|"you fork it, once"| FORK
+  FORK --- INSIDE
+  ACT -->|"reads at run time"| CFG
+  ACT -->|"checks out"| REPO
+
+  classDef net fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
+  classDef compute fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef data fill:#f5eefc,stroke:#7c4dbe,color:#1a1a1a
+  class UP,FORK net
+  class REPO,WIKI compute
+  class ACT,CFG data
+```
+
+<details><summary>Text description of this diagram</summary>
+
+A **repository** is a project folder GitHub tracks with git. Forking makes your
+own complete copy, with its own Actions runs and its own secrets — which is why
+every participant works in a fork rather than sharing one repo.
+
+Four things live inside it and matter here. **Code** is the Bicep templates and
+scripts. **Actions** are the workflows that deploy them. **Settings → Secrets
+and variables** holds the configuration those workflows read at run time —
+secrets are masked in logs, variables are not. The **Wiki** is these pages.
+
+One thing the picture can't show: a fork copies the code, but **GitHub does not
+fork wikis**. Your fork has no wiki of its own, which is why these pages always
+link back to the original repository.
+
+</details>
 
 ---
 

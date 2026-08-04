@@ -12,7 +12,44 @@
 
 Four cumulative lab stages, each adding to the infrastructure from the previous one. All labs deploy into **your single assigned resource group** — nothing is created or deleted between stages.
 
-![Lab stages overview](diagram-home-stages.svg)
+```mermaid
+flowchart LR
+  L1["L1 · Hub and Spoke<br/>VNets, Bastion, one VM<br/>~$0.24/hr"]
+  L2["L2 · Web Tier and Firewall<br/>3 web VMs, internal LB,<br/>Azure Firewall<br/>~$1.65/hr"]
+  L3["L3 · Containers and Data<br/>Container Apps, SQL,<br/>Key Vault, private endpoints<br/>~$1.73/hr"]
+  L4["L4 · Global Scale<br/>Second region, SQL failover,<br/>Front Door<br/>~$1.84/hr"]
+
+  L1 -->|"adds a firewall<br/>to the hub"| L2
+  L2 -->|"adds a second spoke<br/>off the same hub"| L3
+  L3 -->|"adds a second region"| L4
+
+  classDef s1 fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef s2 fill:#fff9e6,stroke:#c9a227,color:#1a1a1a
+  classDef s3 fill:#fff4e5,stroke:#d97706,color:#1a1a1a
+  classDef s4 fill:#fdecea,stroke:#c0392b,color:#1a1a1a
+  class L1 s1
+  class L2 s2
+  class L3 s3
+  class L4 s4
+```
+
+<details><summary>Text description of this diagram</summary>
+
+Four labs, run in order, each building on what the last one deployed.
+
+**L1** creates the network foundation — a hub and a peered spoke VNet, Azure
+Bastion, and one Linux VM. **L2** puts an Azure Firewall in the hub's reserved
+subnet and adds three web VMs behind an internal load balancer. **L3** adds a
+*second* spoke off the same hub, running Container Apps with Azure SQL and Key
+Vault reachable only through private endpoints. **L4** copies the app tier into
+a second region, joins the databases in a failover group, and puts Azure Front
+Door in front of both.
+
+The running cost is cumulative and billed while deployed. The jump at L2 is
+Azure Firewall, which is $1.25/hr on its own — more than everything else in all
+four labs combined.
+
+</details>
 
 | Stage | Guide | What gets added | Difficulty | Deploy time |
 |-------|-------|-----------------|-----------|-------------|
