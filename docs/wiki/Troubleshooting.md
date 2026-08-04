@@ -24,7 +24,7 @@
 |---------|--------------|
 | `gh secret list` returns `! Multiple remotes detected. Requiring disambiguation.` | Your repo has both `origin` (your fork) and `upstream` (instructor) remotes. `gh` doesn't know which one to use. Fix: run `gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode` once inside the repo folder. |
 | `gh secret list` returns `no secrets found` after disambiguation | You selected the instructor's repo (`saulpatinojr/…`) instead of your own fork. Fix: run `gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode`. |
-| `gh secret list` returns `no secrets found` (correct repo, correct fork) | `Setup-Oidc.ps1` has not been run yet for this fork. Go to Section G of [Start Here Checklist — Part 2](Start-Here-Checklist-Part-2) and run the script. |
+| `gh secret list` returns `no secrets found` (correct repo, correct fork) | `Setup-Oidc.ps1` has not been run yet for this fork. Go to Section G of [Start Here Checklist — Part 2](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist-Part-2) and run the script. |
 | Any `gh` command targets the wrong repo | Run `gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode` from inside the cloned folder. To verify: `gh repo view --json nameWithOwner -q .nameWithOwner`. |
 
 ---
@@ -47,7 +47,7 @@
 | **L1**: VM deploy fails on password | Must be 12+ characters with 3 of 4 character classes (uppercase, lowercase, digit, symbol) and must not contain the username. Re-run `Setup-Oidc.ps1` to regenerate. |
 | **L2**: `curl http://<fw-ip>` times out | Firewall provisioning takes ~10 minutes *after* the workflow reports success. Also confirm the DNAT rule exists: `az network firewall nat-rule collection list -g <rg> -f afw-<prefix>-hub`. |
 | **L2**: Web VMs unhealthy in the load balancer | `cloud-init` needs outbound HTTP (port 80) to install nginx. If the egress rule was tightened to HTTPS-only *before* first deploy, `apt-get` failed silently. Redeploy or loosen the rule first. |
-| **L2**: Everything broke after adding a public LB | Asymmetric routing — inbound via public LB, return path via firewall. Use the DNAT + internal LB pattern already in the template. See the design note in the [L2 guide](L2-Web-Tier-and-Firewall). |
+| **L2**: Everything broke after adding a public LB | Asymmetric routing — inbound via public LB, return path via firewall. Use the DNAT + internal LB pattern already in the template. See the design note in the [L2 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L2-Web-Tier-and-Firewall). |
 | **L3**: Connecting to SQL from your laptop fails | That is correct and expected — public access is disabled. SQL is only reachable from inside the VNet via private endpoint. |
 | **L3**: Container cannot reach SQL by name | The private DNS zone is linked to spoke2 only. To link another VNet: `az network private-dns link vnet create -g <rg> -z "privatelink.database.windows.net" -n <link-name> -v <vnet-id> -e false`. |
 | **L3**: SQL or Key Vault name already taken | These names are globally unique. The template appends a `uniqueString` suffix per subscription+prefix — collisions mean someone else used the same prefix. Change `-Prefix`. |
@@ -89,3 +89,14 @@ az deployment group show -g $RG --name <deployment-name> --query properties.erro
 az deployment operation group list -g $RG --name <deployment-name> `
   --query "[?properties.provisioningState=='Failed']"
 ```
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Re-running a failed job**
+>
+> **You just used it:** when a deploy fails, you do not have to start over. A transient Azure error, or a secret you have just corrected, only needs the failed part to run again.
+> **Find it:** open the failed run in the **Actions** tab → **Re-run jobs** → *Re-run failed jobs*. Use **Download log archive** on the same menu to grab the full output for a bug report.
+> **Beyond the lab:** re-running only what failed turns a twenty-minute deploy retry into a two-minute one, and the run history keeps both attempts so you can see what changed.
+> [Docs →](https://docs.github.com/actions/managing-workflow-runs/re-running-workflows-and-jobs)

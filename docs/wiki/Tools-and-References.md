@@ -1,6 +1,6 @@
 # Tools and References
 
-> For a hands-on warm-up instead of a reference, see [Getting Comfortable with the Tools](Getting-Comfortable-with-the-Tools).
+> For a hands-on warm-up instead of a reference, see [Getting Comfortable with the Tools](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Getting-Comfortable-with-the-Tools).
 
 ---
 
@@ -77,7 +77,7 @@ PowerShell helpers you run on your own machine (requires PowerShell 7 + signed-i
 ### `Setup-Oidc.ps1`
 - One-command GitHub↔Azure OIDC handshake: creates the Entra app registration, adds the federated credential, grants Contributor on your resource group, and pushes all repo secrets and variables.
 - Always preview first: `./scripts/Setup-Oidc.ps1 -WhatIf` · Idempotent — safe to re-run to rotate passwords.
-- Full walkthrough: [Deployment Guide](Deployment-Guide).
+- Full walkthrough: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide).
 
 ### `Cleanup-Labs.ps1`
 - Deletes all resources inside your lab resource group (classroom mode) or deletes the whole lab resource groups (standard mode).
@@ -103,7 +103,7 @@ These scripts require the **Az PowerShell module** (`Install-Module Az -Scope Cu
 - Optional: creates a User Assigned Managed Identity (`<username>-mi`) per student (`-IncludeManagedIdentity`).
 - Always preview first: `./scripts/admin/New-LabEnvironment.ps1 -WhatIf`
 - Idempotent — safe to re-run; existing resources are detected and skipped.
-- Full guide: [Instructor Setup](Instructor-Setup).
+- Full guide: [Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup).
 
 ### `Set-LabPolicy.ps1`
 - Assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:
@@ -133,3 +133,14 @@ These scripts require the **Az PowerShell module** (`Install-Module Az -Scope Cu
 | SQL failover groups | https://learn.microsoft.com/azure/azure-sql/database/failover-group-sql-db |
 | Azure Front Door | https://learn.microsoft.com/azure/frontdoor/ |
 | Azure pricing calculator | https://azure.microsoft.com/pricing/calculator/ |
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Pinned versions and automated updates**
+>
+> **You just used it:** every Azure Verified Module in these templates is pinned to an exact version — `avm/res/network/virtual-network:0.9.0`, never `:latest`. Your deploy today and the same deploy next month produce identical infrastructure.
+> **Find it:** any `br/public:avm/...` line in a `main.bicep`. The version is the text after the final colon.
+> **Beyond the lab:** pinning makes builds reproducible; Dependabot then proposes version bumps as pull requests, so upgrades become a reviewed decision instead of a surprise.
+> [Docs →](https://docs.github.com/code-security/dependabot/dependabot-version-updates/about-dependabot-version-updates)

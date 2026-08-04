@@ -27,7 +27,49 @@ That "do nothing if already correct" property is called **idempotency**: running
 
 ## 🔗 How the tools fit together
 
-![Tools and workflow overview](diagram-understanding-iac-tools.svg)
+```mermaid
+flowchart LR
+  subgraph LOCAL["Your machine · VS Code"]
+    COP["GitHub Copilot<br/>agent mode"]
+    BICEP["Bicep files<br/>.bicep + .bicepparam"]
+  end
+
+  AVM["Azure Verified Modules<br/>Microsoft's published building blocks"]
+  REPO["GitHub repository"]
+  GHA["GitHub Actions<br/>workflow"]
+  AZ["Azure"]
+
+  COP -->|"writes and edits"| BICEP
+  BICEP -->|"references, version-pinned"| AVM
+  BICEP -->|"az bicep build, what-if, deploy"| AZ
+  BICEP -->|"git push"| REPO
+  REPO -->|"triggers"| GHA
+  GHA -->|"OIDC login, no password"| AZ
+
+  classDef compute fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef net fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
+  classDef data fill:#f5eefc,stroke:#7c4dbe,color:#1a1a1a
+  class COP,BICEP compute
+  class REPO,GHA net
+  class AVM,AZ data
+```
+
+<details><summary>Text description of this diagram</summary>
+
+You write Bicep in VS Code, with Copilot agent mode doing much of the typing.
+The templates reference **Azure Verified Modules** — building blocks Microsoft
+publishes and versions, so you describe *what* you want rather than wiring every
+resource by hand.
+
+From there the same template reaches Azure two ways. Locally you run
+`az bicep build`, `what-if` and `deploy` yourself. Or you push to GitHub, where
+a workflow does the same three steps and signs in with OIDC — no password
+anywhere.
+
+That is the point of the three deploy options in every lab: one template, three
+routes to the same result.
+
+</details>
 
 | Tool | Its one job | Where you will see it |
 |------|------------|----------------------|
@@ -36,7 +78,7 @@ That "do nothing if already correct" property is called **idempotency**: running
 | **Bicep** | The language you describe Azure resources in — compiles to ARM JSON | Every lab |
 | **Azure Verified Modules (AVM)** | Pre-built, Microsoft-maintained Bicep building blocks (`br/public:avm/res/...`), version-pinned for reproducibility | Every `main.bicep` |
 | **GitHub Actions** | Runs your deploy in the cloud on a button press. Lint → What-if → Deploy lives here. | Every lab, Step 3 |
-| **OIDC federation** | Lets Actions log into Azure with a short-lived token instead of a stored password | [Deployment Guide](Deployment-Guide) |
+| **OIDC federation** | Lets Actions log into Azure with a short-lived token instead of a stored password | [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide) |
 | **Azure CLI (`az`) + Bicep CLI** | The commands that compile and deploy. Copilot runs these; so can you. | Everywhere |
 
 ---
@@ -45,7 +87,44 @@ That "do nothing if already correct" property is called **idempotency**: running
 
 Every deployment in this workshop follows the same three-step pattern. This is the most important habit IaC teaches:
 
-![Lint to What-if to Deploy loop](diagram-understanding-iac-loop.svg)
+```mermaid
+flowchart LR
+  EDIT["Edit the Bicep"]
+  LINT["1 · Lint<br/>az bicep build<br/>does it compile?"]
+  WHATIF["2 · What-if<br/>az deployment group what-if<br/>what would change?"]
+  CHECK{"Does the diff<br/>match what you meant?"}
+  DEPLOY["3 · Deploy<br/>az deployment group create"]
+
+  EDIT --> LINT --> WHATIF --> CHECK
+  CHECK -->|"yes"| DEPLOY
+  CHECK -->|"no"| EDIT
+
+  classDef step fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
+  classDef go fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef ask fill:#fff9e6,stroke:#c9a227,color:#1a1a1a
+  class EDIT,LINT,WHATIF step
+  class DEPLOY go
+  class CHECK ask
+```
+
+<details><summary>Text description of this diagram</summary>
+
+Every change follows the same three steps, and the loop is the habit worth
+building.
+
+**Lint** (`az bicep build`) answers "does this compile?" — it catches typos and
+bad parameters in seconds, before anything touches Azure. **What-if** answers
+the more important question: "what would this actually change?" It lists every
+resource that would be created, modified or **deleted**, without doing any of it.
+
+Then you read that diff. If it doesn't match what you intended, go back and
+edit — you have lost nothing, because nothing has happened yet. Only when the
+diff looks right do you **deploy**.
+
+The GitHub Actions workflows run these same three steps in the same order, so
+the button and the terminal behave identically.
+
+</details>
 
 1. **Lint** — `az bicep build` compiles the template and runs the linter. Catches typos and bad parameters *before* touching Azure.
 2. **What-if** — `az deployment group what-if` shows a colour-coded preview: `+` create, `~` modify, `-` delete. **Read this every time** — it is how you catch an accidental delete before it happens.
@@ -82,4 +161,15 @@ Every deployment in this workshop follows the same three-step pattern. This is t
 
 ---
 
-Ready? → [Start-Here Checklist](Start-Here-Checklist) → [L1 — Hub & Spoke](L1-Hub-and-Spoke)
+Ready? → [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) → [L1 — Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · History as an infrastructure audit log**
+>
+> **You just used it:** the moment your Bicep went into git, every future change to that network became a commit — with an author, a timestamp, a diff and a reason.
+> **Find it:** run `git log --oneline labs/L1-hub-spoke/main.bicep`, or open the file on GitHub and press **Blame**. Every line traces back to the change that introduced it.
+> **Beyond the lab:** this is the answer to "who opened that subnet, and when?" — a question that is nearly unanswerable when infrastructure is clicked together in a portal, and trivial when it is code.
+> [Docs →](https://docs.github.com/repositories/working-with-files/using-files/viewing-a-file#viewing-the-line-by-line-revision-history-for-a-file)

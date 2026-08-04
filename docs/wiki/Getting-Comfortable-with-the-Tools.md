@@ -1,6 +1,21 @@
 # Getting Comfortable with the Tools
 
-> **Before you start:** this page is a 15-minute hands-on warm-up. Nothing here deploys anything to Azure. Work through it in order in your clone of the repo — by the end every tool will feel familiar.
+> [!NOTE]
+> A 15-minute hands-on warm-up. **Nothing here deploys anything to Azure.** Work through it in order in your clone of the repo, and by the end every tool will feel familiar.
+
+## Which machine are you on?
+
+Everything below is identical on both — only the *install* commands differ, and those live on the [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist).
+
+<table>
+<tr>
+<td align="center" width="360"><img src="icon-windows.svg" width="56"><br><br><b>Windows</b><br><sub>One winget command per tool, or the installer script</sub></td>
+<td align="center" width="360"><img src="icon-macos-linux.svg" width="56"><br><br><b>macOS or Linux</b><br><sub>Download links; use pwsh or bash instead of PowerShell</sub></td>
+</tr>
+</table>
+
+> [!TIP]
+> On macOS and Linux, the repo's `.ps1` helper scripts run under [PowerShell 7](https://github.com/PowerShell/PowerShell/releases). If you would rather not install it, the [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide) Option B gives you the same steps as plain `az` and `gh` commands.
 
 ---
 
@@ -97,6 +112,17 @@ Docs: https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode
 
 You can open the repo, read Bicep, compile a template, and drive Copilot. That is everything the labs assume.
 
-→ Head to the [Start-Here Checklist](Start-Here-Checklist) to finish setup, then [L1 — Hub & Spoke](L1-Hub-and-Spoke).
+→ Head to the [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) to finish setup, then [L1 — Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke).
 
-For install links and deeper CLI reference, see [Tools and References](Tools-and-References).
+For install links and deeper CLI reference, see [Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References).
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Repository-recommended extensions**
+>
+> **You just used it:** when you opened this folder, VS Code offered you the Bicep and Copilot extensions. That was not your settings — the **repository** asked for them.
+> **Find it:** [`.vscode/extensions.json`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/.vscode/extensions.json). Five recommendations, checked into git.
+> **Beyond the lab:** new joiners get the right toolchain on first open, with nothing to read and nothing to install by hand. One small file removes an entire onboarding step.
+> [Docs →](https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions)

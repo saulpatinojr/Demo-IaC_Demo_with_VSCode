@@ -6,7 +6,47 @@
 
 ## 🧭 The mental model
 
-![GitHub repository mental model](diagram-github-essentials.svg)
+```mermaid
+flowchart TB
+  UP["The original repository<br/>saulpatinojr/Demo-IaC_Demo_with_VSCode"]
+  FORK["Your fork<br/>your own copy, your own Actions"]
+
+  subgraph INSIDE["What lives inside a repository"]
+    REPO["Code<br/>the Bicep templates and scripts"]
+    WIKI["Wiki<br/>these pages"]
+    ACT["Actions<br/>the workflows that deploy"]
+    CFG["Settings · Secrets and variables<br/>configuration the workflows read"]
+  end
+
+  UP -->|"you fork it, once"| FORK
+  FORK --- INSIDE
+  ACT -->|"reads at run time"| CFG
+  ACT -->|"checks out"| REPO
+
+  classDef net fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
+  classDef compute fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef data fill:#f5eefc,stroke:#7c4dbe,color:#1a1a1a
+  class UP,FORK net
+  class REPO,WIKI compute
+  class ACT,CFG data
+```
+
+<details><summary>Text description of this diagram</summary>
+
+A **repository** is a project folder GitHub tracks with git. Forking makes your
+own complete copy, with its own Actions runs and its own secrets — which is why
+every participant works in a fork rather than sharing one repo.
+
+Four things live inside it and matter here. **Code** is the Bicep templates and
+scripts. **Actions** are the workflows that deploy them. **Settings → Secrets
+and variables** holds the configuration those workflows read at run time —
+secrets are masked in logs, variables are not. The **Wiki** is these pages.
+
+One thing the picture can't show: a fork copies the code, but **GitHub does not
+fork wikis**. Your fork has no wiki of its own, which is why these pages always
+link back to the original repository.
+
+</details>
 
 ---
 
@@ -54,7 +94,7 @@ Learn more: https://docs.github.com/actions
 The **Wiki** (what you are reading) is a separate git repository attached to the main repo, used for long-form docs. Pages are Markdown files and `_Sidebar.md` controls the navigation.
 
 - Edit in the browser (**Edit** button on any page) or clone it: `git clone https://github.com/<owner>/<repo>.wiki.git`
-- Links between pages: `[L1](L1-Hub-and-Spoke)` (page name without extension)
+- Links between pages: `[L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)` (page name without extension)
 
 ---
 
@@ -129,3 +169,14 @@ gh run watch
 - Understanding OIDC in Actions — https://docs.github.com/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect
 - Encrypted secrets — https://docs.github.com/actions/security-guides/using-secrets-in-github-actions
 - Environments and protection rules — https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Status checks on a pull request**
+>
+> **You just used it:** this repo runs a check on every pull request that touches the wiki. The docs you are reading cannot change without it passing.
+> **Find it:** the **Actions** tab, or the checks section at the bottom of any open pull request. [`wiki-check.yml`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/.github/workflows/wiki-check.yml) is the whole thing.
+> **Beyond the lab:** a status check plus a branch protection rule is how a team stops "it worked on my machine" from reaching main. The rule is enforced by the platform, not by people remembering.
+> [Docs →](https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)

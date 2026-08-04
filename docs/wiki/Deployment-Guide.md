@@ -4,11 +4,61 @@ Everything the workflows need to talk to Azure, end to end. Do this **once** bef
 
 The goal of this page is a **passwordless "handshake"** between GitHub and Azure: GitHub Actions proves its identity to Microsoft Entra ID on every run using a short-lived token (OIDC), so there is **no cloud password stored anywhere** — not in the repo, not in a secret, nowhere to leak. This is the same one-time setup described in the repository README and driven by the setup script in the repo.
 
-![OIDC handshake flow](diagram-deployment-guide.svg)
+```mermaid
+sequenceDiagram
+    autonumber
+    participant W as GitHub Actions<br/>workflow run
+    participant G as GitHub<br/>OIDC issuer
+    participant E as Microsoft Entra ID<br/>federated credential
+    participant A as Azure<br/>resource group
+
+    W->>G: request a signed token for this run
+    G-->>W: token stating repo, branch and workflow
+    W->>E: present the token
+    Note over E: Does the subject match<br/>repo:owner/repo:ref:refs/heads/main ?
+    E-->>W: yes — here is an Azure token,<br/>valid about one hour
+    W->>A: deploy with that token
+    Note over W,A: No password or client secret<br/>is stored anywhere
+```
+
+<details><summary>Text description of this diagram</summary>
+
+Four steps, and no stored credential at any point.
+
+The workflow asks GitHub for a **signed token describing itself** — which
+repository, which branch, which workflow. It presents that token to Microsoft
+Entra ID, which checks it against a **federated credential** you registered
+once: a rule saying "trust tokens from this exact repository and branch."
+
+If the subject matches, Entra issues an Azure access token valid for about an
+hour, and the workflow deploys with it. If someone forks the repo, their
+workflow's token names *their* repository, the subject doesn't match, and the
+exchange fails.
+
+That's the whole point: there is no client secret in the repository, nothing to
+leak in a log, and nothing to rotate. `Setup-Oidc.ps1` registers the federated
+credential for you.
+
+</details>
 
 ---
 
-## ✅ Option A — the one-command setup (recommended)
+## 🚀 Set it up — pick either way
+
+Both produce exactly the same result: an Entra app, a federated credential, a role assignment, and your repo secrets. Choose by how much you want to see.
+
+<table>
+<tr>
+<td align="center" width="360"><img src="icon-one-command.svg" width="56"><br><br><b>A · One command</b><br><sub>The script does all five steps</sub></td>
+<td align="center" width="360"><img src="icon-step-by-step.svg" width="56"><br><br><b>B · Step by step</b><br><sub>Run each az and gh command yourself</sub></td>
+</tr>
+</table>
+
+<br>
+
+---
+
+## <img src="icon-one-command.svg" width="26" align="top">&nbsp; Option A — the one-command setup (recommended)
 
 From inside your clone (PowerShell 7, with `az` and `gh` already signed in):
 
@@ -55,7 +105,9 @@ It is **idempotent** — safe to re-run. Re-running also **rotates** the throwaw
 
 ---
 
-## 🔍 Option B — the manual steps (what the script does)
+## <img src="icon-step-by-step.svg" width="26" align="top">&nbsp; Option B — the manual steps (what the script does)
+
+**Best if you want to see every moving part**, or you are on macOS or Linux where the PowerShell script is less convenient.
 
 ### 1. App registration + service principal + federated credential
 
@@ -89,7 +141,8 @@ echo "AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)"
 echo "AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)"
 ```
 
-> ⚠️ The `subject` string must match your fork **exactly** — owner, repo name (`Demo-IaC_Demo_with_VSCode`), and branch. A typo here is the #1 cause of `AADSTS700213` errors. See [Troubleshooting](Troubleshooting).
+> [!WARNING]
+> The `subject` string must match your fork **exactly** — owner, repo name (`Demo-IaC_Demo_with_VSCode`), and branch. A typo here is the single most common cause of `AADSTS700213` errors, and the message does not tell you which part is wrong. See [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting).
 
 **Deploying from a branch other than `main`, or from a Pull Request?** The token's `subject` changes, so add a matching credential:
 
@@ -126,7 +179,7 @@ Notes:
 - `SQL_ADMIN_PASSWORD` is used by L3/L4.
 - `ALERT_EMAIL` is optional (used by L3 alerting).
 
-Not sure why some of these are **secrets** and some are **variables**? See [GitHub Essentials → Secrets vs. Variables](GitHub-Essentials#secrets-vs-variables).
+Not sure why some of these are **secrets** and some are **variables**? See [GitHub Essentials → Secrets vs. Variables](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials#-secrets-vs-variables).
 
 Password rules: VM passwords need 12+ chars and 3 of 4 character classes; SQL forbids the login name inside the password. (The setup script generates compliant ones automatically.)
 
@@ -175,3 +228,14 @@ Same `AZURE_PREFIX` and `AZURE_LOCATION` must be used throughout — the labs fi
 ```
 
 Or via **Actions → "Teardown labs"** → type `DELETE`.
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Short-lived credentials, and knowing when not to automate**
+>
+> **You just used it:** the OIDC handshake above replaced a stored cloud password with a token that expires in about an hour and only works from this repository.
+> **Find it:** the **Azure login (OIDC)** step in any deploy run. There is no `client-secret` anywhere in these workflows.
+> **Beyond the lab:** note what is *not* automated here: publishing this wiki. `GITHUB_TOKEN` cannot push to a wiki repo, so automating it would mean storing a long-lived key in a repo built to be forked. It is run from a machine instead. Knowing when the automation costs more than it saves is a real engineering skill.
+> [Docs →](https://docs.github.com/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)

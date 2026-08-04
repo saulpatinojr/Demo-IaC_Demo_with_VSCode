@@ -1,0 +1,7 @@
+# This file is published to the wiki repository along with the pages.
+#
+# Without it the wiki repo falls back to core.autocrlf, so on Windows every
+# page is checked out CRLF while docs/wiki holds LF. Publishing then shows all
+# ~16 pages as modified when only one changed, and committing on that signal
+# rewrites every file and makes the next diff unreadable.
+* text=auto eol=lf

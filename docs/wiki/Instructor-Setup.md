@@ -330,3 +330,14 @@ az group delete --name rg-lab-<prefix> --yes
 | Students' Actions are blocked on first run | Fork's Actions require one-time approval | Walk them through: Actions tab → "I understand my workflows, go ahead and enable them" |
 | Two students' resource names clash | Same prefix used | Re-run setup for one student with a different prefix, update their `AZURE_PREFIX` variable |
 | Bicep deployment fails: `ResourceGroupNotFound` | `AZURE_RESOURCE_GROUP` secret is wrong or RG wasn't created | Verify: `az group show --name <rg>` and check the secret value in GitHub |
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · One fork per participant**
+>
+> **You just used it:** the model you are provisioning gives every student their own fork, and therefore their own Actions runs, their own secrets and their own blast radius. Nobody can break anyone else's lab.
+> **Find it:** each student's repo at `github.com/<their-handle>/Demo-IaC_Demo_with_VSCode`. Their OIDC subject names *their* fork, so their credential only works from it.
+> **Beyond the lab:** this is why the classroom scales. Twenty students need no coordination, no shared branch and no queue — and a mistake stays inside one fork.
+> [Docs →](https://docs.github.com/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks)

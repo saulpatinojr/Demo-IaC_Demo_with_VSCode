@@ -24,6 +24,44 @@ and nothing else belongs there:
   page. `_Sidebar.md` **replaces** the auto-generated page list, so any page it
   doesn't link becomes reachable only by search.
 
+## Icons
+
+Two tiers, and the distinction is deliberate.
+
+**Vendor logos** — `bicep.png`, `gh-actions.png`, `gh-copilot.png`. Used *only* in
+the lab deploy chooser, because that is the one place the reader picks between
+real products. Full colour, and never redrawn or recoloured.
+
+**Supporting icons** — `icon-*.svg`, taken from
+[Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons)
+(Microsoft's own set, MIT licensed, so redistribution here is clean). These mark
+ways of working rather than products, so they are monochrome line icons and stay
+visually subordinate to the vendor logos.
+
+| File | Fluent icon | Used for |
+|---|---|---|
+| `icon-spotlight.svg` | Lightbulb | the GitHub feature spotlight callout |
+| `icon-one-command.svg` | Flash | Deployment Guide — one-command setup |
+| `icon-step-by-step.svg` | Text Bullet List | Deployment Guide — manual steps |
+| `icon-instructor.svg` | Hat Graduation | Start Here — instructor provisioned |
+| `icon-self-service.svg` | Person | Start Here — self-service |
+| `icon-windows.svg` | Desktop | Getting Comfortable — Windows |
+| `icon-macos-linux.svg` | Laptop | Getting Comfortable — macOS / Linux |
+| `icon-new-here.svg` | Book Open | Home — new to all of this |
+| `icon-know-azure.svg` | Cloud | Home — knows Azure, new to GitHub |
+| `icon-just-deploy.svg` | Rocket | Home — straight to the first lab |
+
+Fetched from `assets/<Name>/SVG/ic_fluent_<name>_24_regular.svg` at 24 px regular
+weight. The only modification is the fill: Fluent ships `#212121`, which
+disappears on a dark background. All ten are recoloured to `#6e7781`, which
+clears 4.5:1 contrast on both white and GitHub's dark `#0d1117`. An `<img src>`
+cannot inherit `currentColor`, so a fixed mid-tone is the only option that works
+in both themes.
+
+**No OS brand marks.** The Windows flag and Apple logo are trademarks with their
+own usage terms, not MIT — hence neutral Desktop/Laptop icons, with the label
+doing the naming.
+
 ## Link policy
 
 The wiki and this folder are read at different URLs, so only absolute links work

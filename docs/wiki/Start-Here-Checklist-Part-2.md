@@ -1,6 +1,6 @@
 # Start Here Checklist — Part 2
 
-Continue here after finishing [Start-Here Checklist](Start-Here-Checklist) sections A through D.
+Continue here after finishing [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) sections A through D.
 
 ---
 
@@ -193,7 +193,7 @@ gh variable list
   *(Self-hosted: 5 secrets — no `AZURE_RESOURCE_GROUP`)*
 - [ ] `gh variable list` shows `AZURE_PREFIX` and `AZURE_LOCATION`
 
-> Full walkthrough and manual steps: [Deployment Guide](Deployment-Guide). Instructor pre-lab setup: [Instructor Setup](Instructor-Setup).
+> Full walkthrough and manual steps: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide). Instructor pre-lab setup: [Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup).
 
 ---
 
@@ -202,7 +202,7 @@ gh variable list
 - [ ] On GitHub, open **Actions** and click the green **"I understand my workflows, go ahead and enable them"** button if prompted (forks disable workflows by default).
 - [ ] Run **Deploy L1 — Hub & Spoke** → **Run workflow** → **Run workflow**.
 - [ ] Watch the **What-if** step — it lists every resource that will be created. Read it before the deploy step runs.
-- [ ] Green check on all three steps (Lint → What-if → Deploy)? 🎉 Continue with the **[L1 guide](L1-Hub-and-Spoke)**.
+- [ ] Green check on all three steps (Lint → What-if → Deploy)? 🎉 Continue with the **[L1 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)**.
 
 ---
 
@@ -220,4 +220,15 @@ gh variable list
 | `gh variable list` shows `AZURE_PREFIX` and `AZURE_LOCATION`? | Section G |
 | The Actions tab shows the deploy workflows (not blocked)? | Section H |
 
-Stuck on any of these → [Troubleshooting](Troubleshooting).
+Stuck on any of these → [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting).
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Secrets versus variables**
+>
+> **You just used it:** `Setup-Oidc.ps1` pushed both kinds. `AZURE_PREFIX` and `AZURE_LOCATION` went in as **variables** because they appear in resource names and logs anyway. The passwords and IDs went in as **secrets**.
+> **Find it:** **Settings → Secrets and variables → Actions**. You can read a variable back; you can never read a secret back, only replace it. In a run log a secret prints as `***`, automatically.
+> **Beyond the lab:** the test is simple — if someone leaking it would cause harm, it is a secret; if you would happily print it in a log, it is a variable. Getting that split right is most of what secret hygiene means in practice.
+> [Docs →](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions)
