@@ -224,7 +224,15 @@ $emojiQuotes = 0
 foreach ($p in $pages) {
     foreach ($l in Get-Lines $p.FullName) {
         if ($l.InFence) { continue }
-        if ($l.Text -match '^>\s+[\p{So}\p{Sk}]') {
+        # Two traps here, both found the hard way:
+        #   \p{Sk} matches the backtick (U+0060), so a blockquoted code fence
+        #   -- "> ```powershell" -- was reported as an emoji callout.
+        #   \p{So} alone misses every emoji above U+FFFF, because .NET regex
+        #   works on UTF-16 units and sees a surrogate pair, not a symbol.
+        #   That silently exempted the ones most used here (💰 🎉 🚀 🧹),
+        #   catching only BMP characters like ⚠.
+        # So: category So, or a high surrogate that starts an astral emoji.
+        if ($l.Text -match '^>\s+(\p{So}|[\uD800-\uDBFF])') {
             Add-Problem "$($p.Name) line $($l.N): emoji blockquote -- use a GitHub alert instead" $false
             $emojiQuotes++
         }
