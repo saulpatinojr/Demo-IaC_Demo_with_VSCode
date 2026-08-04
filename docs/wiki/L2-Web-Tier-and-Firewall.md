@@ -14,7 +14,7 @@ Files: [`labs/L2-web-tier/main.bicep`](../blob/main/labs/L2-web-tier/main.bicep)
 
 <br>
 
-# 🚀 Deploy L2 — pick any one of three ways
+## 🚀 Deploy L2 — pick any one of three ways
 
 All three deploy the **same** template and give the **same** result.
 

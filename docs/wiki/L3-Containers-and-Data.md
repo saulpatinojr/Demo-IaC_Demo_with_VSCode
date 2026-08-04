@@ -10,7 +10,7 @@ Files: [`labs/L3-containers/main.bicep`](../blob/main/labs/L3-containers/main.bi
 
 <br>
 
-# 🚀 Deploy L3 — pick any one of three ways
+## 🚀 Deploy L3 — pick any one of three ways
 
 All three deploy the **same** template and give the **same** result.
 

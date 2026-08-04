@@ -10,7 +10,7 @@ Files: [`labs/L4-global/main.bicep`](../blob/main/labs/L4-global/main.bicep) · 
 
 <br>
 
-# 🚀 Deploy L4 — pick any one of three ways
+## 🚀 Deploy L4 — pick any one of three ways
 
 All three deploy the **same** template and give the **same** result.
 

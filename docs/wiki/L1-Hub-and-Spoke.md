@@ -10,7 +10,7 @@ Files: [labs/L1-hub-spoke/main.bicep](../blob/main/labs/L1-hub-spoke/main.bicep)
 
 <br>
 
-# 🚀 Deploy L1 — pick any one of three ways
+## 🚀 Deploy L1 — pick any one of three ways
 
 All three deploy the **same** template and give the **same** result. Choose the one you're most comfortable with.
 
