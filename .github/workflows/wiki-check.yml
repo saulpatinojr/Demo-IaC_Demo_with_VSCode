@@ -1,0 +1,77 @@
+name: "Wiki check"
+
+# Validates docs/wiki before a change can reach readers: broken links, missing
+# images, a second H1 fighting the page title, a mermaid diagram with no text
+# description, CRLF line endings, cost figures that have drifted from README.
+#
+# This job only READS. It never publishes, so it needs no secrets and no
+# GitHub App -- the stock GITHUB_TOKEN with contents:read is enough. That also
+# means it works unchanged in a fork: it validates that fork's own files.
+#
+# Publishing is deliberately NOT automated. GITHUB_TOKEN cannot push to a wiki
+# repository, and forks don't get a wiki at all (GitHub does not fork wikis),
+# so a publish job would be dead weight in every fork of this teaching repo.
+# Publish from a machine instead: ./scripts/Publish-Wiki.ps1 -WhatIf
+on:
+  pull_request:
+    paths:
+      - "docs/wiki/**"
+      - "scripts/Publish-Wiki.ps1"
+      - ".github/workflows/wiki-check.yml"
+      - "README.md"
+  push:
+    branches: [main]
+    paths:
+      - "docs/wiki/**"
+      - "scripts/Publish-Wiki.ps1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same PR makes the previous run irrelevant.
+concurrency:
+  group: wiki-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the wiki mirror
+        shell: pwsh
+        run: |
+          # *>&1, not 2>&1. The script reports via Write-Host, which goes to
+          # the information stream; 2>&1 only merges errors, so the capture
+          # comes back empty and the summary and annotations below are blank.
+          $output = & ./scripts/Publish-Wiki.ps1 -CheckOnly *>&1 | Out-String
+          $failed = $LASTEXITCODE -ne 0
+
+          Write-Host $output
+
+          # Surface the result on the run summary, so a reviewer sees what
+          # broke without opening the log.
+          $status = if ($failed) { 'Failed' } else { 'Passed' }
+          @(
+            "## Wiki check - $status"
+            ""
+            'Validates `docs/wiki` (the source of truth for the published wiki).'
+            ""
+            '```'
+            $output.TrimEnd()
+            '```'
+          ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+          # Turn each failure into an inline annotation on the PR.
+          foreach ($line in ($output -split "`r?`n")) {
+            if ($line -match '^\s*\[FAIL\]\s*(.+)$') {
+              Write-Host "::error::$($Matches[1])"
+            }
+          }
+
+          if ($failed) {
+            Write-Host "::error::Wiki check failed. Reproduce locally with: ./scripts/Publish-Wiki.ps1 -CheckOnly"
+            exit 1
+          }
