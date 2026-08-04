@@ -22,6 +22,7 @@ Each builds on the last. Costs are **running totals**, billed while deployed.
 The jump at L2 is Azure Firewall — **$1.25/hr on its own.**
 
 ### Reference
+- [Copilot Prompt Library](Copilot-Prompt-Library)
 - [Troubleshooting](Troubleshooting)
 - [Tools and References](Tools-and-References)
 
