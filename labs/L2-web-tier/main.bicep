@@ -4,7 +4,9 @@
 // INTERNAL load balancer, and an Azure Firewall in the hub. Inbound traffic
 // enters through a firewall DNAT rule -> internal LB (this avoids the
 // asymmetric-routing problem of a public LB + forced tunneling). Egress from
-// the web subnet is forced through the firewall by a route table.
+// the web subnet AND from L1's workload subnet is forced through the firewall
+// by a route table — which is also how L1's test VM gets internet access at
+// all, since default outbound access was retired on 30 Sep 2025.
 // Prerequisite: L1 must be deployed (same prefix, same resource group).
 // Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
@@ -26,6 +28,7 @@ param adminPassword string
 var hubVnetName = 'vnet-${prefix}-hub'
 var spokeVnetName = 'vnet-${prefix}-spoke1'
 var webSubnetPrefix = '10.1.1.0/24'
+var workloadSubnetPrefix = '10.1.0.0/24' // created by L1
 var ilbFrontendIp = '10.1.1.100'
 var vmCount = 3
 
@@ -160,6 +163,26 @@ module webSubnet '../modules/subnet.bicep' = {
     networkSecurityGroupResourceId: webNsg.outputs.resourceId
     routeTableResourceId: webRouteTable.outputs.resourceId
   }
+}
+
+// --- Give L1's workload subnet a way out to the internet --------------------
+// Default outbound access was retired on 30 Sep 2025, so L1's test VM has no
+// internet egress on its own (no public IP, no NAT gateway, no outbound rule).
+// Re-declaring L1's subnet here attaches the same route table the web tier
+// uses, so the L1 VM now reaches the internet through the firewall — and is
+// subject to the same allow-80/443 rule. This is the L1 -> L2 payoff: the
+// blocked curl from L1 starts working, and the firewall logs show why.
+// dependsOn is required: two concurrent subnet writes on one VNet fail with
+// AnotherOperationInProgress.
+module workloadSubnet '../modules/subnet.bicep' = {
+  name: 'l2-workload-subnet'
+  params: {
+    vnetName: spokeVnetName
+    subnetName: 'snet-workload'
+    addressPrefix: workloadSubnetPrefix
+    routeTableResourceId: webRouteTable.outputs.resourceId
+  }
+  dependsOn: [webSubnet]
 }
 
 // --- Internal load balancer (Standard) --------------------------------------

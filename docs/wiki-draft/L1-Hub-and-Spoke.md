@@ -96,7 +96,11 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
 ## ✅ Test it (3 ways)
 
 1. **Bastion SSH** — Portal → `vm-$env:AZURE_PREFIX-test` → **Connect → Bastion** → log in with `azureuser` + your VM password.
-2. **Outbound works** — from that SSH session: `curl -s ifconfig.me` (works now; in L2 this same call is forced through the firewall).
+2. **There is no way out yet** — from that SSH session:
+   ```bash
+   curl -s -m 5 ifconfig.me || echo "NO EGRESS - as designed"
+   ```
+   This **times out, and that is the correct result.** The VM has no public IP, no NAT gateway and no route to a firewall, and [default outbound access was retired on 30 September 2025](https://azure.microsoft.com/en-us/updates?id=default-outbound-access-for-vms-in-azure-will-be-retired-transition-to-a-new-method-of-internet-access) — so a VM in a new VNet gets no internet unless you give it one explicitly. L2 is what gives it one, through the firewall. Run the same command again at the end of L2.
 3. **Peering is Connected** —
    ```powershell
    az network vnet peering list --resource-group $env:AZURE_RESOURCE_GROUP --vnet-name "vnet-$env:AZURE_PREFIX-spoke1" -o table
@@ -109,4 +113,4 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
 
 ## ➡️ What carries forward
 
-L2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet` and adds a `snet-web` subnet to this spoke. **Leave L1 deployed** → **[continue to L2](L2-Web-Tier-and-Firewall)**.
+L2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet`, adds a `snet-web` subnet to this spoke, and routes **this** subnet's traffic through the firewall too — which is what finally gives the test VM its internet access. **Leave L1 deployed** → **[continue to L2](L2-Web-Tier-and-Firewall)**.

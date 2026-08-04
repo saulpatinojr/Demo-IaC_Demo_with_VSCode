@@ -1,6 +1,6 @@
 # L2 — Web Tier & Azure Firewall 🟡
 
-**Goal:** add a real web tier to L1's network — 3 nginx VMs behind an **internal** load balancer — and put **Azure Firewall** in charge of all traffic in and out.
+**Goal:** add a real web tier to L1's network — 3 nginx VMs behind an **internal** load balancer — and put **Azure Firewall** in charge of all traffic in and out. That includes L1's test VM: L2 routes its subnet through the firewall too, which is what finally gives it internet access.
 
 ![L2 web tier and firewall traffic flow](diagram-l2.svg)
 
@@ -9,6 +9,8 @@ Files: [`labs/L2-web-tier/main.bicep`](../blob/main/labs/L2-web-tier/main.bicep)
 > **Design note — why an internal LB?** A *public* LB in front of the VMs while a route table forces egress through the firewall causes asymmetric routing — return traffic takes a different path than inbound and connections silently die. The correct hub/spoke pattern used here: inbound through a firewall **DNAT rule** to an internal LB, egress through the firewall via the route table.
 
 > ⚠️ **L1 must already be deployed with the same prefix** — L2 builds on that network.
+
+> 💰 **This is the expensive lab.** Azure Firewall Standard is **$1.25/hr on its own**, taking the running total from ~$0.24/hr after L1 to **~$1.65/hr**. It bills while deployed even when idle, so don't leave L2 up overnight.
 
 <br>
 
@@ -77,7 +79,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
 ---
 
-## ✅ Test it (3 ways)
+## ✅ Test it (4 ways)
 
 ```powershell
 $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
@@ -95,11 +97,21 @@ $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
      --scripts "curl -s -m 5 https://ifconfig.me || echo HTTPS-BLOCKED; ping -c 2 -W 2 8.8.8.8 || echo ICMP-BLOCKED"
    ```
    HTTPS succeeds (allowed rule); ICMP is blocked (no rule).
-3. **IP flow verify** —
+3. **L1's VM can now reach the internet** — the same `curl` that timed out at the end of L1:
    ```powershell
-   az network watcher test-ip-flow -g $RG --vm "vm-$PREFIX-web0" `
-     --direction Inbound --protocol TCP --local 10.1.1.5:80 --remote 10.0.1.4:40000
+   az vm run-command invoke -g $RG -n "vm-$PREFIX-test" `
+     --command-id RunShellScript `
+     --scripts "curl -s -m 5 https://ifconfig.me"
    ```
+   It returns the **firewall's** public IP, not the VM's — L2 attached the same route table to L1's `snet-workload`, so its traffic is now SNAT'd by the firewall. That IP should match `$FW_IP` from test 1.
+4. **IP flow verify** — confirm the NSG permits firewall-to-web traffic on 80:
+   ```powershell
+   $WEB_IP = az vm list-ip-addresses -g $RG -n "vm-$PREFIX-web0" `
+     --query "[0].virtualMachine.network.privateIpAddresses[0]" -o tsv
+   az network watcher test-ip-flow -g $RG --vm "vm-$PREFIX-web0" `
+     --direction Inbound --protocol TCP --local "${WEB_IP}:80" --remote 10.0.1.4:40000
+   ```
+   `10.0.1.4` is the firewall's address inside `AzureFirewallSubnet` — the source the web VMs actually see, because Azure Firewall SNATs DNAT'd traffic.
 
 <br>
 
@@ -107,4 +119,7 @@ $RG = $env:AZURE_RESOURCE_GROUP; $PREFIX = $env:AZURE_PREFIX
 
 ## ➡️ What carries forward
 
-L3 keeps the hub and firewall, but replaces "VMs for apps" with containers and adds the data tier. → **[continue to L3](L3-Containers-and-Data)**. *(You may tear down only L2's firewall now if cost is a concern — L3 doesn't depend on it.)*
+L3 keeps the hub and firewall, but replaces "VMs for apps" with containers and adds the data tier. → **[continue to L3](L3-Containers-and-Data)**.
+
+> [!WARNING]
+> **Don't delete just the firewall to save money.** Both spoke subnets now have a `0.0.0.0/0` route pointing at its private IP, so deleting it alone black-holes all their outbound traffic — the web tier and L1's test VM go dark while still billing. L3 doesn't depend on L2, so if cost is the concern tear down **all of L2** (`rt-<prefix>-web` included) or run the full teardown — see [Cost & cleanup](../blob/main/README.md) in the README.

@@ -1,6 +1,14 @@
 // Adds (or updates) a subnet on an EXISTING virtual network in another lab's
 // resource group. Kept as a local module because AVM modules manage whole
 // VNets — there is no AVM module for a standalone subnet on an existing VNet.
+//
+// This is a full PUT on the subnet: omitting networkSecurityGroupResourceId or
+// routeTableResourceId sets that association to null, which DETACHES anything
+// already there. When re-declaring a subnet another lab created, pass every
+// association you want to keep.
+//
+// Callers must also serialize their module calls with dependsOn — two subnet
+// writes running against the same VNet fail with AnotherOperationInProgress.
 param vnetName string
 param subnetName string
 param addressPrefix string
