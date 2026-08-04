@@ -1,20 +1,29 @@
 name: "Teardown labs"
 
-# Deletes lab resource groups. There is also a local equivalent you can run
-# from your machine: scripts/Cleanup-Labs.ps1 (supports -WhatIf).
+# Deletes every resource INSIDE your lab resource group (the group itself is
+# left alone — students usually only have Contributor on it, not permission to
+# delete it). This matches how the labs deploy: L1-L4 all land in the single
+# AZURE_RESOURCE_GROUP, so that group is the unit of teardown.
+#
+# There is also a local equivalent: scripts/Cleanup-Labs.ps1 -ResourceGroup <rg>
+# (supports -WhatIf).
+#
+# Partial "just tear down L2" is deliberately not offered: both spoke subnets
+# route 0.0.0.0/0 at the firewall's private IP, so removing the firewall on its
+# own black-holes the surviving VMs while they keep billing. Tear down all of
+# it, or leave it running.
 on:
   workflow_dispatch:
     inputs:
-      levels:
-        description: "Which labs to delete (highest first is safest)"
-        type: choice
-        required: true
-        default: "all"
-        options: ["all", "l4", "l3", "l2", "l1"]
+      dry_run:
+        description: "Preview only — list what would be deleted, delete nothing"
+        type: boolean
+        required: false
+        default: true
       confirm:
-        description: 'Type DELETE to confirm'
+        description: 'Type DELETE to confirm (ignored when dry_run is checked)'
         type: string
-        required: true
+        required: false
 
 permissions:
   id-token: write
@@ -25,12 +34,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PREFIX: iacdemo
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
 jobs:
   teardown:
     runs-on: ubuntu-latest
-    if: ${{ inputs.confirm == 'DELETE' }}
+    # A real delete needs the typed confirmation; a dry run never does.
+    if: ${{ inputs.dry_run || inputs.confirm == 'DELETE' }}
     steps:
       - name: Preflight - verify required secrets
         env:
@@ -39,7 +49,7 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
             if [ -z "${!v}" ]; then
               echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 first."
               missing=1
@@ -54,18 +64,52 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Delete resource groups (L4 -> L1 order)
+      - name: Delete every resource in the lab resource group
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          set -e
-          delete_rg() {
-            if az group exists --name "$1" | grep -q true; then
-              echo "Deleting $1 ..."
-              az group delete --name "$1" --yes
-            else
-              echo "$1 does not exist, skipping."
-            fi
-          }
-          case "${{ inputs.levels }}" in
-            all) for l in l4 l3 l2 l1; do delete_rg "rg-$PREFIX-$l"; done ;;
-            *)   delete_rg "rg-$PREFIX-${{ inputs.levels }}" ;;
-          esac
+          set -euo pipefail
+          RG="$AZURE_RESOURCE_GROUP"
+
+          if [ "$(az group exists --name "$RG")" != "true" ]; then
+            echo "::error::Resource group '$RG' does not exist."
+            exit 1
+          fi
+
+          mapfile -t ids < <(az resource list --resource-group "$RG" --query '[].id' -o tsv)
+          if [ "${#ids[@]}" -eq 0 ]; then
+            echo "Resource group '$RG' is already empty. Nothing to do."
+            exit 0
+          fi
+
+          echo "Found ${#ids[@]} resource(s) in '$RG':"
+          az resource list --resource-group "$RG" \
+            --query '[].{name:name,type:type}' -o table
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo ""
+            echo "::notice::DRY RUN — nothing was deleted. Re-run with dry_run unchecked and confirm=DELETE."
+            exit 0
+          fi
+
+          # Several passes: ARM orders most dependencies within a batch, but
+          # some (private endpoints before their parent, NIC before VNet,
+          # firewall before its public IP) only clear on a later pass.
+          for pass in 1 2 3; do
+            mapfile -t ids < <(az resource list --resource-group "$RG" --query '[].id' -o tsv)
+            [ "${#ids[@]}" -eq 0 ] && break
+            echo "::group::Delete pass $pass (${#ids[@]} remaining)"
+            # Don't abort the pass on a single failure — a later pass retries it.
+            az resource delete --ids "${ids[@]}" --verbose || true
+            echo "::endgroup::"
+          done
+
+          mapfile -t leftover < <(az resource list --resource-group "$RG" --query '[].id' -o tsv)
+          if [ "${#leftover[@]}" -eq 0 ]; then
+            echo "::notice::'$RG' is empty — teardown complete. The group itself was kept."
+          else
+            echo "::warning::${#leftover[@]} resource(s) still present after 3 passes:"
+            printf '  %s\n' "${leftover[@]}"
+            echo "::warning::Re-run this workflow, or delete them in the portal."
+            exit 1
+          fi
