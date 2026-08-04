@@ -162,3 +162,14 @@ the button and the terminal behave identically.
 ---
 
 Ready? → [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) → [L1 — Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · History as an infrastructure audit log**
+>
+> **You just used it:** the moment your Bicep went into git, every future change to that network became a commit — with an author, a timestamp, a diff and a reason.
+> **Find it:** run `git log --oneline labs/L1-hub-spoke/main.bicep`, or open the file on GitHub and press **Blame**. Every line traces back to the change that introduced it.
+> **Beyond the lab:** this is the answer to "who opened that subnet, and when?" — a question that is nearly unanswerable when infrastructure is clicked together in a portal, and trivial when it is code.
+> [Docs →](https://docs.github.com/repositories/working-with-files/using-files/viewing-a-file#viewing-the-line-by-line-revision-history-for-a-file)

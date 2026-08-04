@@ -221,3 +221,14 @@ gh variable list
 | The Actions tab shows the deploy workflows (not blocked)? | Section H |
 
 Stuck on any of these → [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting).
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Secrets versus variables**
+>
+> **You just used it:** `Setup-Oidc.ps1` pushed both kinds. `AZURE_PREFIX` and `AZURE_LOCATION` went in as **variables** because they appear in resource names and logs anyway. The passwords and IDs went in as **secrets**.
+> **Find it:** **Settings → Secrets and variables → Actions**. You can read a variable back; you can never read a secret back, only replace it. In a run log a secret prints as `***`, automatically.
+> **Beyond the lab:** the test is simple — if someone leaking it would cause harm, it is a secret; if you would happily print it in a log, it is a variable. Getting that split right is most of what secret hygiene means in practice.
+> [Docs →](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions)

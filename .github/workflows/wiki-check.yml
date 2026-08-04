@@ -46,7 +46,10 @@ jobs:
           # *>&1, not 2>&1. The script reports via Write-Host, which goes to
           # the information stream; 2>&1 only merges errors, so the capture
           # comes back empty and the summary and annotations below are blank.
-          $output = & ./scripts/Publish-Wiki.ps1 -CheckOnly *>&1 | Out-String
+          # -Strict promotes content-standard warnings to errors. Safe to turn
+          # on now that every page meets the standard; it means a regression
+          # fails the pull request instead of quietly accumulating.
+          $output = & ./scripts/Publish-Wiki.ps1 -CheckOnly -Strict *>&1 | Out-String
           $failed = $LASTEXITCODE -ne 0
 
           Write-Host $output
@@ -72,6 +75,6 @@ jobs:
           }
 
           if ($failed) {
-            Write-Host "::error::Wiki check failed. Reproduce locally with: ./scripts/Publish-Wiki.ps1 -CheckOnly"
+            Write-Host "::error::Wiki check failed. Reproduce locally with: ./scripts/Publish-Wiki.ps1 -CheckOnly -Strict"
             exit 1
           }

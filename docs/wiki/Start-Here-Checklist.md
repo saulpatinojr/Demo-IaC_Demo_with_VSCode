@@ -2,7 +2,21 @@
 
 Work top to bottom. Each item is one small, checkable thing. If you can tick every box, your first deploy will work.
 
-> New to the vocabulary (repo, fork, secret, OIDC)? Skim [Understanding IaC](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Understanding-IaC) and [GitHub Essentials](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials) first — 10 minutes that make everything below make sense.
+> [!TIP]
+> New to the vocabulary — repo, fork, secret, OIDC? Skim [Understanding IaC](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Understanding-IaC) and [GitHub Essentials](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials) first. Ten minutes that make everything below make sense.
+
+## Which are you?
+
+The steps are the same either way — but one path has less to do, because someone did part of it for you.
+
+<table>
+<tr>
+<td align="center" width="360"><img src="icon-instructor.svg" width="56"><br><br><b>My instructor set me up</b><br><sub>Resource group and OIDC already done — verify and go</sub></td>
+<td align="center" width="360"><img src="icon-self-service.svg" width="56"><br><br><b>I'm on my own</b><br><sub>Own subscription — create the group, run setup yourself</sub></td>
+</tr>
+</table>
+
+If you are in a classroom, assume the left-hand column and **confirm before Section G** — running the OIDC setup a second time is harmless but wastes ten minutes.
 
 ---
 
@@ -216,3 +230,14 @@ az account show --query "{subscription:name, tenant:tenantId}" -o table
 This completes Part 1 (A–D).
 
 ➡️ Continue with **[Start Here Checklist — Part 2](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist-Part-2)**
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Forks and the `upstream` remote**
+>
+> **You just used it:** forking gave you a complete, independent copy of this repo — your own Actions runs, your own secrets, your own history. Nothing you do can affect anyone else's.
+> **Find it:** `git remote -v` in your clone. `origin` is your fork; `upstream` points at the original, which is how you pull in later changes without losing your work.
+> **Beyond the lab:** this is how essentially all open-source contribution works: fork, branch, pull request. The workshop uses it so twenty people can deploy from twenty repos with no coordination.
+> [Docs →](https://docs.github.com/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks)

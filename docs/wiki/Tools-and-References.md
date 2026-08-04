@@ -133,3 +133,14 @@ These scripts require the **Az PowerShell module** (`Install-Module Az -Scope Cu
 | SQL failover groups | https://learn.microsoft.com/azure/azure-sql/database/failover-group-sql-db |
 | Azure Front Door | https://learn.microsoft.com/azure/frontdoor/ |
 | Azure pricing calculator | https://azure.microsoft.com/pricing/calculator/ |
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Pinned versions and automated updates**
+>
+> **You just used it:** every Azure Verified Module in these templates is pinned to an exact version — `avm/res/network/virtual-network:0.9.0`, never `:latest`. Your deploy today and the same deploy next month produce identical infrastructure.
+> **Find it:** any `br/public:avm/...` line in a `main.bicep`. The version is the text after the final colon.
+> **Beyond the lab:** pinning makes builds reproducible; Dependabot then proposes version bumps as pull requests, so upgrades become a reviewed decision instead of a surprise.
+> [Docs →](https://docs.github.com/code-security/dependabot/dependabot-version-updates/about-dependabot-version-updates)

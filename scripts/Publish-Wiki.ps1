@@ -162,7 +162,9 @@ foreach ($p in $pages) {
 
     # Bare wiki links work on the wiki but not in the mirror. Allowed only in
     # _Sidebar/_Footer, which are never read as page bodies.
-    foreach ($m in [regex]::Matches($text, '\]\(([A-Z][A-Za-z0-9-]*)\)')) {
+    # The (#anchor)? group matters: without it, "](GitHub-Essentials#secrets)"
+    # slipped through, because the pattern demanded ')' right after the name.
+    foreach ($m in [regex]::Matches($text, '\]\(([A-Z][A-Za-z0-9-]*)(#[A-Za-z0-9-]+)?\)')) {
         $target = $m.Groups[1].Value
         if ($target -notin $pageNames) {
             Add-Problem "$($p.Name): link to '$target' but $target.md does not exist" $true

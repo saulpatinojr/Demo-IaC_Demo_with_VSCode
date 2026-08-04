@@ -206,3 +206,14 @@ All three scripts check before acting:
 ---
 
 *Full instructor pre-lab guide including GitHub org settings: [Instructor Setup Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup)*
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Scripting GitHub with `gh`**
+>
+> **You just used it:** `Setup-OidcAll.ps1` pushed six secrets and two variables into every student repo without a browser. That is the `gh` CLI doing in a loop what would otherwise be twenty rounds of clicking.
+> **Find it:** the `gh secret set` and `gh variable set` calls inside [`scripts/admin/Setup-OidcAll.ps1`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/scripts/admin/Setup-OidcAll.ps1). Verify with `gh secret list --repo <owner>/<repo>`.
+> **Beyond the lab:** anything you can do in the GitHub UI, `gh` can do in a script — and in an organization every one of those writes lands in the audit log, so bulk changes stay reviewable.
+> [Docs →](https://cli.github.com/manual/gh_secret_set)

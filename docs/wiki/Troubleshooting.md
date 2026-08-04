@@ -89,3 +89,14 @@ az deployment group show -g $RG --name <deployment-name> --query properties.erro
 az deployment operation group list -g $RG --name <deployment-name> `
   --query "[?properties.provisioningState=='Failed']"
 ```
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Re-running a failed job**
+>
+> **You just used it:** when a deploy fails, you do not have to start over. A transient Azure error, or a secret you have just corrected, only needs the failed part to run again.
+> **Find it:** open the failed run in the **Actions** tab → **Re-run jobs** → *Re-run failed jobs*. Use **Download log archive** on the same menu to grab the full output for a bug report.
+> **Beyond the lab:** re-running only what failed turns a twenty-minute deploy retry into a two-minute one, and the run history keeps both attempts so you can see what changed.
+> [Docs →](https://docs.github.com/actions/managing-workflow-runs/re-running-workflows-and-jobs)

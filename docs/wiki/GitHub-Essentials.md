@@ -169,3 +169,14 @@ gh run watch
 - Understanding OIDC in Actions — https://docs.github.com/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect
 - Encrypted secrets — https://docs.github.com/actions/security-guides/using-secrets-in-github-actions
 - Environments and protection rules — https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment
+
+<br>
+
+---
+
+> <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Status checks on a pull request**
+>
+> **You just used it:** this repo runs a check on every pull request that touches the wiki. The docs you are reading cannot change without it passing.
+> **Find it:** the **Actions** tab, or the checks section at the bottom of any open pull request. [`wiki-check.yml`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/.github/workflows/wiki-check.yml) is the whole thing.
+> **Beyond the lab:** a status check plus a branch protection rule is how a team stops "it worked on my machine" from reaching main. The rule is enforced by the platform, not by people remembering.
+> [Docs →](https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
