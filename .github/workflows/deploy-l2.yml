@@ -47,7 +47,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Lint (compile + linter)
-        run: az bicep build --file labs/L2-web-tier/main.bicep
+        run: |
+          az bicep build --file labs/L2-web-tier/main.bicep --stdout > /dev/null
+          # Also compile the parameter file — build alone never reads it, so a
+          # bad param name or a missing env var would slip through to deploy.
+          az bicep build-params --file labs/L2-web-tier/main.bicepparam --stdout > /dev/null
 
       - name: What-if (preview changes)
         run: |
