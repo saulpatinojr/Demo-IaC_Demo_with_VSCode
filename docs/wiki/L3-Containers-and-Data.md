@@ -2,7 +2,67 @@
 
 **Goal:** modernize the app tier — Azure Container Apps instead of VMs, an Azure SQL backend, Key Vault + managed identity for secrets, Log Analytics/App Insights monitoring with an email alert. This is where **private networking** arrives: SQL and Key Vault have public access **disabled** and are only reachable through private endpoints.
 
-![L3 containers and private networking](diagram-l3.svg)
+```mermaid
+flowchart LR
+  YOU(["You"])
+  HUB["vnet-iacdemo-hub<br/>from L1"]
+
+  subgraph SPOKE2["vnet-iacdemo-spoke2 · 10.2.0.0/16 · NEW in L3"]
+    subgraph ACA["snet-aca 10.2.0.0/23 · delegated to Microsoft.App"]
+      APP["ca-iacdemo-web<br/>cae-iacdemo-l3<br/>public ingress<br/>managed identity"]
+    end
+    subgraph PE["snet-private-endpoints 10.2.2.0/24"]
+      PESQL["private endpoint<br/>to SQL"]
+      PEKV["private endpoint<br/>to Key Vault"]
+    end
+  end
+
+  SQL["sql-iacdemo-xxxxxx<br/>Azure SQL Basic<br/>public access DISABLED"]
+  KV["kv-iacdemo-xxxxxx<br/>Key Vault, RBAC<br/>public access DISABLED"]
+  DNS["private DNS zones<br/>linked to spoke2 only"]
+  MON["log-iacdemo-l3 + appi-iacdemo-l3<br/>alert: replicas >= 2 for 15 min"]
+
+  SPOKE2 <-->|"VNet peering to L1's hub"| HUB
+  YOU -->|"HTTPS, public ingress<br/>does NOT pass through the firewall"| APP
+  APP --> PESQL --> SQL
+  APP --> PEKV --> KV
+  DNS -.->|"resolves privatelink names<br/>for workloads inside spoke2"| PE
+  APP --> MON
+  YOU -. "BLOCKED, public access disabled" .-> SQL
+
+  classDef net fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
+  classDef compute fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef data fill:#f5eefc,stroke:#7c4dbe,color:#1a1a1a
+  classDef blocked fill:#fdecea,stroke:#c0392b,color:#1a1a1a
+  class PESQL,PEKV,DNS,HUB net
+  class APP,MON compute
+  class SQL,KV data
+```
+
+<details><summary>Text description of this diagram</summary>
+
+L3 creates a **second spoke** — `vnet-iacdemo-spoke2` (`10.2.0.0/16`) — and
+peers it to L1's hub. It does not reuse L1's spoke, and it does not route
+through L2's firewall: this stack branches off the hub on its own. L2 is not a
+prerequisite.
+
+The spoke holds two subnets. `snet-aca` (`10.2.0.0/23`) is delegated to
+`Microsoft.App/environments` and runs the Container Apps environment and the
+web app. `snet-private-endpoints` (`10.2.2.0/24`) holds one private endpoint
+for SQL and one for Key Vault.
+
+Both data services have **public network access disabled**, so a connection
+from your laptop fails. The app reaches them over private endpoints using its
+managed identity. The private DNS zones are what make that work — they resolve
+the `privatelink` hostnames to private addresses, and they are linked to
+**spoke2 only**, so the name resolves privately from inside that VNet and
+nowhere else.
+
+One thing worth being explicit about: the container app itself is **publicly
+reachable** (`ingressExternal: true`). "Private networking" here applies to the
+data tier, not the front door.
+
+</details>
 
 Files: [`labs/L3-containers/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L3-containers/main.bicep) · `main.bicepparam`
 

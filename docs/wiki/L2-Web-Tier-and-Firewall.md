@@ -2,7 +2,64 @@
 
 **Goal:** add a real web tier to L1's network — 3 nginx VMs behind an **internal** load balancer — and put **Azure Firewall** in charge of all traffic in and out. That includes L1's test VM: L2 routes its subnet through the firewall too, which is what finally gives it internet access.
 
-![L2 web tier and firewall traffic flow](diagram-l2.svg)
+```mermaid
+flowchart LR
+  NET(["Internet"])
+  PIP["pip-iacdemo-fw<br/>public IP"]
+
+  subgraph HUB["vnet-iacdemo-hub · 10.0.0.0/16"]
+    FW["afw-iacdemo-hub<br/>Azure Firewall Standard<br/>AzureFirewallSubnet 10.0.1.0/26<br/>private IP 10.0.1.4<br/>$1.25/hr"]
+  end
+
+  subgraph SPOKE["vnet-iacdemo-spoke1 · 10.1.0.0/16"]
+    subgraph WEB["snet-web 10.1.1.0/24 · + nsg + route table"]
+      ILB["lbi-iacdemo-web<br/>internal load balancer<br/>frontend 10.1.1.100"]
+      W["vm-iacdemo-web0 / web1 / web2<br/>nginx"]
+    end
+    subgraph WL["snet-workload 10.1.0.0/24 · + route table, new in L2"]
+      VM["vm-iacdemo-test<br/>from L1"]
+    end
+  end
+
+  NET -->|"HTTP 80"| PIP
+  PIP --> FW
+  FW -->|"DNAT :80 to 10.1.1.100"| ILB
+  ILB -->|"round robin"| W
+  W -. "0.0.0.0/0 via 10.0.1.4" .-> FW
+  VM -. "0.0.0.0/0 via 10.0.1.4<br/>this is how L1's VM finally gets out" .-> FW
+  FW ==>|"allowed: TCP 80/443 from 10.1.0.0/16<br/>everything else, including ICMP: denied"| NET
+
+  classDef net fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
+  classDef compute fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef money fill:#fff4e5,stroke:#d97706,color:#1a1a1a
+  class PIP,ILB net
+  class W,VM compute
+  class FW money
+```
+
+<details><summary>Text description of this diagram</summary>
+
+Inbound traffic arrives at the firewall's public IP on port 80. A **DNAT rule**
+translates it to `10.1.1.100`, the private frontend of an **internal** load
+balancer, which round-robins across three nginx VMs in `snet-web`
+(`10.1.1.0/24`).
+
+The load balancer is internal on purpose. A public one, combined with a route
+table forcing egress through the firewall, would send return traffic out a
+different path than it came in — asymmetric routing, and connections die
+silently. Inbound via DNAT and outbound via the route table keeps both
+directions on the firewall.
+
+Outbound, both dashed lines are route tables sending `0.0.0.0/0` to the
+firewall's private address `10.0.1.4`. The web subnet has one, and **L2 also
+attaches the same route table to L1's `snet-workload`** — which is what finally
+gives the L1 test VM internet access. The firewall allows TCP 80 and 443 from
+`10.1.0.0/16` and denies everything else, so ICMP fails while HTTPS works.
+
+Azure Firewall Standard costs **$1.25/hr on its own**, which is why the running
+total jumps from about $0.24/hr to about $1.65/hr at this lab.
+
+</details>
 
 Files: [`labs/L2-web-tier/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L2-web-tier/main.bicep) · [`labs/modules/subnet.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/modules/subnet.bicep)
 

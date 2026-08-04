@@ -2,7 +2,51 @@
 
 **Goal:** deploy the network foundation every later lab builds on — a hub VNet and a peered spoke VNet, Azure Bastion for secure access, and one Linux test VM.
 
-![L1 hub and spoke network topology](diagram-l1.svg)
+```mermaid
+flowchart LR
+  YOU(["You<br/>in a browser"])
+  NET(["Internet"])
+
+  subgraph HUB["vnet-iacdemo-hub · 10.0.0.0/16"]
+    BAS["AzureBastionSubnet<br/>10.0.0.0/26<br/>bas-iacdemo-hub (Basic)"]
+    AFW["AzureFirewallSubnet<br/>10.0.1.0/26<br/>reserved, empty until L2"]
+  end
+
+  subgraph SPOKE["vnet-iacdemo-spoke1 · 10.1.0.0/16"]
+    VM["vm-iacdemo-test<br/>snet-workload 10.1.0.0/24<br/>Ubuntu 24.04, B2s<br/>no public IP"]
+  end
+
+  YOU -->|"HTTPS 443"| BAS
+  BAS -->|"SSH, over the peering"| VM
+  HUB <-->|"VNet peering<br/>both directions"| SPOKE
+  VM -. "NO WAY OUT<br/>no public IP, no NAT gateway, no route" .-> NET
+
+  classDef net fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
+  classDef compute fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
+  classDef blocked fill:#fdecea,stroke:#c0392b,color:#1a1a1a
+  class BAS,AFW net
+  class VM compute
+  class NET blocked
+```
+
+<details><summary>Text description of this diagram</summary>
+
+Two virtual networks, peered in both directions. The **hub**
+(`vnet-iacdemo-hub`, `10.0.0.0/16`) holds two subnets: `AzureBastionSubnet`
+(`10.0.0.0/26`) running the Basic Bastion host, and `AzureFirewallSubnet`
+(`10.0.1.0/26`), which L1 creates but leaves empty — L2 puts the firewall
+there. The **spoke** (`vnet-iacdemo-spoke1`, `10.1.0.0/16`) holds
+`snet-workload` (`10.1.0.0/24`) with one Ubuntu VM that has no public IP.
+
+You reach the VM by browsing to Bastion over HTTPS; Bastion reaches the VM by
+SSH across the peering. Nothing else can reach it.
+
+The dashed red line is the point of this lab: the VM has **no route to the
+internet at all**. No public IP, no NAT gateway, and no route table sending
+traffic anywhere. `iacdemo` is the default `AZURE_PREFIX`; your resources use
+whatever prefix you set.
+
+</details>
 
 Files: [labs/L1-hub-spoke/main.bicep](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L1-hub-spoke/main.bicep) · [labs/L1-hub-spoke/main.bicepparam](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L1-hub-spoke/main.bicepparam)
 
