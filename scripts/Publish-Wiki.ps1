@@ -27,10 +27,6 @@
     mermaid text descriptions, callout style) start as warnings while the
     pages are being rewritten, and become fatal once the rewrite is done.
 
-.PARAMETER Token
-    A GitHub App installation access token, used as the HTTP password when
-    pushing. Omit it to use whatever git credentials you already have.
-
 .PARAMETER WikiPath
     Local wiki clone. Defaults to Demo-IaC_Demo_with_VSCode.wiki beside the
     repo root; it is gitignored, so keeping it there is safe.
@@ -44,7 +40,6 @@
 param(
     [switch] $CheckOnly,
     [switch] $Strict,
-    [string] $Token,
     [string] $WikiPath,
     [string] $Message = 'Publish wiki from docs/wiki'
 )
@@ -393,12 +388,7 @@ if ($PSCmdlet.ShouldProcess('the GitHub Wiki', 'publish docs/wiki')) {
     git -C $WikiPath commit --quiet -m $Message
     # HEAD:master, never 'main main:master' -- a fresh clone has no local main,
     # so that refspec fails and aborts the whole push.
-    if ($Token) {
-        $authed = $WikiUrl -replace '^https://', "https://x-access-token:$Token@"
-        git -C $WikiPath push --quiet $authed HEAD:master
-    } else {
-        git -C $WikiPath push --quiet origin HEAD:master
-    }
+    git -C $WikiPath push --quiet origin HEAD:master
     if ($LASTEXITCODE -ne 0) { Write-Fail 'push failed'; exit 1 }
     Write-Ok "published -- $(git -C $WikiPath rev-parse --short HEAD)"
     Write-Host "    $RepoUrl/wiki" -ForegroundColor Cyan
