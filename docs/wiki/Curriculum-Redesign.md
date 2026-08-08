@@ -1,9 +1,14 @@
 # Curriculum Redesign — the Azure operational maturity path 🧭
 
-**Status: proposal.** This page and the six level pages below are a *curriculum
-outline*. They define chapter structure, learning objectives, dependencies,
-service inventory and cost. They deliberately contain **no lab instructions, no
-hands-on steps and no exercises** — that is the next phase of work.
+**Status: proposal, being built.** The six level pages define chapter structure,
+learning objectives, dependencies, service inventory and cost. Chapters gain a
+**Built** line and a walkthrough page as their code lands.
+
+| Level | Outline | Code |
+|---|---|---|
+| Level 1 · Deploy | ✅ | ✅ — the existing labs, unchanged |
+| Level 2 · Monitor | ✅ | ✅ L2.1 · L2.2 · L2.3 · L2.4 |
+| Levels 3–6 | ✅ | outline only so far |
 
 Nothing on this branch changes the four labs that exist today. The existing
 [L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)–[L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)
