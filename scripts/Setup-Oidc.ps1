@@ -40,9 +40,12 @@
     Target subscription. Default: your current az default subscription.
 
 .PARAMETER ResourceGroup
-    Resource group name to scope Contributor to. Recommended for classroom
-    labs where you have been assigned a single resource group. This parameter
-    is required for real runs because deploy workflows expect AZURE_RESOURCE_GROUP.
+    Resource group name to scope Contributor to. Required, including under
+    -WhatIf, because every deploy workflow reads the AZURE_RESOURCE_GROUP
+    secret this sets. The group must already exist -- no lab creates it.
+    Classroom: the group your instructor assigned. Self-hosted: create one
+    yourself first. Contributor is always scoped to this group; the script has
+    no subscription-scoped mode.
 
 .PARAMETER Prefix
     Unique prefix for resource names (e.g. your initials). Stored as the
@@ -60,15 +63,16 @@
     Print every action without changing anything. Recommended first run.
 
 .EXAMPLE
-    ./scripts/Setup-Oidc.ps1 -WhatIf
-    Preview exactly what would be created.
+    ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-alice" -Prefix "alice" -WhatIf
+    Preview exactly what would be created. -ResourceGroup is required here too,
+    so the preview cannot report a plan the real run would reject.
 
 .EXAMPLE
-    ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-alice" -Prefix "alice"
+    ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-alice" -Prefix "alice"
     Typical classroom setup: scope to assigned RG with a unique prefix.
 
 .EXAMPLE
-    ./scripts/Setup-Oidc.ps1 -GitHubRepo "myorg/Demo-IaC_Demo_with_VSCode" -ResourceGroup "rg-lab-alice" -Prefix "alice" -AlertEmail "me@example.com"
+    ./scripts/Setup-Oidc.ps1 -GitHubRepo "myorg/Demo-IaC_Demo_with_VSCode" -ResourceGroup "rg-techdemo-alice" -Prefix "alice" -AlertEmail "me@example.com"
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
@@ -125,8 +129,11 @@ try {
     if ($LASTEXITCODE -ne 0) { Fail 'Not signed in to Azure. Run:  az login' }
     gh auth status 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) { Fail 'Not signed in to GitHub. Run:  gh auth login' }
-    if (-not $ResourceGroup -and -not $WhatIfPreference) {
-        Fail 'ResourceGroup is required for this repo because deploy workflows require AZURE_RESOURCE_GROUP.'
+    # Checked under -WhatIf too. Exempting the preview made it succeed on the
+    # exact invocation the real run rejects, so the dry run students are told to
+    # start with reported a plan that could never execute.
+    if (-not $ResourceGroup) {
+        Fail 'ResourceGroup is required (also under -WhatIf) because deploy workflows require AZURE_RESOURCE_GROUP. Classroom: the group your instructor assigned. Self-hosted: create one first with  az group create --name rg-techdemo-<yourname> --location eastus2'
     }
     Write-Ok 'az and gh are installed and signed in'
 

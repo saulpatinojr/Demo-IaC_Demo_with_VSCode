@@ -1,7 +1,7 @@
 # Troubleshooting
 
 > [!TIP]
-> **Fastest fix for OIDC and secret issues:** re-run `./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"` — it is idempotent and repairs a missing credential, role assignment, or secret in one shot. The preflight step in each workflow also tells you *exactly which secret* is missing before login is even attempted.
+> **Fastest fix for OIDC and secret issues:** re-run `./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"` — it is idempotent and repairs a missing credential, role assignment, or secret in one shot. The preflight step in each workflow also tells you *exactly which secret* is missing before login is even attempted.
 
 ---
 
@@ -9,11 +9,13 @@
 
 | Symptom | Cause and fix |
 |---------|--------------|
-| `Missing repo secret 'AZURE_RESOURCE_GROUP'` (workflow fails immediately) | The preflight check caught a missing secret. Re-run `Setup-Oidc.ps1 -ResourceGroup ...` or set it manually: `gh secret set AZURE_RESOURCE_GROUP --body "rg-lab-<yourname>"`. |
+| `ResourceGroup is required (also under -WhatIf)` from `Setup-Oidc.ps1` | You ran it without `-ResourceGroup`. It is required on **every** run, self-hosted included — the workflows always deploy into a named group. Pass the group your instructor assigned, or create your own first: `az group create --name "rg-techdemo-<yourname>" --location eastus2`. |
+| `Resource group '<name>' does not exist in subscription` | **No lab creates the group** — it must exist before setup. Check what you actually have with `az group list --query "[].name" -o tsv`, and make sure you didn't type the `<yourname>` placeholder literally. |
+| `Missing repo secret 'AZURE_RESOURCE_GROUP'` (workflow fails immediately) | The preflight check caught a missing secret. Re-run `Setup-Oidc.ps1 -ResourceGroup ...` or set it manually: `gh secret set AZURE_RESOURCE_GROUP --body "rg-techdemo-<yourname>"`. |
 | `Missing repo secret 'VM_ADMIN_PASSWORD'` or `SQL_ADMIN_PASSWORD'` | Same as above — re-run the setup script to regenerate passwords. |
 | `AADSTS700213: No matching federated identity record` | The federated credential `subject` does not match. It must be exactly `repo:<user>/Demo-IaC_Demo_with_VSCode:ref:refs/heads/main` — check fork owner, repo name, and branch name. Re-run `Setup-Oidc.ps1` to recreate it. |
 | `AADSTS70021` / audience errors | The `audiences` field must be `api://AzureADTokenExchange`. Re-run the setup script. |
-| `AuthorizationFailed` during deploy | The service principal needs **Contributor on the resource group**. Re-run `Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>"`. |
+| `AuthorizationFailed` during deploy | The service principal needs **Contributor on the resource group**. Re-run `Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>"`. |
 | Login step fails with "id-token: write" hint | The workflow's `permissions:` block is missing or was removed. Do not remove it when editing workflows with Copilot. |
 
 ---

@@ -65,16 +65,21 @@ From inside your clone (PowerShell 7, with `az` and `gh` already signed in):
 ### Classroom participant (assigned one resource group, unique prefix)
 ```powershell
 # Preview first:
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>" -WhatIf
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf
 
 # Run for real:
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
 ```
 
-### Self-hosted (own subscription, full Contributor)
+### Self-hosted (own subscription)
+
+`-ResourceGroup` is required here too — the workflows always deploy into a named group, and no lab creates it. Make it first:
+
 ```powershell
-./scripts/Setup-Oidc.ps1 -Prefix "<yourname>" -WhatIf
-./scripts/Setup-Oidc.ps1 -Prefix "<yourname>"
+az group create --name "rg-techdemo-<yourname>" --location eastus2
+
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
 ```
 
 That single script:
@@ -82,15 +87,15 @@ That single script:
 1. **Detects your fork** (`owner/repo`) from the `gh` CLI — you don't type it.
 2. Creates (or reuses) an **Entra app registration + service principal** named `iac-demo-<prefix>`.
 3. Adds the **federated credential** so Actions on your branch can log in with no secret.
-4. Grants that identity **Contributor** on your resource group (classroom) or subscription (self-hosted).
+4. Grants that identity **Contributor** on the resource group you passed. That is the only scope the script grants — there is no subscription-scoped mode, classroom or not.
 5. Sets the repo **secrets and variables** — the IDs, your resource group, prefix, location, and strong throwaway VM/SQL passwords.
 
 Optional flags:
 
 | Flag | Use |
 |---|---|
-| `-WhatIf` | Dry run — prints every action, changes nothing. Always start here. |
-| `-ResourceGroup "rg-lab-<name>"` | **Classroom:** scope Contributor to this pre-existing RG. |
+| `-WhatIf` | Dry run — prints every action, changes nothing. Always start here. Still requires `-ResourceGroup`, so that the preview matches what the real run will do. |
+| `-ResourceGroup "rg-techdemo-<name>"` | **Required, classroom and self-hosted alike.** Scopes Contributor to this **pre-existing** group and sets the `AZURE_RESOURCE_GROUP` secret every workflow reads. |
 | `-Prefix "<name>"` | Unique identifier for your resources (max 12 chars). Sets `AZURE_PREFIX` variable. |
 | `-Location "eastus2"` | Override the default region. Sets `AZURE_LOCATION` variable. |
 | `-GitHubRepo "owner/repo"` | Override auto-detection. |
@@ -99,7 +104,7 @@ Optional flags:
 | `-SubscriptionId <id>` | Target a specific subscription instead of your default. |
 | `-AppName "custom-name"` | Override the Entra app name (default: `iac-demo-<prefix>`). |
 
-It is **idempotent** — safe to re-run. Re-running also **rotates** the throwaway passwords.
+It is **idempotent** — safe to re-run. Re-running **rewrites** the identity and resource-group secrets, so they always match the app and group that run just configured, and **keeps** any `VM_ADMIN_PASSWORD` / `SQL_ADMIN_PASSWORD` you already have — a deployed VM or SQL server holds whatever password it was built with, so overwriting the secret would only put GitHub out of step with it. To force a fresh password, delete that secret in GitHub and re-run.
 
 > **Prefer to see the moving parts, or on macOS/Linux?** Do Option B instead — it's the same steps by hand.
 
@@ -127,14 +132,17 @@ az ad app federated-credential create --id $APP_ID --parameters '{
   "audiences": ["api://AzureADTokenExchange"]
 }'
 
-# 3a) Classroom: Contributor on your assigned resource group
-RG="rg-lab-$PREFIX"
+# 3) Contributor on your resource group -- classroom and self-hosted alike.
+#    Classroom: the group your instructor assigned, which already exists.
+#    Self-hosted: create it first, because no lab creates it for you:
+#      az group create --name "rg-techdemo-$PREFIX" --location eastus2
+RG="rg-techdemo-$PREFIX"
 az role assignment create --assignee $APP_ID --role Contributor \
   --scope /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RG
 
-# 3b) Self-hosted: Contributor on the subscription
-# az role assignment create --assignee $APP_ID --role Contributor \
-#   --scope /subscriptions/$(az account show --query id -o tsv)
+# Resource-group scope is deliberate: it is the classroom blast-radius boundary,
+# and it is what Setup-Oidc.ps1 does too. Granting Contributor at subscription
+# scope instead would work, but nothing in this workshop needs it.
 
 echo "AZURE_CLIENT_ID=$APP_ID"
 echo "AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)"
@@ -158,7 +166,7 @@ echo "AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)"
 ### 2. Repo secrets & variables
 
 ```bash
-RG="rg-lab-<yourname>"
+RG="rg-techdemo-<yourname>"
 PREFIX="<yourname>"
 
 gh secret set AZURE_CLIENT_ID       --body "<appId>"
@@ -174,7 +182,7 @@ gh variable set ALERT_EMAIL         --body "you@yourdomain.com"
 ```
 
 Notes:
-- `AZURE_RESOURCE_GROUP` is for classroom/shared-RG deployments.
+- `AZURE_RESOURCE_GROUP` is required for **every** deployment, not just classroom ones — each workflow's preflight step fails immediately without it.
 - `VM_ADMIN_PASSWORD` is used by L1/L2.
 - `SQL_ADMIN_PASSWORD` is used by L3/L4.
 - `ALERT_EMAIL` is optional (used by L3 alerting).
@@ -217,15 +225,15 @@ Same `AZURE_PREFIX` and `AZURE_LOCATION` must be used throughout — the labs fi
 All four labs deploy into the **same** resource group, so one command clears all of them. The group itself is left in place — classroom students usually hold Contributor on the group and can't delete it.
 
 ```powershell
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>" -WhatIf   # preview first
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>"
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-techdemo-<yourname>" -WhatIf   # preview first
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-techdemo-<yourname>"
 ```
 
 If `AZURE_RESOURCE_GROUP` is already set in your terminal (`Load-LabSettings.ps1` sets it), you can leave `-ResourceGroup` off and the script picks it up.
 
 **Self-hosted** — you own the group, so you can drop the whole thing once it's empty, and remove the deployment identity too:
 ```powershell
-az group delete --name "rg-lab-<yourname>" --yes
+az group delete --name "rg-techdemo-<yourname>" --yes
 ./scripts/Cleanup-Labs.ps1 -Prefix "<yourname>" -RemoveOidc   # deletes the Entra app
 ```
 

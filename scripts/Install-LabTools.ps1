@@ -444,7 +444,7 @@ Write-Host "     .\Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
 Write-Host "     → This creates your fork, clones it to Desktop, and adds upstream" -ForegroundColor White
 Write-Host ""
 Write-Host "  3. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
-Write-Host '     ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"' -ForegroundColor Cyan
+Write-Host '     ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"' -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  4. Head to the workshop wiki to start Lab 1:" -ForegroundColor White
 Write-Host "     https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki" -ForegroundColor DarkCyan

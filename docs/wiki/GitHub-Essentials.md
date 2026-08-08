@@ -123,7 +123,7 @@ gh variable set AZURE_LOCATION --body "eastus2"
 gh variable set ALERT_EMAIL   --body "ops@example.com"
 
 # Secret (write-only, masked in logs)
-gh secret set AZURE_RESOURCE_GROUP  --body "rg-lab-alice"
+gh secret set AZURE_RESOURCE_GROUP  --body "rg-techdemo-alice"
 gh secret set VM_ADMIN_PASSWORD     --body "S0me-Throwaway-Pass!"
 ```
 
