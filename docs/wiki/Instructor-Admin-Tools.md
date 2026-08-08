@@ -112,7 +112,7 @@ Your `gh` account must have **Admin** access to each student's GitHub fork to pu
 
 | # | Policy | Effect |
 |---|--------|--------|
-| 1 | Allowed locations | Only `eastus2` deployments are permitted |
+| 1 | Allowed locations | Only `eastus2` and `westus2` deployments are permitted (L4 builds its failover stack in `westus2`) |
 | 2 | Allowed resource types | Only ~38 types used by L1-L4 labs are allowed |
 | 3 | Inherit tag: Owner | Every resource inside the RG inherits the `Owner` tag |
 | 4 | Inherit tag: Event | Every resource inherits the `Event` tag |

@@ -279,15 +279,29 @@ try {
         [CmdletBinding(SupportsShouldProcess = $true)]
         param(
             [string] $name,
-            [string] $value
+            [string] $value,
+            # Passwords are regenerated on every run, and a deployed VM or SQL
+            # server keeps whatever password it was built with. Overwriting the
+            # secret would put GitHub out of step with the running resource, so
+            # an existing password is left alone. Identity and resource-group
+            # secrets get no such treatment: they must match the app and RG
+            # THIS run just configured, or the workflows authenticate as a
+            # stale identity (or deploy into the wrong group).
+            [switch] $KeepExisting
         )
-        $existingSecrets = @(gh secret list --repo $GitHubRepo --json name --jq '.[].name' 2>$null)
-        if ($existingSecrets -contains $name) {
-            Write-Skip "secret '$name' already exists"
-            return
+        if ($KeepExisting) {
+            $existingSecrets = @(gh secret list --repo $GitHubRepo --json name --jq '.[].name' 2>$null)
+            if ($existingSecrets -contains $name) {
+                Write-Skip "secret '$name' already exists - keeping the current value"
+                return
+            }
         }
         if ($TopLevelCmdlet.ShouldProcess("$GitHubRepo secret $name", 'Set')) {
-            $value | gh secret set $name --repo $GitHubRepo --body - 2>$null
+            # `gh secret set` reads the value from stdin ONLY when --body is
+            # absent; `--body -` is not a stdin convention and stores the
+            # literal string "-", which then fails azure/login with an opaque
+            # AAD error. Pipe the value in and pass no --body.
+            $value | gh secret set $name --repo $GitHubRepo 2>$null
             if ($LASTEXITCODE -ne 0) {
                 Fail "Failed to set secret $name"
             }
@@ -300,11 +314,9 @@ try {
             [string] $name,
             [string] $value
         )
-        $existingVars = @(gh variable list --repo $GitHubRepo --json name --jq '.[].name' 2>$null)
-        if ($existingVars -contains $name) {
-            Write-Skip "variable '$name' already exists"
-            return
-        }
+        # Always rewritten. AZURE_PREFIX and AZURE_LOCATION have to describe the
+        # run that just happened; a student re-running with a different -Prefix
+        # would otherwise keep deploying under the old one.
         if ($TopLevelCmdlet.ShouldProcess("$GitHubRepo variable $name", 'Set')) {
             gh variable set $name --repo $GitHubRepo --body $value 2>$null
             if ($LASTEXITCODE -ne 0) {
@@ -316,8 +328,8 @@ try {
     Set-RepoSecret 'AZURE_CLIENT_ID'       $appId
     Set-RepoSecret 'AZURE_TENANT_ID'       $TenantId
     Set-RepoSecret 'AZURE_SUBSCRIPTION_ID' $SubscriptionId
-    Set-RepoSecret 'VM_ADMIN_PASSWORD'  (New-ThrowawayPassword)
-    Set-RepoSecret 'SQL_ADMIN_PASSWORD' (New-ThrowawayPassword)
+    Set-RepoSecret 'VM_ADMIN_PASSWORD'  (New-ThrowawayPassword) -KeepExisting
+    Set-RepoSecret 'SQL_ADMIN_PASSWORD' (New-ThrowawayPassword) -KeepExisting
     Set-RepoSecret 'AZURE_RESOURCE_GROUP' $ResourceGroup
 
     # Prefix and location are non-secret variables (they appear in resource names/logs).
@@ -378,7 +390,9 @@ try {
         Write-Ok 'OIDC handshake complete. GitHub can now deploy to Azure with no stored cloud credentials.'
         Write-Ok "Next: GitHub -> Actions -> 'Deploy L1 - Hub & Spoke' -> Run workflow."
         Write-Host "    (Throwaway VM/SQL passwords were generated and stored as secrets;" -ForegroundColor DarkGray
-        Write-Host "     you never need to see them. Re-run this script to rotate.)" -ForegroundColor DarkGray
+        Write-Host "     you never need to see them. Re-runs keep the existing passwords so" -ForegroundColor DarkGray
+        Write-Host "     they stay in step with anything already deployed - delete the secret" -ForegroundColor DarkGray
+        Write-Host "     in GitHub if you want a fresh one generated.)" -ForegroundColor DarkGray
         if ($ResourceGroup) {
             Write-Ok "Resource group: $ResourceGroup  |  Prefix: $Prefix  |  Location: $Location"
         }

@@ -32,12 +32,16 @@ resource primaryApp 'Microsoft.App/containerApps@2024-03-01' existing = {
 }
 
 // --- Secondary region: Container Apps stack (slim — no VNet, public) -------
+// publicNetworkAccess must be explicit: the AVM module defaults it to
+// 'Disabled', which would leave this origin unreachable and fail Front Door's
+// health probes below.
 module acaEnv2 'br/public:avm/res/app/managed-environment:0.13.3' = {
   name: 'l4-aca-env-secondary'
   params: {
     name: 'cae-${prefix}-l4'
     location: secondaryLocation
     zoneRedundant: false
+    publicNetworkAccess: 'Enabled'
   }
 }
 

@@ -76,12 +76,13 @@ PowerShell helpers you run on your own machine (requires PowerShell 7 + signed-i
 
 ### `Setup-Oidc.ps1`
 - One-command GitHub↔Azure OIDC handshake: creates the Entra app registration, adds the federated credential, grants Contributor on your resource group, and pushes all repo secrets and variables.
-- Always preview first: `./scripts/Setup-Oidc.ps1 -WhatIf` · Idempotent — safe to re-run to rotate passwords.
+- Always preview first: `./scripts/Setup-Oidc.ps1 -WhatIf` · Idempotent — re-running refreshes the identity and resource-group secrets, and keeps existing VM/SQL passwords so they still match anything already deployed.
 - Full walkthrough: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide).
 
 ### `Cleanup-Labs.ps1`
-- Deletes all resources inside your lab resource group (classroom mode) or deletes the whole lab resource groups (standard mode).
+- Deletes every resource inside your lab resource group — all four labs share one group, so this clears L1–L4 in one run. The group itself is kept.
 - Always preview first: `./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP -WhatIf`
+- Leave `-ResourceGroup` off and it falls back to the `AZURE_RESOURCE_GROUP` environment variable.
 - Add `-RemoveOidc` to also delete the Entra app registration and its role assignment.
 
 ---
@@ -107,7 +108,7 @@ These scripts require the **Az PowerShell module** (`Install-Module Az -Scope Cu
 
 ### `Set-LabPolicy.ps1`
 - Assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:
-  - **Allowed locations** — restricts deployments to `eastus2` only
+  - **Allowed locations** — restricts deployments to `eastus2` and `westus2` (L4's failover region)
   - **Allowed resource types** — whitelist of ~38 types used by L1–L4 labs
   - **Inherit tag × 4** — `Owner`, `Event`, `Date`, `Instructor` propagate automatically from RG to all child resources
 - Run after `New-LabEnvironment.ps1`.

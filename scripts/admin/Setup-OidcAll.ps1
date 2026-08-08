@@ -208,7 +208,9 @@ function Ensure-FedCred($Name, $Subject, $AppId) {
 
 function Set-RepoSecret($ForkRepo, $Name, $Value) {
     if ($PSCmdlet.ShouldProcess("$ForkRepo secret $Name", 'Set')) {
-        $Value | gh secret set $Name --repo $ForkRepo --body - 2>$null
+        # `gh secret set` reads stdin ONLY when --body is absent; `--body -`
+        # stores the literal string "-" and every deploy then fails to log in.
+        $Value | gh secret set $Name --repo $ForkRepo 2>$null
         if ($LASTEXITCODE -ne 0) {
             Write-Warn "Could not set secret $Name on $ForkRepo`n  Check that your gh account has Admin access to this fork."
         } else { Write-Ok "Secret set: $Name" }
@@ -260,13 +262,22 @@ foreach ($Student in $Students) {
 
     if (-not $AppId) {
         if ($PSCmdlet.ShouldProcess($AppName, 'Create Entra app registration')) {
-            $AppId = (az ad app create --display-name $AppName --query appId -o tsv).Trim()
+            $AppId = az ad app create --display-name $AppName --query appId -o tsv
+            if (-not $AppId) {
+                Write-Warn "Could not create Entra app '$AppName' -- skipping this student. Check your directory permissions."
+                continue
+            }
+            $AppId = $AppId.Trim()
             Write-Ok "Created app: $AppName  ($AppId)"
         } else { Write-Skip "Would create app: $AppName"; $AppId = '<new-app-id>' }
     } else { Write-Skip "App exists: $AppName  ($AppId)" }
 
     # -- Service principal -------------------------------------------------- #
-    $SpId = (az ad sp list --filter "appId eq '$AppId'" --query '[0].id' -o tsv 2>$null).Trim()
+    # az prints nothing when the JMESPath result is null, so the capture is
+    # $null and .Trim() on it would terminate the whole roster run -- which is
+    # exactly the fresh-provisioning case this script exists for.
+    $SpId = az ad sp list --filter "appId eq '$AppId'" --query '[0].id' -o tsv 2>$null
+    if ($SpId) { $SpId = $SpId.Trim() }
     if (-not $SpId) {
         if ($PSCmdlet.ShouldProcess($AppId, 'Create service principal')) {
             az ad sp create --id $AppId | Out-Null
@@ -279,8 +290,9 @@ foreach ($Student in $Students) {
     Ensure-FedCred "gh-pr-$Prefix"      $SubjectPR   $AppId
 
     # -- Contributor on student's RG ---------------------------------------- #
-    $HasRole = (az role assignment list --assignee $AppId --scope $Scope `
-        --role Contributor --query '[0].id' -o tsv 2>$null).Trim()
+    $HasRole = az role assignment list --assignee $AppId --scope $Scope `
+        --role Contributor --query '[0].id' -o tsv 2>$null
+    if ($HasRole) { $HasRole = $HasRole.Trim() }
     if ($HasRole) {
         Write-Skip "Contributor already assigned on $RgName"
     } elseif ($PSCmdlet.ShouldProcess($Scope, "Assign Contributor to $AppName")) {

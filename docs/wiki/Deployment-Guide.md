@@ -214,17 +214,19 @@ Same `AZURE_PREFIX` and `AZURE_LOCATION` must be used throughout — the labs fi
 
 ## 🧹 5. Teardown
 
-**Classroom participants** (preserve the RG, just delete everything inside it):
+All four labs deploy into the **same** resource group, so one command clears all of them. The group itself is left in place — classroom students usually hold Contributor on the group and can't delete it.
+
 ```powershell
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>" -WhatIf
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>" -WhatIf   # preview first
 ./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>"
 ```
 
-**Self-hosted** (delete whole resource groups):
+If `AZURE_RESOURCE_GROUP` is already set in your terminal (`Load-LabSettings.ps1` sets it), you can leave `-ResourceGroup` off and the script picks it up.
+
+**Self-hosted** — you own the group, so you can drop the whole thing once it's empty, and remove the deployment identity too:
 ```powershell
-./scripts/Cleanup-Labs.ps1 -Prefix "<yourname>" -WhatIf
-./scripts/Cleanup-Labs.ps1 -Prefix "<yourname>"
-# Add -RemoveOidc to also delete the Entra app registration
+az group delete --name "rg-lab-<yourname>" --yes
+./scripts/Cleanup-Labs.ps1 -Prefix "<yourname>" -RemoveOidc   # deletes the Entra app
 ```
 
 Or via **Actions → "Teardown labs"** → type `DELETE`.
