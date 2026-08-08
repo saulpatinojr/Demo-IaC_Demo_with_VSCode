@@ -36,7 +36,7 @@ When it finishes you will see:
 - [ ] Your fork URL is shown in the terminal — copy it, you will use it in Section F
 
 > [!NOTE]
-> **Already have a repo called `Demo-IaC_Demo_with_VSCode`?** The script checks that the repo in your account is genuinely a fork *of this workshop*, not just a name match, and stops with a `[FAIL]` if it isn't. Rename or delete that repo and re-run — otherwise every later step (`gh repo set-default`, the OIDC credential, the deploy workflows) would point at a repo with none of the lab's workflows in it.
+> **Already have a repo called `Demo-IaC_Demo_with_VSCode`?** The script checks that the repo in your account is genuinely a fork *of this workshop*, not just a name match. It **warns and keeps going** rather than stopping — but read the warning, because it means the URL it prints is the wrong repo. Rename or delete that repo and re-run; otherwise every later step (`gh repo set-default`, the OIDC credential, the deploy workflows) points at a repo with none of the lab's workflows in it.
 
 > If your environment blocks script downloads in the terminal, download `Connect-AzureAndGitHub.ps1` in a browser, save it to `$HOME\Desktop\Demo-IaC-Bootstrap\`, then run it.
 

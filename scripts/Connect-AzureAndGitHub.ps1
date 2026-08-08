@@ -106,6 +106,7 @@ $forkRepo = "$ghUser/$repoName"
 $forkUrl  = "https://github.com/$forkRepo"
 
 Write-Step "Forking the lab repo to your account"
+$forkWarning = ''
 
 if ($ghUser -eq $upstreamOwner) {
     # You cannot fork a repo into the account that already owns it. Say so
@@ -118,24 +119,48 @@ if ($ghUser -eq $upstreamOwner) {
     # their fork was ready, and every later step -- gh repo set-default, the
     # OIDC federated credential, the deploy workflows -- would target a repo
     # with none of the lab's workflows in it.
-    $existing = gh repo view $forkRepo --json isFork,parent 2>$null | ConvertFrom-Json
-    if ($LASTEXITCODE -eq 0 -and $existing) {
-        $parent = if ($existing.parent) { "$($existing.parent.owner.login)/$($existing.parent.name)" } else { '' }
-        if ($existing.isFork -and $parent -eq $UpstreamRepo) {
+    #
+    # This only ever WARNS. It runs before anything else in the workshop, so a
+    # wrong answer here -- an unexpected payload, a gh version that renders
+    # 'parent' differently -- must not be able to stop a classroom at step one.
+    # Being noisy about a repo that is actually fine costs a scary message;
+    # blocking on one costs the session.
+    gh repo view $forkRepo --json name 2>$null | Out-Null
+    $repoExists = ($LASTEXITCODE -eq 0)
+
+    if ($repoExists) {
+        $existing = $null
+        try   { $existing = gh repo view $forkRepo --json isFork,parent 2>$null | ConvertFrom-Json }
+        catch { $existing = $null }
+
+        if (-not $existing -or $null -eq $existing.isFork) {
+            # Could not tell. Say so and carry on rather than guessing either way.
             Write-Ok "Fork is ready at: $forkUrl"
-        } elseif ($existing.isFork) {
-            Write-Fail "$forkRepo already exists but is a fork of '$parent', not $UpstreamRepo."
-            Write-Warn "Rename or delete it, then re-run - or fork manually into a differently named repo."
-            exit 1
-        } else {
-            Write-Fail "$forkRepo already exists and is NOT a fork of $UpstreamRepo."
-            Write-Warn "The labs would deploy from a repo with none of the workshop's workflows."
-            Write-Warn "Rename or delete that repo, then re-run this script."
-            exit 1
+            Write-Warn "(Could not confirm it is a fork of $UpstreamRepo - continuing anyway.)"
         }
-    } else {
+        else {
+            $parent = if ($existing.parent) { "$($existing.parent.owner.login)/$($existing.parent.name)" } else { '' }
+            if ($existing.isFork -and $parent -eq $UpstreamRepo) {
+                Write-Ok "Fork is ready at: $forkUrl"
+            }
+            elseif ($existing.isFork) {
+                Write-Warn "$forkRepo exists but is a fork of '$parent', not $UpstreamRepo."
+                Write-Warn "Rename or delete it and re-run, or the labs will deploy from the wrong repo."
+                $script:forkWarning = "$forkRepo is a fork of '$parent', not $UpstreamRepo."
+            }
+            else {
+                Write-Warn "$forkRepo exists but is NOT a fork of $UpstreamRepo."
+                Write-Warn "The labs would deploy from a repo with none of the workshop's workflows."
+                Write-Warn "Rename or delete that repo and re-run this script."
+                $script:forkWarning = "$forkRepo is not a fork of $UpstreamRepo."
+            }
+        }
+    }
+    else {
         gh repo fork $UpstreamRepo --clone=false --remote=false
         if ($LASTEXITCODE -ne 0) {
+            # Pre-existing behaviour, deliberately unchanged: no fork exists and
+            # none could be created, so there is genuinely nothing to go on with.
             Write-Fail "Fork failed. Check your GitHub permissions and try again."
             exit 1
         }
@@ -162,11 +187,20 @@ Write-Ok "Authentication helper completed."
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 
+if ($forkWarning) {
+    Write-Host ""
+    Write-Warn "READ THIS BEFORE SECTION F:"
+    Write-Warn "  $forkWarning"
+    Write-Warn "Nothing was blocked, but cloning the URL below would give you the wrong"
+    Write-Warn "repo - no lab workflows, and Setup-Oidc.ps1 would wire Azure up to it."
+    Write-Warn "Rename or delete that repo, then re-run this script."
+}
+
 if (-not $azureValidated) {
     Write-Host ""
-    Write-Warn "Azure CLI was NOT validated - the only step this script skipped."
+    Write-Warn "Azure CLI was NOT validated - a step this script skipped."
     Write-Warn "Install it (Section C) and run 'az login' (Section D) before Section G,"
-    Write-Warn "or Setup-Oidc.ps1 will fail there. Forking below still succeeded."
+    Write-Warn "or Setup-Oidc.ps1 will fail there. Forking above was unaffected."
 }
 
 Write-Host ""
