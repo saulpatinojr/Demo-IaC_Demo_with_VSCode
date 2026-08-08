@@ -172,6 +172,9 @@ ingestion charges entirely.
 
 ## L2.4 — Enterprise Monitoring Strategy
 
+**Built:** [`curriculum/L2.4-monitoring-strategy`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.4-monitoring-strategy/main.bicep) ·
+**walkthrough:** [L2.4 — Enterprise Monitoring Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-4-Monitoring-Strategy)
+
 **Objective.** Decide what a hundred of these environments would collect, and
 prove the decision with numbers.
 
@@ -183,8 +186,11 @@ prove the decision with numbers.
   — and quantify the saving and the capability lost.
 - Separate interactive retention from long-term retention and archive, and
   compute the cost of a 12-month compliance requirement.
-- Enforce diagnostic settings estate-wide with Azure Policy `DeployIfNotExists`
-  instead of configuring resources by hand.
+- Report on missing diagnostic settings estate-wide with an Azure Policy
+  `AuditIfNotExists` assignment, and explain why the auto-remediating
+  `DeployIfNotExists` variant is unavailable to a Contributor — it needs a role
+  assignment, which is the boundary between running a workload and governing a
+  platform.
 - Build a monitoring cost report and set a budget with an action group on it.
 
 **Builds on.** L2.1–L2.3 — this chapter governs everything the previous three

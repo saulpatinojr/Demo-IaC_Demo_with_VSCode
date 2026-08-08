@@ -22,6 +22,7 @@ on:
           - "L2.1 - Monitoring Fundamentals"
           - "L2.2 - Operational Visibility"
           - "L2.3 - Proactive Operations"
+          - "L2.4 - Enterprise Monitoring Strategy"
       include_web_tier:
         description: "L1.2 (firewall + web tier) is still deployed"
         type: boolean
@@ -82,6 +83,7 @@ jobs:
             "L2.1 - Monitoring Fundamentals") dir="curriculum/L2.1-monitoring-fundamentals" ;;
             "L2.2 - Operational Visibility")  dir="curriculum/L2.2-operational-visibility" ;;
             "L2.3 - Proactive Operations")    dir="curriculum/L2.3-proactive-operations" ;;
+            "L2.4 - Enterprise Monitoring Strategy") dir="curriculum/L2.4-monitoring-strategy" ;;
             *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
           esac
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
