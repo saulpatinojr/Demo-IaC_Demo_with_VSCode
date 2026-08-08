@@ -156,8 +156,8 @@ Your `gh` account must have **Admin** access to each student's GitHub fork to pu
 > [!TIP]
 > The `AZURE_PREFIX` variable is derived as `stu<number>` from the student's UPN (e.g. `Student140801` becomes `stu140801`). This keeps it under Bicep's 12-character limit on resource name prefixes.
 
-> [!NOTE]
-> Re-running this script rotates the VM and SQL throwaway passwords. It is safe to re-run.
+> [!WARNING]
+> **Re-running this script overwrites every secret, including the VM and SQL throwaway passwords** — unlike the single-student `Setup-Oidc.ps1`, which deliberately keeps existing passwords. Re-running it is safe *before* students deploy. Re-running it *after* they have deployed L1 or L3 puts the new `VM_ADMIN_PASSWORD` / `SQL_ADMIN_PASSWORD` in GitHub out of step with the VMs and SQL servers already built with the old ones — the credentials in their fork will no longer sign in to their own resources. Re-run mid-class only for students who have not deployed yet, or expect to redeploy those resources afterwards.
 
 ---
 

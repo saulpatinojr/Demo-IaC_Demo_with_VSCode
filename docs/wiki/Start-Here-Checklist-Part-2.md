@@ -156,28 +156,34 @@ gh secret list
 > **Optional preview (`-WhatIf`)** — safe dry run. You should only see planned actions, with no changes applied.
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>" -WhatIf
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf
 ```
 
 #### Run for real
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
 ```
 
 #### Self-hosted (your own subscription)
+
+> [!IMPORTANT]
+> **`-ResourceGroup` is required here too, and the group must already exist.** No lab creates it, and every deploy workflow reads the `AZURE_RESOURCE_GROUP` secret that this flag sets. Create it first:
+> ```powershell
+> az group create --name "rg-techdemo-<yourname>" --location eastus2
+> ```
 
 > [!TIP]
 > **Optional preview (`-WhatIf`)** — safe dry run. You should only see planned actions, with no changes applied.
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -Prefix "<yourname>" -WhatIf
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf
 ```
 
 #### Run for real
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -Prefix "<yourname>"
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
 ```
 
 ---
@@ -189,8 +195,8 @@ gh secret list
 gh variable list
 ```
 
-- [ ] `gh secret list` shows 6 secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD`
-  *(Self-hosted: 5 secrets — no `AZURE_RESOURCE_GROUP`)*
+- [ ] `gh secret list` shows all 6 secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD`
+  *(Same 6 either way — classroom and self-hosted both need `AZURE_RESOURCE_GROUP`, because the workflows deploy into a named group in both cases.)*
 - [ ] `gh variable list` shows `AZURE_PREFIX` and `AZURE_LOCATION`
 
 > Full walkthrough and manual steps: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide). Instructor pre-lab setup: [Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup).

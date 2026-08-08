@@ -31,7 +31,7 @@ Place `lab-user-data.csv` (the student roster exported from your Entra/GitHub ad
 > [!NOTE]
 > The real `lab-user-data.csv` is listed in `.gitignore` — it is never committed to the repo. Copy `lab-user-data.csv.example` as a template. Only the `.example` file is tracked.
 
-This script creates **31 resource groups** (`rg-techdemo-Student140801` … `rg-techdemo-Saul.Patina`), applies 4 required tags to each, assigns students Contributor on their own RG, and assigns the instructor Contributor on all RGs.
+This script creates **one resource group per Student row in your CSV**, named `rg-techdemo-<entra-username>` (e.g. `rg-techdemo-Student140801`), applies 4 required tags to each, assigns students Contributor on their own RG, and assigns the instructor Contributor on all RGs. Run it with `-WhatIf` first to see the exact list and count for *your* roster.
 
 **Tags applied to every resource group:**
 
@@ -54,6 +54,9 @@ This script creates **31 resource groups** (`rg-techdemo-Student140801` … `rg-
 ./scripts/admin/Set-LabPolicy.ps1 `
     -SubscriptionId "<your-subscription-id>"
 ```
+
+> [!WARNING]
+> **The `rg-techdemo-` prefix is load-bearing.** `Set-LabPolicy.ps1` finds groups to protect by that prefix (its `-ResourceGroupPrefix` default), and `New-LabEnvironment.ps1` and `Setup-OidcAll.ps1` both build the same name. A group created under any other name — including by hand, using the per-participant steps in section 3 below — gets **no policy guardrails at all**, silently: nothing errors, the deployment just isn't constrained. Keep the prefix, or pass a matching `-ResourceGroupPrefix` to `Set-LabPolicy.ps1`.
 
 This assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:
 - **Allowed locations** — only `eastus2` and `westus2` deployments are permitted (L4 deploys its failover stack to `westus2`)
@@ -100,7 +103,7 @@ This script loops over every Student row in the CSV and for each one:
 |------|-----------|----------------|
 | GitHub org membership | Participant can fork and use Actions | Instructor (invite) |
 | GitHub Copilot seat | Required for Copilot agent mode | Instructor (assign) |
-| Azure resource group | e.g. `rg-lab-alice` | Instructor |
+| Azure resource group | e.g. `rg-techdemo-alice` | Instructor |
 | Contributor on RG | Lets the participant deploy resources | Instructor |
 | Owner (or RBAC Admin) on RG | Lets the OIDC setup script grant Contributor to the service principal | Instructor, **OR** instructor runs setup on the student's behalf |
 | Entra app registration (optional) | The OIDC identity; can be student-created or instructor-created | Instructor or student (see below) |
@@ -156,12 +159,12 @@ This avoids giving participants elevated RBAC rights and works regardless of ten
 
 ```powershell
 # 1. Create the resource group
-az group create --name rg-lab-<prefix> --location eastus2
+az group create --name rg-techdemo-<prefix> --location eastus2
 
 # 2. Run the OIDC setup on the participant's behalf (signed in as instructor)
 ./scripts/Setup-Oidc.ps1 `
     -GitHubRepo "<orgOrUser>/Demo-IaC_Demo_with_VSCode" `
-    -ResourceGroup "rg-lab-<prefix>" `
+    -ResourceGroup "rg-techdemo-<prefix>" `
     -Prefix "<prefix>" `
     -Location "eastus2" `
     -AlertEmail "<participant-email>"
@@ -174,7 +177,7 @@ az role assignment create \
   --assignee-object-id $STUDENT_OID \
   --assignee-principal-type User \
   --role Contributor \
-  --scope /subscriptions/<sub-id>/resourceGroups/rg-lab-<prefix>
+  --scope /subscriptions/<sub-id>/resourceGroups/rg-techdemo-<prefix>
 ```
 
 After step 2, the participant only needs to **sign in with `az login` and `gh auth login`** — no extra setup required.
@@ -188,7 +191,7 @@ If your tenant allows app registration (default) and you grant participants Owne
 az role assignment create \
   --assignee <student-email-or-object-id> \
   --role Owner \
-  --scope /subscriptions/<sub-id>/resourceGroups/rg-lab-<prefix>
+  --scope /subscriptions/<sub-id>/resourceGroups/rg-techdemo-<prefix>
 ```
 
 The student then runs `Setup-Oidc.ps1` themselves, which creates their own app registration and sets up the federated credential.
@@ -225,7 +228,7 @@ Run this for each participant before the lab. Replace `<prefix>` with their uniq
 PARTICIPANT:  <name>
 PREFIX:       <prefix>        ← must be unique, ≤12 chars, alphanumeric
 GITHUB FORK:  <orgOrUser>/Demo-IaC_Demo_with_VSCode
-RESOURCE GROUP: rg-lab-<prefix>
+RESOURCE GROUP: rg-techdemo-<prefix>
 REGION:       eastus2
 ```
 
@@ -236,11 +239,11 @@ REGION:       eastus2
 - [ ] Confirm participant has enabled Actions on their fork (first-time approval)
 
 **Azure (10 min)**
-- [ ] `az group create --name rg-lab-<prefix> --location eastus2`
-- [ ] `./scripts/Setup-Oidc.ps1 -GitHubRepo "<fork>" -ResourceGroup "rg-lab-<prefix>" -Prefix "<prefix>" -AlertEmail "<email>"`
+- [ ] `az group create --name rg-techdemo-<prefix> --location eastus2`
+- [ ] `./scripts/Setup-Oidc.ps1 -GitHubRepo "<fork>" -ResourceGroup "rg-techdemo-<prefix>" -Prefix "<prefix>" -AlertEmail "<email>"`
 - [ ] Verify secrets pushed: `gh secret list --repo <fork>`
 - [ ] Verify variables pushed: `gh variable list --repo <fork>`
-- [ ] Confirm Contributor assignment: `az role assignment list --scope /subscriptions/<sub>/resourceGroups/rg-lab-<prefix> --role Contributor -o table`
+- [ ] Confirm Contributor assignment: `az role assignment list --scope /subscriptions/<sub>/resourceGroups/rg-techdemo-<prefix> --role Contributor -o table`
 
 **Participant self-check (before starting)**
 - [ ] `az login` → correct subscription shows
@@ -309,10 +312,10 @@ Each student at L4 uses: 1 additional Container Apps environment + 1 SQL server 
 
 ```powershell
 # Per student (classroom mode — deletes resources, not the RG):
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<prefix>"
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-techdemo-<prefix>"
 
 # Instructor: delete the RG entirely when the lab is fully done:
-az group delete --name rg-lab-<prefix> --yes
+az group delete --name rg-techdemo-<prefix> --yes
 
 # Remove the OIDC app registration:
 ./scripts/Cleanup-Labs.ps1 -Prefix "<prefix>" -RemoveOidc
