@@ -21,6 +21,17 @@
     in the Start-Here Checklist.  gh secret list  on their fork will already show
     all six secrets.
 
+    IDEMPOTENT -- safe to re-run at any point, including mid-class. The Azure
+    objects (app registration, service principal, federated credentials, role
+    assignment) are all check-then-skip. The identity and resource-group secrets
+    are rewritten every run so they always match the app and RG this run
+    configured. VM_ADMIN_PASSWORD and SQL_ADMIN_PASSWORD are generated only when
+    absent and are otherwise left alone, because a VM or SQL server already
+    deployed keeps whatever password it was built with -- overwriting the secret
+    would leave the student holding a credential that no longer opens their own
+    resources. To force a fresh password, delete that secret on the fork and
+    re-run.
+
     GitHub handle derivation:
         Student GitHub username is assumed to be the Entra UPN prefix
         (e.g.  Student140801@npluslab.onmicrosoft.com  ->  Student140801).
@@ -206,7 +217,17 @@ function Ensure-FedCred($Name, $Subject, $AppId) {
     } else { Write-Skip "Would create federated credential '$Name' for $Subject" }
 }
 
-function Set-RepoSecret($ForkRepo, $Name, $Value) {
+function Set-RepoSecret($ForkRepo, $Name, $Value, $ExistingSecrets, [switch] $KeepExisting) {
+    # Passwords are regenerated on every run, and a deployed VM or SQL server
+    # keeps whatever password it was built with. Overwriting the secret would
+    # leave the student's fork holding a credential that no longer opens their
+    # own resources, so an existing password is left alone -- matching the
+    # single-student Setup-Oidc.ps1. Identity and resource-group secrets get no
+    # such treatment: they must match the app and RG THIS run configured.
+    if ($KeepExisting -and $ExistingSecrets -contains $Name) {
+        Write-Skip "Secret '$Name' already exists on $ForkRepo - keeping the current value"
+        return
+    }
     if ($PSCmdlet.ShouldProcess("$ForkRepo secret $Name", 'Set')) {
         # `gh secret set` reads stdin ONLY when --body is absent; `--body -`
         # stores the literal string "-" and every deploy then fails to log in.
@@ -325,12 +346,16 @@ foreach ($Student in $Students) {
     $VmPwd  = New-ThrowawayPassword
     $SqlPwd = New-ThrowawayPassword
 
+    # Listed once per student rather than once per secret: the only two that
+    # need it are the passwords below, and this keeps it to a single API call.
+    $ExistingSecrets = @(gh secret list --repo $ForkRepo --json name --jq '.[].name' 2>$null)
+
     Set-RepoSecret  $ForkRepo 'AZURE_CLIENT_ID'       $AppId
     Set-RepoSecret  $ForkRepo 'AZURE_TENANT_ID'       $TenantId
     Set-RepoSecret  $ForkRepo 'AZURE_SUBSCRIPTION_ID' $SubscriptionId
     Set-RepoSecret  $ForkRepo 'AZURE_RESOURCE_GROUP'  $RgName
-    Set-RepoSecret  $ForkRepo 'VM_ADMIN_PASSWORD'     $VmPwd
-    Set-RepoSecret  $ForkRepo 'SQL_ADMIN_PASSWORD'    $SqlPwd
+    Set-RepoSecret  $ForkRepo 'VM_ADMIN_PASSWORD'     $VmPwd  $ExistingSecrets -KeepExisting
+    Set-RepoSecret  $ForkRepo 'SQL_ADMIN_PASSWORD'    $SqlPwd $ExistingSecrets -KeepExisting
     Set-RepoVariable $ForkRepo 'AZURE_PREFIX'          $AzurePrefix
     Set-RepoVariable $ForkRepo 'AZURE_LOCATION'        $Location
 

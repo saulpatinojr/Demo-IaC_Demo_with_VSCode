@@ -157,11 +157,9 @@ Your `gh` account must have **Admin** access to each student's GitHub fork to pu
 > The `AZURE_PREFIX` variable is derived as `stu<number>` from the student's UPN (e.g. `Student140801` becomes `stu140801`). This keeps it under Bicep's 12-character limit on resource name prefixes.
 
 > [!NOTE]
-> **This script is idempotent, with exactly two exceptions.** The Azure side is safe to re-run as often as you like: the app registration, service principal, federated credentials and role assignment are all check-then-skip, and the four identity/resource-group secrets rewrite to the same values.
+> **This script is idempotent — safe to re-run at any point, including mid-class.** The Azure objects (app registration, service principal, federated credentials, role assignment) are all check-then-skip. The identity and resource-group secrets are rewritten every run so they always match the app and RG that run configured.
 >
-> The exceptions are `VM_ADMIN_PASSWORD` and `SQL_ADMIN_PASSWORD`. Both are freshly generated on every run and written unconditionally, so each run puts a **different** password in the student's fork. That is harmless before they deploy. After they have deployed L1 or L3, it leaves GitHub out of step with the VMs and SQL servers already built with the old password — the secret in their fork no longer signs in to their own resources.
->
-> The single-student `Setup-Oidc.ps1` does not have this behaviour; it deliberately keeps existing passwords for that reason. Until the two scripts agree, re-run this one mid-class only for students who have not deployed yet, or plan to redeploy those resources afterwards.
+> `VM_ADMIN_PASSWORD` and `SQL_ADMIN_PASSWORD` are generated **only when absent** and otherwise left alone, matching the single-student `Setup-Oidc.ps1`. That matters once students have deployed: a VM or SQL server keeps whatever password it was built with, so overwriting the secret would leave a student holding a credential that no longer opens their own resources. To force a fresh password, delete that secret on the fork and re-run.
 
 ---
 

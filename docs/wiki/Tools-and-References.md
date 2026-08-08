@@ -80,6 +80,42 @@ PowerShell helpers you run on your own machine (requires PowerShell 7 + signed-i
 - Idempotent — re-running refreshes the identity and resource-group secrets, and keeps existing VM/SQL passwords so they still match anything already deployed.
 - Full walkthrough: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide).
 
+<details><summary><b>Why these scripts pipe secrets in instead of using <code>--body -</code></b> (maintainer note)</summary>
+
+Both OIDC scripts set secrets by piping the value and passing **no** `--body`:
+
+```powershell
+$value | gh secret set NAME --repo $repo      # correct
+$value | gh secret set NAME --repo $repo --body -   # WRONG: stores the literal "-"
+```
+
+`gh` reads a value from standard input **only when `--body` is absent**. Its own flag help says so, identically for both commands:
+
+```
+$ gh secret set --help
+  -b, --body string   The value for the secret (reads from standard input if not specified)
+
+$ gh variable set --help
+  -b, --body string   The value for the variable (reads from standard input if not specified)
+```
+
+`--body -` *specifies* a value, so stdin is never read and the secret is stored as the one-character string `-`. Every `azure/login` then fails with an opaque AAD error, because the preflight check only tests that the secret is non-empty — and `-` is non-empty.
+
+**Verifying it yourself, using a variable rather than a secret.** A secret cannot be read back, so confirming its stored value normally needs a throwaway workflow that echoes the length. A **variable** can be read back directly, which turns the check into two commands. `gh variable set` and `gh secret set` are separate commands, but they share the `--body` semantics quoted above, so the variable is a faithful stand-in:
+
+```bash
+# On a fork you don't mind writing to:
+echo "realvalue" | gh variable set TEST_BODY_DASH --repo OWNER/REPO --body -
+gh variable get TEST_BODY_DASH --repo OWNER/REPO
+
+# Cleanup
+gh variable delete TEST_BODY_DASH --repo OWNER/REPO
+```
+
+`-` confirms the behaviour these scripts work around. `realvalue` would mean the reasoning above is wrong and the piping could be reverted.
+
+</details>
+
 ### `Cleanup-Labs.ps1`
 - Deletes every resource inside your lab resource group — all four labs share one group, so this clears L1–L4 in one run. The group itself is kept.
 - Always preview first: `./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP -WhatIf`
