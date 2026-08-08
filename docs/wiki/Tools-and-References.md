@@ -101,7 +101,16 @@ $ gh variable set --help
 
 `--body -` *specifies* a value, so stdin is never read and the secret is stored as the one-character string `-`. Every `azure/login` then fails with an opaque AAD error, because the preflight check only tests that the secret is non-empty — and `-` is non-empty.
 
-**Verifying it yourself, using a variable rather than a secret.** A secret cannot be read back, so confirming its stored value normally needs a throwaway workflow that echoes the length. A **variable** can be read back directly, which turns the check into two commands. `gh variable set` and `gh secret set` are separate commands, but they share the `--body` semantics quoted above, so the variable is a faithful stand-in:
+**This has been confirmed against the real client** (`gh` 2.63.2), by pointing it at a local HTTPS server and reading the request it actually sent. A repo secret is encrypted client-side with a libsodium sealed box, which is exactly **48 bytes larger than its plaintext** — so the ciphertext length recovers the plaintext length without ever decrypting anything. Piping the 9-character string `realvalue` both ways:
+
+| invocation | ciphertext | plaintext length |
+|---|---|---|
+| `gh secret set X --body -` | 49 B | **1** — the literal `-`, stdin discarded |
+| `echo … \| gh secret set X` | 57 B | **9** — `realvalue`, read from stdin |
+
+That length of 1 is the bug. Nothing about it is specific to this repo or to Azure.
+
+**Re-checking it yourself, using a variable.** A secret cannot be read back, so confirming a *stored* value normally needs a throwaway workflow that echoes its length. A **variable** can be read back directly, which turns the check into two commands. `gh variable set` and `gh secret set` are separate commands that share the `--body` semantics quoted above — and the same local capture showed `variable set --body -` putting `{"name":"…","value":"-"}` on the wire — so the variable is a faithful stand-in:
 
 ```bash
 # On a fork you don't mind writing to:
@@ -112,7 +121,7 @@ gh variable get TEST_BODY_DASH --repo OWNER/REPO
 gh variable delete TEST_BODY_DASH --repo OWNER/REPO
 ```
 
-`-` confirms the behaviour these scripts work around. `realvalue` would mean the reasoning above is wrong and the piping could be reverted.
+`-` confirms the behaviour these scripts work around. `realvalue` would mean a future `gh` release changed it, and the piping could be reverted.
 
 </details>
 
