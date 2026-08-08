@@ -6,7 +6,7 @@
     For every resource group matching the -ResourceGroupPrefix pattern this
     script assigns six Azure Policy assignments:
 
-        1. Allowed locations        -- deployments must target eastus2 only
+        1. Allowed locations        -- deployments must target the lab regions
         2. Allowed resource types   -- only the resource types used by L1-L4
         3. Inherit tag: Owner       -- resources inherit Owner from their RG
         4. Inherit tag: Event       -- resources inherit Event from their RG
@@ -37,7 +37,13 @@
     Default: rg-techdemo-
 
 .PARAMETER Location
-    The single allowed Azure region. Default: eastus2.
+    The allowed Azure regions. Default: eastus2, westus2.
+
+    BOTH are required. L1-L3 deploy to the primary region (eastus2), but L4
+    deploys its failover stack to a secondary region -- westus2, the default of
+    the secondaryLocation parameter in labs/L4-global/main.bicep. Restricting
+    this to eastus2 alone makes L4 undeployable. If you change the lab regions,
+    change them here and in the L4 template together.
 
 .PARAMETER WhatIf
     Print every planned assignment without making any changes.
@@ -58,7 +64,7 @@
 param(
     [string] $CsvPath             = (Join-Path $PSScriptRoot 'lab-user-data.csv'),
     [string] $ResourceGroupPrefix = 'rg-techdemo-',
-    [string] $Location            = 'eastus2'
+    [string[]] $Location          = @('eastus2', 'westus2')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -100,11 +106,22 @@ Write-Ok "SubscriptionId from CSV: $SubscriptionId"
 # ---------------------------------------------------------------------------- #
 #  Allowed resource types -- all L1-L4 lab resources                            #
 # ---------------------------------------------------------------------------- #
+# The "Allowed resource types" policy is a DENY policy that evaluates child
+# resources as well as top-level ones, so every child type an AVM module
+# creates has to appear here or the student's deployment fails with an opaque
+# policy error. Two consequences worth knowing before you edit this list:
+#   * Child types use the full nested path. 'Microsoft.Network/virtualNetworks/
+#     virtualNetworkPeerings' is real; 'Microsoft.Network/virtualNetworkPeerings'
+#     is not, and an entry that names no real type silently allows nothing.
+#   * Bumping an AVM module version can introduce new child types. If students
+#     start hitting policy denials after a template change, re-derive this list
+#     rather than guessing:
+#         az deployment group what-if -g <rg> -f labs/L1-hub-spoke/main.bicep
 $AllowedResourceTypes = @(
     # Networking -- L1 (hub/spoke, Bastion, peering)
     'Microsoft.Network/virtualNetworks'
     'Microsoft.Network/virtualNetworks/subnets'
-    'Microsoft.Network/virtualNetworkPeerings'
+    'Microsoft.Network/virtualNetworks/virtualNetworkPeerings'
     'Microsoft.Network/networkInterfaces'
     'Microsoft.Network/networkSecurityGroups'
     'Microsoft.Network/publicIPAddresses'
@@ -116,35 +133,46 @@ $AllowedResourceTypes = @(
     'Microsoft.Network/firewallPolicies/ruleCollectionGroups'
     'Microsoft.Network/routeTables'
     'Microsoft.Network/loadBalancers'
+    'Microsoft.Network/loadBalancers/backendAddressPools'
+    'Microsoft.Network/loadBalancers/inboundNatRules'
+    'Microsoft.Network/publicIPPrefixes'
 
     # Networking -- L3 (private endpoints, DNS)
     'Microsoft.Network/privateDnsZones'
     'Microsoft.Network/privateDnsZones/virtualNetworkLinks'
+    'Microsoft.Network/privateDnsZones/A'
+    'Microsoft.Network/privateDnsZones/SOA'
     'Microsoft.Network/privateEndpoints'
+    'Microsoft.Network/privateEndpoints/privateDnsZoneGroups'
 
-    # Networking -- L4 (Front Door -- both classic and Standard/Premium)
-    'Microsoft.Network/frontdoors'
+    # Networking -- L4 (Front Door Standard; routes hang off the AFD endpoint)
     'Microsoft.Cdn/profiles'
     'Microsoft.Cdn/profiles/afdEndpoints'
+    'Microsoft.Cdn/profiles/afdEndpoints/routes'
     'Microsoft.Cdn/profiles/originGroups'
     'Microsoft.Cdn/profiles/originGroups/origins'
-    'Microsoft.Cdn/profiles/routes'
 
     # Compute -- L1 / L2 VMs
     'Microsoft.Compute/virtualMachines'
+    'Microsoft.Compute/virtualMachines/extensions'
     'Microsoft.Compute/disks'
-    'Microsoft.Compute/virtualMachineExtensions'
 
     # Containers -- L3
     'Microsoft.App/managedEnvironments'
     'Microsoft.App/containerApps'
 
-    # Data -- L3/L4
+    # Data -- L3/L4 (AVM's sql/server module always writes these child settings)
     'Microsoft.Sql/servers'
     'Microsoft.Sql/servers/databases'
     'Microsoft.Sql/servers/failoverGroups'
     'Microsoft.Sql/servers/firewallRules'
+    'Microsoft.Sql/servers/auditingSettings'
+    'Microsoft.Sql/servers/securityAlertPolicies'
+    'Microsoft.Sql/servers/vulnerabilityAssessments'
+    'Microsoft.Sql/servers/connectionPolicies'
     'Microsoft.KeyVault/vaults'
+    'Microsoft.KeyVault/vaults/secrets'
+    'Microsoft.KeyVault/vaults/accessPolicies'
 
     # Identity
     'Microsoft.ManagedIdentity/userAssignedIdentities'
@@ -154,6 +182,7 @@ $AllowedResourceTypes = @(
     'Microsoft.Insights/components'
     'Microsoft.Insights/metricAlerts'
     'Microsoft.Insights/actionGroups'
+    'Microsoft.Insights/diagnosticSettings'
 
     # ARM / RBAC plumbing
     'Microsoft.Authorization/roleAssignments'
@@ -306,7 +335,7 @@ Write-Host " POLICY ASSIGNMENTS COMPLETE" -ForegroundColor Green
 Write-Host "$('=' * 72)" -ForegroundColor Green
 Write-Host "  Resource groups processed : $AssignedCount"
 Write-Host "  Assignments per group     : 6  (location + resource types + 4 tags)"
-Write-Host "  Allowed location          : $Location"
+Write-Host "  Allowed locations         : $($Location -join ', ')"
 Write-Host "  Resource type whitelist   : $($AllowedResourceTypes.Count) types"
 if ($WhatIfPreference) {
     Write-Host "`n  *** DRY RUN -- no changes were made ***" -ForegroundColor Yellow

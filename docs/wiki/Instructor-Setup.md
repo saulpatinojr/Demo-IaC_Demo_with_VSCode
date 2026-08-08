@@ -56,7 +56,7 @@ This script creates **31 resource groups** (`rg-techdemo-Student140801` … `rg-
 ```
 
 This assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:
-- **Allowed locations** — only `eastus2` deployments are permitted
+- **Allowed locations** — only `eastus2` and `westus2` deployments are permitted (L4 deploys its failover stack to `westus2`)
 - **Allowed resource types** — only the ~38 resource types used by L1–L4 are permitted
 - **Inherit tag × 4** — `Owner`, `Event`, `Date`, `Instructor` automatically propagate from the RG to every resource deployed inside it
 

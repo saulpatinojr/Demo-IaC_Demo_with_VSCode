@@ -6,31 +6,27 @@
     The labs create real, billable resources - Azure Firewall, Bastion, Front
     Door and SQL all bill while idle. This script tears them down.
 
-    Classroom mode (-ResourceGroup): deletes ALL resources inside the shared
-    resource group without deleting the group itself (students typically don't
-    have permission to delete the RG). Resources are deleted in parallel; some
-    dependent resources (e.g. Private Endpoints before their parent) may need
-    two passes.
+    All four labs deploy into ONE resource group (the one Setup-Oidc.ps1 stored
+    as the AZURE_RESOURCE_GROUP secret), so that group is the unit of teardown.
+    This script deletes every resource inside the group but leaves the group
+    itself in place, because classroom students usually hold Contributor on the
+    group only and cannot delete it.
 
-    Standard mode: deletes the lab resource groups rg-<prefix>-l1..l4 in the
-    correct order (L4 first, L1 last).
-
-    ALWAYS preview first:   ./scripts/Cleanup-Labs.ps1 -WhatIf
+    ALWAYS preview first:
+        ./scripts/Cleanup-Labs.ps1 -ResourceGroup "<your rg>" -WhatIf
 
 .PARAMETER ResourceGroup
-    When set, delete all resources INSIDE this group (classroom mode). The
-    group itself is not deleted. Ignores -Prefix and -Level.
+    The resource group the labs deployed into. Falls back to the
+    AZURE_RESOURCE_GROUP environment variable when not supplied.
 
 .PARAMETER Prefix
-    Resource-name prefix used when deploying. Default: iacdemo. Resource groups
-    are rg-<prefix>-l1 .. rg-<prefix>-l4.
-
-.PARAMETER Level
-    Which labs to remove (standard mode only): All (default), L4, L3, L2, L1.
+    Resource-name prefix used when deploying. Default: iacdemo. Only used to
+    derive the default -AppName for -RemoveOidc.
 
 .PARAMETER RemoveOidc
-    Also delete the Entra app registration named by -AppName and its role
-    assignment. Off by default so you can redeploy without re-running setup.
+    Also delete the Entra app registration named by -AppName and every role
+    assignment it holds. Off by default so you can redeploy without re-running
+    setup.
 
 .PARAMETER AppName
     Entra app to remove when -RemoveOidc is set. Defaults to "iac-demo-<Prefix>"
@@ -40,27 +36,26 @@
     Show what would be deleted without deleting anything.
 
 .EXAMPLE
-    ./scripts/Cleanup-Labs.ps1 -WhatIf
+    ./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-alice" -WhatIf
 .EXAMPLE
-    ./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-alice"   # classroom mode
+    ./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP
 .EXAMPLE
-    ./scripts/Cleanup-Labs.ps1                                  # delete all lab RGs (standard)
-.EXAMPLE
-    ./scripts/Cleanup-Labs.ps1 -Level L2                        # delete only rg-iacdemo-l2
-.EXAMPLE
-    ./scripts/Cleanup-Labs.ps1 -RemoveOidc                      # full teardown incl. OIDC identity
+    ./scripts/Cleanup-Labs.ps1 -Prefix "alice" -RemoveOidc   # identity only
 #>
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
     [string] $ResourceGroup,
     [string] $Prefix = 'iacdemo',
-    [ValidateSet('All', 'L4', 'L3', 'L2', 'L1')]
-    [string] $Level = 'All',
     [switch] $RemoveOidc,
     [string] $AppName = ''
 )
 
 $ErrorActionPreference = 'Stop'
+# az returns non-zero for expected conditions and writes progress to stderr.
+# Keep PowerShell 7.4+ from turning those into terminating errors so the
+# explicit $LASTEXITCODE checks below are the single source of truth.
+$PSNativeCommandUseErrorActionPreference = $false
+
 function Write-Banner($text) {
     $line = '=' * ($text.Length + 8)
     Write-Host ""
@@ -83,66 +78,126 @@ if (-not (Get-Command az -ErrorAction SilentlyContinue)) { Write-Fail 'az not fo
 try { az account show -o none 2>$null } catch { Write-Fail 'Run: az login'; exit 1 }
 if ($LASTEXITCODE -ne 0) { Write-Fail 'Run: az login'; exit 1 }
 
-# ---- Classroom mode: delete resources inside a shared RG -------------------
+# ---- Work out which resource group to empty --------------------------------
+if (-not $ResourceGroup -and $env:AZURE_RESOURCE_GROUP) {
+    $ResourceGroup = $env:AZURE_RESOURCE_GROUP
+    Write-Skip "using AZURE_RESOURCE_GROUP from the environment: $ResourceGroup"
+}
+
+if (-not $ResourceGroup) {
+    if ($RemoveOidc) {
+        Write-Warn 'No resource group given - removing the OIDC identity only.'
+        Write-Warn 'Lab resources (firewall, Bastion, SQL) are still deployed and still billing.'
+    } else {
+        Write-Fail 'No resource group to clean up.'
+        Write-Host '    Pass -ResourceGroup "<your lab rg>", or run ./scripts/Load-LabSettings.ps1' -ForegroundColor DarkGray
+        Write-Host '    first so AZURE_RESOURCE_GROUP is set. All four labs share one group.' -ForegroundColor DarkGray
+        exit 1
+    }
+}
+
+# ---- Delete everything inside the group ------------------------------------
 if ($ResourceGroup) {
-    Write-Step "Classroom mode: deleting all resources in '$ResourceGroup'"
+    Write-Step "Deleting all resources in '$ResourceGroup'"
+
     $rgExists = (az group exists --name $ResourceGroup) -eq 'true'
-    if (-not $rgExists) { Write-Skip "Resource group '$ResourceGroup' not found; nothing to delete"; return }
-
-    $ids = az resource list --resource-group $ResourceGroup --query '[].id' -o tsv 2>$null
-    if (-not $ids) { Write-Skip 'No resources found in the resource group'; return }
-
-    $idList = ($ids -split "`n") -replace '\r', '' | Where-Object { $_ }
-    Write-Warn "Found $($idList.Count) resource(s) to delete."
-
-    if ($PSCmdlet.ShouldProcess($ResourceGroup, "Delete $($idList.Count) resources")) {
-        # Delete in one batch; ARM handles dependency ordering within the group.
-        az resource delete --ids $idList | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Ok "All resources deleted from '$ResourceGroup'"
-        } else {
-            Write-Warn 'Some resources may not have deleted (dependency ordering). Re-run to clean up.'
+    if (-not $rgExists) {
+        Write-Fail "Resource group '$ResourceGroup' not found - nothing was deleted."
+        Write-Host '    Check the name against your AZURE_RESOURCE_GROUP secret.' -ForegroundColor DarkGray
+        if (-not $RemoveOidc) { exit 1 }
+    } else {
+        # Private DNS virtual-network links are CHILD resources: `az resource
+        # list` never returns them, and a zone refuses to delete while a link
+        # survives. Without this the L3 privatelink zones outlive every pass.
+        $zones = @(az network private-dns zone list --resource-group $ResourceGroup --query '[].name' -o tsv 2>$null | Where-Object { $_ })
+        foreach ($zone in $zones) {
+            $links = @(az network private-dns link vnet list --resource-group $ResourceGroup --zone-name $zone --query '[].name' -o tsv 2>$null | Where-Object { $_ })
+            foreach ($link in $links) {
+                if ($PSCmdlet.ShouldProcess("$zone/$link", 'Delete private DNS vnet link')) {
+                    az network private-dns link vnet delete --resource-group $ResourceGroup --zone-name $zone --name $link --yes 2>$null | Out-Null
+                    if ($LASTEXITCODE -eq 0) { Write-Ok "removed DNS link $zone/$link" }
+                    else { Write-Warn "could not remove DNS link $zone/$link" }
+                } else {
+                    Write-Skip "would remove DNS link $zone/$link"
+                }
+            }
         }
-    } else {
-        $idList | ForEach-Object { Write-Skip "would delete $_" }
+
+        # Several passes: ARM rejects a delete while a dependent resource still
+        # references the target (private endpoints before their parent, the
+        # firewall before its public IP, and so on).
+        $remaining = @()
+        $declined  = $false
+        for ($pass = 1; $pass -le 3; $pass++) {
+            $ids = @(az resource list --resource-group $ResourceGroup --query '[].id' -o tsv 2>$null | Where-Object { $_ })
+            if ($LASTEXITCODE -ne 0) {
+                Write-Fail "Could not list resources in '$ResourceGroup' - check your permissions."
+                exit 1
+            }
+
+            $remaining = $ids
+            if ($ids.Count -eq 0) {
+                Write-Ok "'$ResourceGroup' contains no resources"
+                break
+            }
+
+            if (-not $PSCmdlet.ShouldProcess($ResourceGroup, "Delete $($ids.Count) resources")) {
+                $ids | ForEach-Object { Write-Skip "would delete $_" }
+                $declined = $true
+                break
+            }
+
+            Write-Warn "Pass $pass - deleting $($ids.Count) resource(s) ..."
+            az resource delete --ids $ids 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Ok "pass $pass completed"
+            } else {
+                Write-Warn "pass $pass left some resources behind (dependency ordering)"
+            }
+        }
+
+        # Only a real delete attempt can leave something "surviving" - a dry run
+        # or a declined confirmation prompt has simply not tried yet.
+        if (-not $WhatIfPreference -and -not $declined -and $remaining.Count -gt 0) {
+            $left = @(az resource list --resource-group $ResourceGroup --query '[].id' -o tsv 2>$null | Where-Object { $_ })
+            if ($left.Count -gt 0) {
+                Write-Fail "$($left.Count) resource(s) survived all 3 passes and are STILL BILLING:"
+                $left | ForEach-Object { Write-Host "      $_" -ForegroundColor Red }
+                Write-Host '    Re-run this script, or delete them in the Azure portal.' -ForegroundColor DarkGray
+                exit 1
+            }
+            Write-Ok "'$ResourceGroup' is now empty"
+        }
     }
-    Write-Ok 'Done.'
-    if ($WhatIfPreference) { Write-Warn 'DRY RUN - nothing was deleted.' }
-    return
 }
 
-# ---- Standard mode: delete whole lab resource groups -----------------------
-# Delete order matters: L4 first (SQL failover group on L3), L2 before L1 (firewall in L1 hub).
-$order = if ($Level -eq 'All') { @('l4', 'l3', 'l2', 'l1') } else { @($Level.ToLower()) }
-
-Write-Step "Tearing down prefix '$Prefix' - levels: $($order -join ', ')"
-foreach ($lvl in $order) {
-    $rg = "rg-$Prefix-$lvl"
-    $exists = (az group exists --name $rg) -eq 'true'
-    if (-not $exists) { Write-Skip "$rg does not exist; nothing to delete"; continue }
-    if ($PSCmdlet.ShouldProcess($rg, 'Delete resource group')) {
-        Write-Warn "Deleting $rg ..."
-        az group delete --name $rg --yes | Out-Null
-        Write-Ok "deleted $rg"
-    } else {
-        Write-Skip "would delete $rg"
-    }
-}
-
+# ---- Optionally remove the OIDC identity -----------------------------------
 if ($RemoveOidc) {
     Write-Step "Removing OIDC identity '$AppName'"
     $appId = az ad app list --display-name $AppName --query '[0].appId' -o tsv 2>$null
+    if ($appId) { $appId = $appId.Trim() }
     if (-not $appId) {
         Write-Skip "no app named '$AppName'"
     } else {
-        $sub = az account show --query id -o tsv
-        if ($PSCmdlet.ShouldProcess($appId, 'Remove role assignment + delete app')) {
-            az role assignment delete --assignee $appId --scope "/subscriptions/$sub" 2>$null | Out-Null
+        if ($PSCmdlet.ShouldProcess($appId, 'Remove role assignments + delete app')) {
+            # Setup-Oidc.ps1 grants Contributor at RESOURCE GROUP scope, so a
+            # subscription-scoped delete matches nothing and silently leaves an
+            # orphaned assignment. List what the app actually holds instead.
+            $assignments = @(az role assignment list --assignee $appId --all --query '[].id' -o tsv 2>$null | Where-Object { $_ })
+            if ($assignments.Count -gt 0) {
+                az role assignment delete --ids $assignments 2>$null | Out-Null
+                if ($LASTEXITCODE -eq 0) { Write-Ok "removed $($assignments.Count) role assignment(s)" }
+                else { Write-Warn 'some role assignments could not be removed' }
+            } else {
+                Write-Skip 'no role assignments found for this app'
+            }
+
             az ad app delete --id $appId 2>$null | Out-Null
-            Write-Ok "deleted app $appId and its Contributor assignment"
+            if ($LASTEXITCODE -eq 0) { Write-Ok "deleted app $appId" }
+            else { Write-Fail "could not delete app $appId" }
             Write-Host '    NOTE: repo secrets in GitHub are not removed by this script.' -ForegroundColor DarkGray
         } else {
-            Write-Skip "would delete app $appId and its role assignment"
+            Write-Skip "would delete app $appId and its role assignments"
         }
     }
 }

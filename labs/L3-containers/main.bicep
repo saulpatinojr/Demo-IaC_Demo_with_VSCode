@@ -121,6 +121,11 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.13.3' = {
     location: location
     sku: 'standard'
     enableRbacAuthorization: true
+    // The AVM default is true. Purge protection cannot be turned off once set,
+    // and the vault name is deterministic per subscription+prefix, so leaving
+    // it on would block redeploying L3 for the 90-day soft-delete window after
+    // a teardown. Soft delete still applies; the vault is just purgeable.
+    enablePurgeProtection: false
     publicNetworkAccess: 'Disabled'
     networkAcls: { bypass: 'AzureServices', defaultAction: 'Deny' }
     privateEndpoints: [
@@ -182,6 +187,14 @@ module sqlServer 'br/public:avm/res/sql/server:0.21.4' = {
 }
 
 // --- Container Apps environment (VNet-integrated, public ingress) ----------
+// workloadProfiles makes this a workload-profile environment, which is what
+// the delegated snet-aca subnet requires: Azure demands the
+// Microsoft.App/environments delegation for workload-profile environments and
+// forbids it for the legacy Consumption-only kind. Leaving workloadProfiles
+// unset would create a Consumption-only environment and the delegated subnet
+// would be rejected.
+// publicNetworkAccess must be explicit: the AVM module defaults it to
+// 'Disabled', which would make the app URL below unreachable.
 module acaEnv 'br/public:avm/res/app/managed-environment:0.13.3' = {
   name: 'l3-aca-env'
   params: {
@@ -190,6 +203,13 @@ module acaEnv 'br/public:avm/res/app/managed-environment:0.13.3' = {
     infrastructureSubnetResourceId: spoke2.outputs.subnetResourceIds[0]
     internal: false
     zoneRedundant: false
+    publicNetworkAccess: 'Enabled'
+    workloadProfiles: [
+      {
+        name: 'Consumption'
+        workloadProfileType: 'Consumption'
+      }
+    ]
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsWorkspaceResourceId: logAnalytics.outputs.resourceId
@@ -204,6 +224,7 @@ module webApp 'br/public:avm/res/app/container-app:0.23.0' = {
     name: 'ca-${prefix}-web'
     location: location
     environmentResourceId: acaEnv.outputs.resourceId
+    workloadProfileName: 'Consumption'
     managedIdentities: {
       userAssignedResourceIds: [appIdentity.outputs.resourceId]
     }

@@ -92,6 +92,23 @@ jobs:
             exit 0
           fi
 
+          # Private DNS virtual-network links are CHILD resources: they never
+          # appear in `az resource list`, and a zone refuses to delete while a
+          # link still references it. Without this the two L3 privatelink zones
+          # survive all three passes below and teardown always exits 1.
+          echo "::group::Remove private DNS virtual-network links"
+          while read -r zone; do
+            [ -n "$zone" ] || continue
+            while read -r link; do
+              [ -n "$link" ] || continue
+              echo "  unlinking $zone/$link"
+              az network private-dns link vnet delete \
+                --resource-group "$RG" --zone-name "$zone" --name "$link" --yes || true
+            done < <(az network private-dns link vnet list \
+                       --resource-group "$RG" --zone-name "$zone" --query '[].name' -o tsv)
+          done < <(az network private-dns zone list --resource-group "$RG" --query '[].name' -o tsv)
+          echo "::endgroup::"
+
           # Several passes: ARM orders most dependencies within a batch, but
           # some (private endpoints before their parent, NIC before VNet,
           # firewall before its public IP) only clear on a later pass.
