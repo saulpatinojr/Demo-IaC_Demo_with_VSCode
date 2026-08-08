@@ -32,7 +32,11 @@ When it finishes you will see:
 ```
 
 - [ ] Script completes with `[OK] Fork is ready` (no red `[FAIL]` lines)
+- [ ] **No `[WARN] Azure CLI was NOT validated` at the end.** Forking only needs `gh`, so the script finishes without Azure CLI — but `Setup-Oidc.ps1` in Section G will fail without it. If you see that warning, go back to Sections C and D.
 - [ ] Your fork URL is shown in the terminal — copy it, you will use it in Section F
+
+> [!NOTE]
+> **Already have a repo called `Demo-IaC_Demo_with_VSCode`?** The script checks that the repo in your account is genuinely a fork *of this workshop*, not just a name match, and stops with a `[FAIL]` if it isn't. Rename or delete that repo and re-run — otherwise every later step (`gh repo set-default`, the OIDC credential, the deploy workflows) would point at a repo with none of the lab's workflows in it.
 
 > If your environment blocks script downloads in the terminal, download `Connect-AzureAndGitHub.ps1` in a browser, save it to `$HOME\Desktop\Demo-IaC-Bootstrap\`, then run it.
 

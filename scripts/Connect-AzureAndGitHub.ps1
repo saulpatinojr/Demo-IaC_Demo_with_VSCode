@@ -54,6 +54,7 @@ Require-Command 'git'
 # ── Azure CLI authentication ───────────────────────────────────────────────────
 
 Write-Step "Authenticating to Azure"
+$azureValidated = $true
 if (Get-Command az -ErrorAction SilentlyContinue) {
     az account show 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
@@ -70,6 +71,11 @@ if (Get-Command az -ErrorAction SilentlyContinue) {
         }
     }
 } else {
+    # Not fatal: forking needs only gh. But this script is documented as
+    # validating Azure auth, and the checklist's success criterion is "no red
+    # [FAIL] lines" -- so without a flag carried to the summary, a student with
+    # no Azure CLI ticks the box here and only discovers the gap in Section G.
+    $script:azureValidated = $false
     Write-Warn "Azure CLI not found. Install it from Section C and re-run."
 }
 
@@ -90,8 +96,9 @@ Write-Ok "GitHub CLI authentication complete. (signed in as @$ghUser)"
 
 # ── Fork ───────────────────────────────────────────────────────────────────────
 
-$repoName = ($UpstreamRepo -split '/', 2)[1]
-if (-not $repoName) {
+$upstreamOwner = ($UpstreamRepo -split '/', 2)[0]
+$repoName      = ($UpstreamRepo -split '/', 2)[1]
+if (-not $repoName -or -not $upstreamOwner) {
     Write-Fail "UpstreamRepo must be in 'owner/name' format."
     exit 1
 }
@@ -99,16 +106,41 @@ $forkRepo = "$ghUser/$repoName"
 $forkUrl  = "https://github.com/$forkRepo"
 
 Write-Step "Forking the lab repo to your account"
-gh repo view $forkRepo --json name --jq .name 2>$null | Out-Null
-if ($LASTEXITCODE -eq 0) {
-    Write-Ok "Fork is ready at: $forkUrl"
+
+if ($ghUser -eq $upstreamOwner) {
+    # You cannot fork a repo into the account that already owns it. Say so
+    # plainly instead of reporting the upstream back as "your fork".
+    Write-Ok "You own $UpstreamRepo already - no fork needed."
+    Write-Info "Clone it directly in Section F; the workflows and secrets are yours."
 } else {
-    gh repo fork $UpstreamRepo --clone=false --remote=false
-    if ($LASTEXITCODE -ne 0) {
-        Write-Fail "Fork failed. Check your GitHub permissions and try again."
-        exit 1
+    # Ask what the repo IS, not merely whether the name is taken. A student who
+    # already has an unrelated repo called $repoName would otherwise be told
+    # their fork was ready, and every later step -- gh repo set-default, the
+    # OIDC federated credential, the deploy workflows -- would target a repo
+    # with none of the lab's workflows in it.
+    $existing = gh repo view $forkRepo --json isFork,parent 2>$null | ConvertFrom-Json
+    if ($LASTEXITCODE -eq 0 -and $existing) {
+        $parent = if ($existing.parent) { "$($existing.parent.owner.login)/$($existing.parent.name)" } else { '' }
+        if ($existing.isFork -and $parent -eq $UpstreamRepo) {
+            Write-Ok "Fork is ready at: $forkUrl"
+        } elseif ($existing.isFork) {
+            Write-Fail "$forkRepo already exists but is a fork of '$parent', not $UpstreamRepo."
+            Write-Warn "Rename or delete it, then re-run - or fork manually into a differently named repo."
+            exit 1
+        } else {
+            Write-Fail "$forkRepo already exists and is NOT a fork of $UpstreamRepo."
+            Write-Warn "The labs would deploy from a repo with none of the workshop's workflows."
+            Write-Warn "Rename or delete that repo, then re-run this script."
+            exit 1
+        }
+    } else {
+        gh repo fork $UpstreamRepo --clone=false --remote=false
+        if ($LASTEXITCODE -ne 0) {
+            Write-Fail "Fork failed. Check your GitHub permissions and try again."
+            exit 1
+        }
+        Write-Ok "Fork is ready at: $forkUrl"
     }
-    Write-Ok "Fork is ready at: $forkUrl"
 }
 Write-Info "Use that URL in Section F of the checklist when cloning your copy of the repo."
 
@@ -129,6 +161,13 @@ if ($extList -match 'gh-copilot') {
 Write-Ok "Authentication helper completed."
 
 # ── Summary ────────────────────────────────────────────────────────────────────
+
+if (-not $azureValidated) {
+    Write-Host ""
+    Write-Warn "Azure CLI was NOT validated - the only step this script skipped."
+    Write-Warn "Install it (Section C) and run 'az login' (Section D) before Section G,"
+    Write-Warn "or Setup-Oidc.ps1 will fail there. Forking below still succeeded."
+}
 
 Write-Host ""
 Write-Host "  Done. Copy this URL and use it in Section F (Clone):" -ForegroundColor Cyan
