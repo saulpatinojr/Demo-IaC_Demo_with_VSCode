@@ -20,6 +20,7 @@ on:
         default: "L2.1 - Monitoring Fundamentals"
         options:
           - "L2.1 - Monitoring Fundamentals"
+          - "L2.2 - Operational Visibility"
       include_web_tier:
         description: "L1.2 (firewall + web tier) is still deployed"
         type: boolean
@@ -74,6 +75,7 @@ jobs:
         run: |
           case "${{ inputs.chapter }}" in
             "L2.1 - Monitoring Fundamentals") dir="curriculum/L2.1-monitoring-fundamentals" ;;
+            "L2.2 - Operational Visibility")  dir="curriculum/L2.2-operational-visibility" ;;
             *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
           esac
           echo "dir=$dir" >> "$GITHUB_OUTPUT"

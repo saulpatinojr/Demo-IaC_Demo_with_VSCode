@@ -93,6 +93,9 @@ default. Metrics answer many "is it up?" questions for free.
 
 ## L2.2 — Operational Visibility
 
+**Built:** [`curriculum/L2.2-operational-visibility`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.2-operational-visibility/main.bicep) ·
+**walkthrough:** [L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility)
+
 **Objective.** Turn collected data into answers, for both the operator and the
 person who asks "is the app slow?"
 
@@ -116,9 +119,12 @@ dashboards · Application Insights (reused from L1.3) · standard availability
 tests · Azure Resource Graph.
 
 **Estimated cost.** **+$0.02/hr · running total ~$1.92/hr.** Workbooks,
-dashboards and queries are free; the cost is the extra ~0.2 GB/day of
-Application Insights telemetry. Availability tests add well under $1/month at
-lab frequency.
+dashboards, saved searches and queries are free. The cost is ~0.15 GB/day of
+Application Insights telemetry (~$0.017/hr) plus the availability test at
+**$0.0005 per execution** — $0.004/hr at the two-location, 15-minute cadence the
+template ships with. Raise it to the portal default of five locations every five
+minutes and that single line becomes $0.03/hr, more than the rest of Level 2
+combined.
 
 **Cost optimization.** Application Insights sampling is the lever here — at
 default settings a chatty app can out-ingest every other source combined.

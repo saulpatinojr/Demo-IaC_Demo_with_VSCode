@@ -85,6 +85,8 @@ Three properties are worth teaching explicitly:
 | Metric alert rule | $0.10/monitored metric/month | Verified 2026-08-08 |
 | Log alert rule, 5-minute evaluation | $1.50/rule/month | Verified 2026-08-08 |
 | Log alert rule, 15-minute evaluation | $0.50/rule/month | Verified 2026-08-08 |
+| Standard availability test | $0.0005/execution | Verified 2026-08-08 |
+| Multi-step web test | $10/month | Verified 2026-08-08 |
 | Azure Activity log into Log Analytics | free | Verified 2026-08-08 |
 | Platform metrics | free | Verified 2026-08-08 |
 
@@ -152,7 +154,8 @@ deliberately conservative for a small teaching estate.
 |---|---|---|
 | Estate size | 4 × B2s VMs, 1 firewall, 1 load balancer, 2 container replicas, 2 SQL databases, 1 Key Vault, 1 Front Door | All levels |
 | Baseline platform + VM insights ingestion | 0.5 GB/day | L2.1 |
-| Application Insights telemetry | 0.2 GB/day | L2.2 |
+| Application Insights telemetry | 0.15 GB/day | L2.2 |
+| Availability test cadence | 2 locations every 15 min = 8 executions/hr | L2.2 |
 | Alert rule set | 10 metric + 4 log rules at 5-minute evaluation | L2.3 |
 | Security export and security events | 0.25 GB/day | L3.3 |
 | Backup data stored | ~40 GB (4 VMs, compressed OS disks) | L4.1, L4.4 |
