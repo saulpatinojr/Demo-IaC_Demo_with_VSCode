@@ -77,16 +77,18 @@ You need an Azure subscription where you can create resource groups, and a GitHu
 
 GitHub Actions logs into Azure with a **federated credential** — nothing but non-secret IDs are stored, and there is no cloud password to leak. One script sets up the entire handshake, auto-detecting your fork from the tools you're already signed in to.
 
-> **Classroom participants:** your instructor has pre-created a resource group for you (e.g. `rg-lab-<yourname>`) and granted you Contributor on it. Use `-ResourceGroup` and `-Prefix` so the script scopes access correctly and avoids name conflicts with other participants.
+> **Classroom participants:** your instructor has pre-created a resource group for you (e.g. `rg-techdemo-<yourname>`) and granted you Contributor on it. Use `-ResourceGroup` and `-Prefix` so the script scopes access correctly and avoids name conflicts with other participants.
+
+> **Self-hosted:** `-ResourceGroup` is required for you too, and no lab creates the group. Make it first with `az group create --name "rg-techdemo-<yourname>" --location eastus2`.
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -WhatIf   # preview — changes nothing
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf   # preview — changes nothing
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
 ```
 
-`-ResourceGroup` is required for real runs in this repo because deploy workflows expect the `AZURE_RESOURCE_GROUP` secret.
+`-ResourceGroup` is required on **every** run, `-WhatIf` included, because deploy workflows expect the `AZURE_RESOURCE_GROUP` secret — the preview asks for it so it can't report a plan the real run would reject.
 
-This creates the Entra app + service principal, adds a federated credential for your fork's branch, grants Contributor on your assigned resource group, and pushes all the required repo secrets and variables (including strong throwaway VM/SQL passwords it generates for you). Re-run any time to rotate.
+This creates the Entra app + service principal, adds a federated credential for your fork's branch, grants Contributor on your assigned resource group, and pushes all the required repo secrets and variables (including strong throwaway VM/SQL passwords it generates for you). Re-running rewrites the identity and resource-group secrets so they always match the app and group just configured, and leaves existing VM/SQL passwords alone so they stay in step with anything already deployed.
 
 **Secrets set:** `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD`  
 **Variables set:** `AZURE_PREFIX` (your unique prefix), `AZURE_LOCATION` (defaults to `eastus2`)
@@ -139,8 +141,8 @@ When you're done (or pausing overnight), tear everything down:
 
 **Classroom participants** (shared resource group — deletes resources, not the RG):
 ```powershell
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>" -WhatIf   # preview first
-./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-<yourname>"
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-techdemo-<yourname>" -WhatIf   # preview first
+./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-techdemo-<yourname>"
 ```
 
 Or via the **Teardown labs** workflow in GitHub Actions — it runs against your `AZURE_RESOURCE_GROUP` secret, defaults to a dry run, and needs `DELETE` typed in to actually delete.

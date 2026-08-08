@@ -18,7 +18,7 @@ All three paths converge on the same place: the **[Start-Here Checklist](https:/
 
 ## 🧱 What you will build
 
-Four cumulative lab stages, each adding to the infrastructure from the previous one. All labs deploy into **your single assigned resource group** — nothing is created or deleted between stages.
+Four lab stages that all deploy into **your single assigned resource group**. Every lab builds on **L1's hub**, but they do not form a single chain — **L3 does not need L2**, so you can tear the expensive firewall down before moving on.
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
   L4["L4 · Global Scale<br/>Second region, SQL failover,<br/>Front Door<br/>~$1.84/hr"]
 
   L1 -->|"adds a firewall<br/>to the hub"| L2
-  L2 -->|"adds a second spoke<br/>off the same hub"| L3
+  L1 -->|"adds a second spoke<br/>off the same hub"| L3
   L3 -->|"adds a second region"| L4
 
   classDef s1 fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
@@ -43,28 +43,35 @@ flowchart LR
 
 <details><summary>Text description of this diagram</summary>
 
-Four labs, run in order, each building on what the last one deployed.
+Four labs, run in order, all hanging off L1's hub.
 
 **L1** creates the network foundation — a hub and a peered spoke VNet, Azure
 Bastion, and one Linux VM. **L2** puts an Azure Firewall in the hub's reserved
 subnet and adds three web VMs behind an internal load balancer. **L3** adds a
-*second* spoke off the same hub, running Container Apps with Azure SQL and Key
+*second* spoke off **L1's** hub, running Container Apps with Azure SQL and Key
 Vault reachable only through private endpoints. **L4** copies the app tier into
 a second region, joins the databases in a failover group, and puts Azure Front
 Door in front of both.
 
-The running cost is cumulative and billed while deployed. The jump at L2 is
-Azure Firewall, which is $1.25/hr on its own — more than everything else in all
-four labs combined.
+Note the shape: **L2 and L3 are siblings, not a chain.** Both attach to L1's
+hub, and L3 never touches L2's firewall or route table. L1 is a prerequisite for
+everything; L3 is a prerequisite for L4; L2 is a prerequisite for nothing.
+
+The running cost is cumulative *only while you leave each lab deployed*. The
+jump at L2 is Azure Firewall, which is $1.25/hr on its own — more than
+everything else in all four labs combined.
 
 </details>
 
-| Stage | Guide | What gets added | Difficulty | Deploy time |
-|-------|-------|-----------------|-----------|-------------|
-| **L1** | [Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke) | VNets, Bastion, test VM | 🟢 Beginner | ~15 min |
-| **L2** | [Web Tier & Firewall](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L2-Web-Tier-and-Firewall) | Azure Firewall, 3 web VMs, internal LB | 🟡 Intermediate | ~20 min |
-| **L3** | [Containers & Data](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L3-Containers-and-Data) | Container Apps, SQL, Key Vault, monitoring | 🟠 Advanced | ~20 min |
-| **L4** | [Global Scale](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale) | Second region, SQL failover group, Front Door | 🔴 Expert | ~15 min |
+| Stage | Guide | Requires | What gets added | Difficulty | Deploy time |
+|-------|-------|----------|-----------------|-----------|-------------|
+| **L1** | [Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke) | — | VNets, Bastion, test VM | 🟢 Beginner | ~15 min |
+| **L2** | [Web Tier & Firewall](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L2-Web-Tier-and-Firewall) | L1 | Azure Firewall, 3 web VMs, internal LB | 🟡 Intermediate | ~20 min |
+| **L3** | [Containers & Data](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L3-Containers-and-Data) | **L1** (not L2) | Container Apps, SQL, Key Vault, monitoring | 🟠 Advanced | ~20 min |
+| **L4** | [Global Scale](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale) | L3 | Second region, SQL failover group, Front Door | 🔴 Expert | ~15 min |
+
+> [!TIP]
+> **Want to spend less?** Because L3 only needs L1, you can tear L2 down before starting L3 and keep going. L2's firewall and web tier are about **$1.41/hr** of the running totals above — so an L4 stack with L2 already removed costs roughly **$0.43/hr** instead of $1.84/hr. See [Cost & cleanup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/README.md) in the README.
 
 ---
 
@@ -76,7 +83,10 @@ Every lab gives you three deployment paths — pick the one that fits your style
 |---|---|---|---|
 | **How** | Copy-paste terminal commands | Click a button in the browser | Describe what you want in plain English |
 | **Best for** | Seeing every step | Hands-off cloud deploy | Exploring and modifying the template |
-| **One-time setup** | `Load-LabSettings.ps1 -Persist` | `Setup-Oidc.ps1` | `Load-LabSettings.ps1 -Persist` |
+| **One-time setup** | `Load-LabSettings.ps1 -Persist` | `Setup-Oidc.ps1` † | `Load-LabSettings.ps1 -Persist` |
+| **Deploys run on** | Your machine | GitHub's runners | Your machine |
+
+† The Actions **deploys** are browser-only, but that one-time `Setup-Oidc.ps1` is not: it runs on your machine and needs PowerShell 7, `az` and `gh` signed in, and a clone of your fork. It has to authenticate to Azure as *you* in order to create the identity Actions will use afterwards. If your instructor pre-ran it, you can skip it entirely and never install a thing.
 
 ---
 
@@ -101,7 +111,7 @@ The full step-by-step is on the **[Start-Here Checklist](https://github.com/saul
 - [ ] Tools installed — run `./scripts/Install-LabTools.ps1` *(one command, Windows with admin rights)*
 - [ ] Repo **forked**, cloned, opened in VS Code, Copilot signed in
 - [ ] `az login` + `gh auth login` done
-- [ ] OIDC wired up via `./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"`
+- [ ] OIDC wired up via `./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"`
 - [ ] `lab-settings.csv` filled in *(copy from `lab-settings.csv.example`)*
 
 ---

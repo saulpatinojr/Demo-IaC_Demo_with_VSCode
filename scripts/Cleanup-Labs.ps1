@@ -36,7 +36,7 @@
     Show what would be deleted without deleting anything.
 
 .EXAMPLE
-    ./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-lab-alice" -WhatIf
+    ./scripts/Cleanup-Labs.ps1 -ResourceGroup "rg-techdemo-alice" -WhatIf
 .EXAMPLE
     ./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP
 .EXAMPLE

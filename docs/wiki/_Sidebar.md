@@ -10,7 +10,7 @@
 - [Getting Comfortable with the Tools](Getting-Comfortable-with-the-Tools)
 
 ### The labs
-Each builds on the last. Costs are **running totals**, billed while deployed.
+All build on **L1**; L4 needs L3. **L3 does not need L2.** Costs are **running totals** with every lab still deployed, billed while deployed.
 
 | | Lab | Running cost |
 |---|---|---|

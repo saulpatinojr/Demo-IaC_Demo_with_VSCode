@@ -9,7 +9,7 @@
 > [!IMPORTANT]
 > **Your resource group must already exist.** Every lab deploys *into* one; none of them create it. In a classroom your instructor has already made yours. Working on your own subscription, create it once:
 > ```powershell
-> az group create --name "rg-lab-<yourname>" --location eastus2
+> az group create --name "rg-techdemo-<yourname>" --location eastus2
 > ```
 
 ## What you're building
@@ -125,14 +125,19 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button** and let the cloud do the work — nothing installed locally, and no `lab-settings.csv` needed. Actions reads the GitHub secrets instead.
+**Best if you'd rather click a button** and let the cloud do the work. No `lab-settings.csv` needed — Actions reads the GitHub secrets instead.
 
-### Do this once
+### Do this once — and this part *is* local
+
+> [!NOTE]
+> **The one-time setup runs on your machine, not in the cloud.** `Setup-Oidc.ps1` needs PowerShell 7, `az` and `gh` installed, both signed in, and a clone of your fork to run from — everything in [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) sections C, D and F. There is no browser-only path to it, because it has to talk to Azure as *you* to create the identity that GitHub will later use.
+>
+> **After it succeeds, every deploy really is browser-only** — that is the part Actions buys you. If your instructor pre-ran setup ([Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup) step 0C), you can skip straight to *Then deploy* and never install anything.
 
 Store your credentials in GitHub. This registers the OIDC trust and pushes the secrets and variables the workflows read:
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-lab-<yourname>" -Prefix "<yourname>"
+./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
 ```
 
 ### Then deploy

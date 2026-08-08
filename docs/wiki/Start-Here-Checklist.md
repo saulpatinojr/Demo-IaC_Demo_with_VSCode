@@ -25,8 +25,15 @@ If you are in a classroom, assume the left-hand column and **confirm before Sect
 - [ ] **GitHub account** — https://github.com/join
 - [ ] **GitHub Copilot** access — Free tier works for individuals. In a classroom org, your instructor will assign you a Copilot Business or Enterprise seat.
 - [ ] **Azure access** — one of:
-  - **Classroom participant:** Your instructor has pre-created a resource group (e.g. `rg-lab-<yourname>`) and granted you Contributor on it. They may have already run the OIDC setup for you. Confirm before going to Section G.
-  - **Self-hosted:** An Azure subscription where you have at least Contributor and can create app registrations. Free trial: https://azure.microsoft.com/free
+  - **Classroom participant:** Your instructor has pre-created a resource group (typically `rg-techdemo-<your-username>`) and granted you Contributor on it. They may have already run the OIDC setup for you. Confirm before going to Section G.
+  - **Self-hosted:** An Azure subscription where you have at least Contributor and can create app registrations. Free trial: https://azure.microsoft.com/free — you create the resource group yourself, once, in Section G.
+
+> [!IMPORTANT]
+> **Don't type `<yourname>` literally, and don't assume the name.** Every lab deploys into one group that must already exist. After `az login` in Section D, list what you actually have and use that exact string everywhere below:
+> ```powershell
+> az group list --query "[].name" -o tsv
+> ```
+> If that prints nothing and you are in a classroom, stop and ask your instructor — you are missing the group the whole workshop deploys into.
 
 ---
 
