@@ -133,6 +133,9 @@ stops being true for the Basic and Auxiliary tiers introduced in L2.4.
 
 ## L2.3 — Proactive Operations
 
+**Built:** [`curriculum/L2.3-proactive-operations`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.3-proactive-operations/main.bicep) ·
+**walkthrough:** [L2.3 — Proactive Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-3-Proactive-Operations)
+
 **Objective.** Move from watching to being told — with a signal-to-noise budget.
 
 **Learning objectives**
@@ -143,8 +146,9 @@ stops being true for the Basic and Auxiliary tiers introduced in L2.4.
   survives one person being on holiday.
 - Apply dynamic thresholds where a static one would be wrong, and explain when
   they misbehave.
-- Use autoscale on the container app so that a load spike is handled rather
-  than merely reported.
+- Read the container app's scale rules where they actually live — in L1.3's
+  template, which owns that resource — and explain why a monitoring chapter
+  must not reach in and edit them.
 - Suppress noise deliberately with alert processing rules during maintenance,
   and defend the decision.
 

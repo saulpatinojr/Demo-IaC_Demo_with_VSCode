@@ -21,6 +21,7 @@ on:
         options:
           - "L2.1 - Monitoring Fundamentals"
           - "L2.2 - Operational Visibility"
+          - "L2.3 - Proactive Operations"
       include_web_tier:
         description: "L1.2 (firewall + web tier) is still deployed"
         type: boolean
@@ -45,6 +46,10 @@ env:
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
   CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
+  # Read by L2.3. Same variable the L3 lab already uses, so a class that set it
+  # once does not set it again.
+  ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
+  ALERT_EMAIL_SECONDARY: ${{ vars.ALERT_EMAIL_SECONDARY }}
 
 jobs:
   deploy:
@@ -76,6 +81,7 @@ jobs:
           case "${{ inputs.chapter }}" in
             "L2.1 - Monitoring Fundamentals") dir="curriculum/L2.1-monitoring-fundamentals" ;;
             "L2.2 - Operational Visibility")  dir="curriculum/L2.2-operational-visibility" ;;
+            "L2.3 - Proactive Operations")    dir="curriculum/L2.3-proactive-operations" ;;
             *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
           esac
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
