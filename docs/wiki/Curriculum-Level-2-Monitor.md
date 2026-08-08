@@ -13,7 +13,9 @@ you pay for.
 | **Running cost at end of level** | **~$1.93/hr** (~$1.91/hr after L2.4's tiering work) |
 
 > [!NOTE]
-> Curriculum outline only. No hands-on steps or exercises are defined yet.
+> **Build status:** L2.1 is built — template, workflow and walkthrough. L2.2–L2.4
+> are still outline only. Chapters gain a **Built** line above their objective as
+> the code lands.
 
 ## Where this level sits
 
@@ -54,6 +56,9 @@ possible in Level 5 without a redesign.
 </details>
 
 ## L2.1 — Monitoring Fundamentals
+
+**Built:** [`curriculum/L2.1-monitoring-fundamentals`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.1-monitoring-fundamentals/main.bicep) ·
+**walkthrough:** [L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals)
 
 **Objective.** Get every resource from Level 1 sending the right telemetry to
 one workspace, and be able to say what each stream costs.
