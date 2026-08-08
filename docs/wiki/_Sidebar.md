@@ -21,6 +21,17 @@ All build on **L1**; L4 needs L3. **L3 does not need L2.** Costs are **running t
 
 The jump at L2 is Azure Firewall — **$1.25/hr on its own.**
 
+### Curriculum redesign (proposal)
+Outline only — the labs above are unchanged.
+- [Overview & dependency map](Curriculum-Redesign)
+- [Level 1 · Deploy](Curriculum-Level-1-Deploy)
+- [Level 2 · Monitor](Curriculum-Level-2-Monitor)
+- [Level 3 · Secure](Curriculum-Level-3-Secure)
+- [Level 4 · Protect](Curriculum-Level-4-Protect)
+- [Level 5 · Detect](Curriculum-Level-5-Detect)
+- [Level 6 · Recover](Curriculum-Level-6-Recover)
+- [Cost model](Curriculum-Cost-Model)
+
 ### Reference
 - [Copilot Prompt Library](Copilot-Prompt-Library)
 - [Troubleshooting](Troubleshooting)
