@@ -12,7 +12,8 @@ built and instrumented — without deploying a single new workload to attack.
 | **Running cost at end of level** | **~$2.01/hr** with the recommended plan set |
 
 > [!NOTE]
-> Curriculum outline only. No hands-on steps or exercises are defined yet.
+> **Build status:** L3.1 is built — template, workflow, walkthrough, and the
+> instructor script for the subscription-scoped half. L3.2–L3.4 are outline only.
 
 ## Where this level sits
 
@@ -54,6 +55,9 @@ Sentinel decision.
 
 ## L3.1 — Security Foundation
 
+**Built:** [`curriculum/L3.1-security-foundation`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.1-security-foundation/main.bicep) ·
+**walkthrough:** [L3.1 — Security Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-1-Security-Foundation)
+
 **Objective.** Establish where the environment actually stands, using only the
 free capability, before spending anything.
 
@@ -64,8 +68,12 @@ free capability, before spending anything.
   Benchmark control they came from.
 - Identify which Level 1 design choices already scored well (private endpoints,
   managed identity, no public IP on the VM) and which did not.
-- Apply Azure Policy initiatives for governance, and distinguish `Audit`,
-  `Deny` and `DeployIfNotExists` effects by blast radius.
+- Distinguish `Audit`, `Deny` and `DeployIfNotExists` policy effects by blast
+  radius — and explain why a Contributor can assign none of them, since
+  `Microsoft.Authorization/*/Write` sits in the role's `notActions`.
+- Locate the permission boundary in this lab: Defender **plans** are
+  subscription-scoped and belong to the instructor, while per-resource security
+  settings are yours. Name which side each Level 3 task falls on.
 - Review RBAC on the resource group and the OIDC identity, and apply least
   privilege to both.
 
