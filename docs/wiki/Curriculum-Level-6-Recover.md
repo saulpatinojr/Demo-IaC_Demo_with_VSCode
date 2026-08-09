@@ -15,7 +15,8 @@ depend on Level 5.
 | **Running cost at end of level** | **~$2.20/hr** with the recommended scope (Level 5 not included) |
 
 > [!NOTE]
-> Curriculum outline only. No hands-on steps or exercises are defined yet.
+> **Build status:** Level 6 is fully built — three templates, one workflow, three
+> walkthroughs.
 
 ## Where this level sits
 
@@ -55,6 +56,9 @@ belong on the same dashboards as everything else.
 
 ## L6.1 — High Availability & Redundancy
 
+**Built:** [`curriculum/L6.1-high-availability`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.1-high-availability/main.bicep) ·
+**walkthrough:** [L6.1 — High Availability & Redundancy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-1-High-Availability)
+
 **Objective.** Grade the Level 1 architecture honestly against availability
 zones and component-level redundancy, and fix what is cheap to fix.
 
@@ -92,6 +96,9 @@ means a second replica and zone-redundant configuration, not a database tier
 upgrade.
 
 ## L6.2 — Disaster Recovery Implementation
+
+**Built:** [`curriculum/L6.2-disaster-recovery`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.2-disaster-recovery/main.bicep) ·
+**walkthrough:** [L6.2 — Disaster Recovery Implementation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-2-Disaster-Recovery)
 
 **Objective.** Build a real regional recovery capability for each tier, and know
 which mechanism applies to which.
@@ -132,6 +139,9 @@ in standby and beats paying for warm infrastructure that does nothing. DR
 strategy is a cost-versus-RTO curve, and IaC moves the curve.
 
 ## L6.3 — Business Continuity & Validation
+
+**Built:** [`curriculum/L6.3-continuity-validation`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.3-continuity-validation/main.bicep) ·
+**walkthrough:** [L6.3 — Business Continuity & Validation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-3-Continuity-Validation)
 
 **Objective.** Prove the recovery capability, write down what it actually
 delivers, and make the proof repeatable.

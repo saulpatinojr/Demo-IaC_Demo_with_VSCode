@@ -1,0 +1,146 @@
+name: "Curriculum L6 - Disaster Recovery & Redundancy"
+
+# Manual only. Prerequisites: Levels 1-4 deployed with the same prefix.
+#
+# Nothing here changes the Level 1 architecture. L6.1 measures redundancy and
+# leaves the fixes to the templates that own those resources; L6.2 lays the
+# Site Recovery groundwork but does NOT enable replication, because that is a
+# long-running imperative operation and a $25/VM/month meter.
+# See the Wiki -> Curriculum Level 6 - Recover.
+on:
+  workflow_dispatch:
+    inputs:
+      chapter:
+        description: "Which chapter to deploy"
+        type: choice
+        required: true
+        default: "L6.1 - High Availability & Redundancy"
+        options:
+          - "L6.1 - High Availability & Redundancy"
+          - "L6.2 - Disaster Recovery Implementation"
+          - "L6.3 - Business Continuity & Validation"
+      include_web_tier:
+        description: "L1.2 (firewall + web tier) is still deployed"
+        type: boolean
+        required: true
+        default: true
+      secondary_region:
+        description: "L1.4 (second region + DR SQL server) is deployed"
+        type: boolean
+        required: true
+        default: true
+      dr_region:
+        description: "Recovery region for Site Recovery (L6.2 only)"
+        type: string
+        required: true
+        default: "westus2"
+      dry_run:
+        description: "Stop after what-if — show the changes, deploy nothing"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: curriculum-l6
+  cancel-in-progress: false
+
+env:
+  AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
+  ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
+  CURRICULUM_SECONDARY_REGION: ${{ inputs.secondary_region }}
+  # Read by L6.2. Matches the L1.4 secondary so the DR story stays consistent.
+  CURRICULUM_DR_REGION: ${{ inputs.dr_region }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight - verify required secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          missing=0
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+
+      - name: Resolve chapter to a template path
+        id: chapter
+        run: |
+          case "${{ inputs.chapter }}" in
+            "L6.1 - High Availability & Redundancy") dir="curriculum/L6.1-high-availability" ;;
+            "L6.2 - Disaster Recovery Implementation") dir="curriculum/L6.2-disaster-recovery" ;;
+            "L6.3 - Business Continuity & Validation") dir="curriculum/L6.3-continuity-validation" ;;
+            *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
+          esac
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "slug=$(echo "$dir" | sed 's|curriculum/||; s|[^a-zA-Z0-9]|-|g')" >> "$GITHUB_OUTPUT"
+          echo "Deploying $dir"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint (compile + linter)
+        run: |
+          az bicep build --file ${{ steps.chapter.outputs.dir }}/main.bicep --stdout > /dev/null
+          az bicep build-params --file ${{ steps.chapter.outputs.dir }}/main.bicepparam --stdout > /dev/null
+
+      - name: What-if (preview changes)
+        run: |
+          az deployment group what-if \
+            --name ${{ steps.chapter.outputs.slug }}-whatif-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+
+      - name: Deploy
+        if: ${{ !inputs.dry_run }}
+        run: |
+          az deployment group create \
+            --name ${{ steps.chapter.outputs.slug }}-deploy-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+
+      # Replication is NOT enabled by this workflow. Print what is actually
+      # protected so nobody mistakes a policy for a capability.
+      - name: Report Site Recovery state
+        if: ${{ !inputs.dry_run }}
+        continue-on-error: true
+        run: |
+          {
+            echo "## ${{ inputs.chapter }}"
+            echo ""
+            echo "Deployed from \`${{ steps.chapter.outputs.dir }}\`."
+            echo ""
+            echo "### Site Recovery state"
+            echo ""
+            echo "A replication POLICY is not a protected VM. Enabling replication is a"
+            echo "manual step and a \$25/VM/month meter — see the L6.2 wiki page."
+            echo ""
+            echo '```'
+            az site-recovery protected-item list --vault-name "rsv-$AZURE_PREFIX-backup" -g $AZURE_RESOURCE_GROUP --fabric-name "fabric-$AZURE_LOCATION" --protection-container-name "*" -o table 2>&1 || echo "No replicated items — expected until you enable replication by hand."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Dry run - nothing was deployed
+        if: ${{ inputs.dry_run }}
+        run: echo "::notice::Dry run. The what-if above shows what a real run would change."

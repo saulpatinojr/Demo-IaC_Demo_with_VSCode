@@ -1,0 +1,150 @@
+name: "Curriculum L5 - Microsoft Sentinel"
+
+# Manual only. Prerequisites: Levels 1-4 deployed with the same prefix.
+#
+# Two things to arrange BEFORE running this, neither of which the workflow can
+# do for you:
+#   * Microsoft Sentinel Contributor on the workspace. Plain Contributor is not
+#     enough to onboard Sentinel or create data connectors.
+#   * If you want Microsoft Entra ID logs, a Global Administrator or Security
+#     Administrator has to connect them in the DIRECTORY. That is a different
+#     person in most organisations, and paid data on top.
+# See the Wiki -> Curriculum Level 5 - Detect.
+on:
+  workflow_dispatch:
+    inputs:
+      chapter:
+        description: "Which chapter to deploy"
+        type: choice
+        required: true
+        default: "L5.1 - Sentinel Foundation"
+        options:
+          - "L5.1 - Sentinel Foundation"
+          - "L5.2 - Detection & Investigation"
+          - "L5.3 - SOC Operations & Automation"
+      include_web_tier:
+        description: "L1.2 (firewall + web tier) is still deployed"
+        type: boolean
+        required: true
+        default: true
+      secondary_region:
+        description: "L1.4 (second region + DR SQL server) is deployed"
+        type: boolean
+        required: true
+        default: true
+      entra_rules:
+        description: "A directory admin has connected Microsoft Entra ID logs (L5.2 only)"
+        type: boolean
+        required: true
+        default: false
+      dry_run:
+        description: "Stop after what-if — show the changes, deploy nothing"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: curriculum-l5
+  cancel-in-progress: false
+
+env:
+  AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
+  ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
+  CURRICULUM_SECONDARY_REGION: ${{ inputs.secondary_region }}
+  # Read by L5.2. A rule over an empty table never fires and looks like
+  # coverage, so this defaults off until someone has actually connected them.
+  CURRICULUM_ENTRA_RULES: ${{ inputs.entra_rules }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight - verify required secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          missing=0
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+
+      - name: Resolve chapter to a template path
+        id: chapter
+        run: |
+          case "${{ inputs.chapter }}" in
+            "L5.1 - Sentinel Foundation") dir="curriculum/L5.1-sentinel-foundation" ;;
+            "L5.2 - Detection & Investigation") dir="curriculum/L5.2-detection-investigation" ;;
+            "L5.3 - SOC Operations & Automation") dir="curriculum/L5.3-soc-operations" ;;
+            *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
+          esac
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "slug=$(echo "$dir" | sed 's|curriculum/||; s|[^a-zA-Z0-9]|-|g')" >> "$GITHUB_OUTPUT"
+          echo "Deploying $dir"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint (compile + linter)
+        run: |
+          az bicep build --file ${{ steps.chapter.outputs.dir }}/main.bicep --stdout > /dev/null
+          az bicep build-params --file ${{ steps.chapter.outputs.dir }}/main.bicepparam --stdout > /dev/null
+
+      - name: What-if (preview changes)
+        run: |
+          az deployment group what-if \
+            --name ${{ steps.chapter.outputs.slug }}-whatif-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+
+      - name: Deploy
+        if: ${{ !inputs.dry_run }}
+        run: |
+          az deployment group create \
+            --name ${{ steps.chapter.outputs.slug }}-deploy-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+
+      # Sentinel bills on everything in the workspace, so the table plans are
+      # now a security-analytics cost and belong on screen after every run.
+      - name: Report what Sentinel is now charging analysis on
+        if: ${{ !inputs.dry_run }}
+        continue-on-error: true
+        run: |
+          {
+            echo "## ${{ inputs.chapter }}"
+            echo ""
+            echo "Deployed from \`${{ steps.chapter.outputs.dir }}\`."
+            echo ""
+            echo "### Table plans in the Sentinel workspace"
+            echo ""
+            echo "Sentinel charges analysis on everything in this workspace. Anything still"
+            echo "on the Analytics plan now costs about \$7.52/GB, not \$2.76."
+            echo ""
+            echo '```'
+            az monitor log-analytics workspace table list -g $AZURE_RESOURCE_GROUP --workspace-name "log-$AZURE_PREFIX-l3" --query "[?plan!='null'].{table:name,plan:plan,retention:retentionInDays}" -o table 2>&1 || echo "Workspace not readable with this identity."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Dry run - nothing was deployed
+        if: ${{ inputs.dry_run }}
+        run: echo "::notice::Dry run. The what-if above shows what a real run would change."

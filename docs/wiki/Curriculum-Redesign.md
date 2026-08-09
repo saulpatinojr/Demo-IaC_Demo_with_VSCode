@@ -1,16 +1,20 @@
 # Curriculum Redesign — the Azure operational maturity path 🧭
 
-**Status: proposal, being built.** The six level pages define chapter structure,
-learning objectives, dependencies, service inventory and cost. Chapters gain a
-**Built** line and a walkthrough page as their code lands.
+**Status: proposal, complete.** All six levels have chapter structure, learning
+objectives, dependencies, service inventory, cost — and code.
 
-| Level | Outline | Code |
-|---|---|---|
-| Level 1 · Deploy | ✅ | ✅ — the existing labs, unchanged |
-| Level 2 · Monitor | ✅ | ✅ L2.1 · L2.2 · L2.3 · L2.4 |
-| Level 3 · Secure | ✅ | ✅ L3.1 · L3.2 · L3.3 · L3.4 |
-| Level 4 · Protect | ✅ | ✅ L4.1 · L4.2 · L4.3 · L4.4 |
-| Levels 5–6 | ✅ | outline only so far |
+| Level | Outline | Code | Chapters |
+|---|---|---|---|
+| Level 1 · Deploy | ✅ | ✅ | the existing labs, unchanged |
+| Level 2 · Monitor | ✅ | ✅ | L2.1 · L2.2 · L2.3 · L2.4 |
+| Level 3 · Secure | ✅ | ✅ | L3.1 · L3.2 · L3.3 · L3.4 |
+| Level 4 · Protect | ✅ | ✅ | L4.1 · L4.2 · L4.3 · L4.4 |
+| Level 5 · Detect | ✅ | ✅ | L5.1 · L5.2 · L5.3 |
+| Level 6 · Recover | ✅ | ✅ | L6.1 · L6.2 · L6.3 |
+
+**18 chapters, 18 templates, 5 workflows, 18 walkthrough pages.** Every template
+compiles clean under Bicep 0.46.1 with no linter warnings. Nothing has been
+deployed against a live subscription.
 
 Nothing on this branch changes the four labs that exist today. The existing
 [L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)–[L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)

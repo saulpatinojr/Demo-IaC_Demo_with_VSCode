@@ -15,7 +15,8 @@ depend on Level 6.
 | **Running cost at end of level** | **~$2.11/hr inside the free trial · ~$2.45/hr after it** |
 
 > [!NOTE]
-> Curriculum outline only. No hands-on steps or exercises are defined yet.
+> **Build status:** Level 5 is fully built — three templates, one workflow, three
+> walkthroughs.
 
 > [!IMPORTANT]
 > **Arrange the permissions before the class, not during it.** This is the first
@@ -68,6 +69,9 @@ detections, then automate and measure the response.
 
 ## L5.1 — Sentinel Foundation
 
+**Built:** [`curriculum/L5.1-sentinel-foundation`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.1-sentinel-foundation/main.bicep) ·
+**walkthrough:** [L5.1 — Sentinel Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-1-Sentinel-Foundation)
+
 **Objective.** Enable Sentinel on the existing workspace and make an informed,
 priced decision about every data source before connecting it.
 
@@ -110,6 +114,9 @@ the workspace it is enabled on.
 
 ## L5.2 — Detection & Investigation
 
+**Built:** [`curriculum/L5.2-detection-investigation`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.2-detection-investigation/main.bicep) ·
+**walkthrough:** [L5.2 — Detection & Investigation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-2-Detection-Investigation)
+
 **Objective.** Build detections that fire on this environment's real behaviour,
 then investigate what they produce.
 
@@ -146,6 +153,9 @@ is worth a look for a different reason than in Level 2 — a 5-minute rule over 
 retention, not on execution.
 
 ## L5.3 — SOC Operations & Automation
+
+**Built:** [`curriculum/L5.3-soc-operations`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.3-soc-operations/main.bicep) ·
+**walkthrough:** [L5.3 — SOC Operations & Automation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-3-SOC-Operations)
 
 **Objective.** Operate the SIEM: automate the repetitive parts of response, and
 measure whether the SOC is getting better or just busier.
