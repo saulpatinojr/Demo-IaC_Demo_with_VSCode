@@ -175,12 +175,11 @@ module webSubnet '../modules/subnet.bicep' = {
 // dependsOn is required: two concurrent subnet writes on one VNet fail with
 // AnotherOperationInProgress.
 //
-// No networkSecurityGroupResourceId here, and that is load-bearing rather than
-// an oversight: L1 attaches no NSG to snet-workload, so there is nothing to
-// preserve. The module does a full PUT, so any association left out is set to
-// null -- IF YOU ADD AN NSG TO snet-workload IN L1, PASS IT HERE TOO, or this
-// deployment will silently detach it and the subnet loses its rules with no
-// error anywhere.
+// networkSecurityGroupResourceId is omitted deliberately: L1 attaches no NSG
+// to snet-workload, so there is nothing to preserve. The module does a full
+// PUT, so any association left out here is set to null. If an NSG is ever
+// added to snet-workload in L1, pass it here as well -- otherwise this
+// deployment DETACHES it, silently and with no error to read.
 module workloadSubnet '../modules/subnet.bicep' = {
   name: 'l2-workload-subnet'
   params: {
