@@ -72,7 +72,14 @@ PowerShell helpers you run on your own machine (requires PowerShell 7 + signed-i
 ### `Load-LabSettings.ps1`
 - Loads your lab values from `lab-settings.csv` into environment variables for the current terminal session.
 - Copy `lab-settings.csv.example` → `lab-settings.csv`, fill in your values, then run: `./scripts/Load-LabSettings.ps1`
-- Use `-Persist` once to save variables permanently (survive terminal restarts).
+- Use `-Persist` once to save variables so they survive terminal restarts. **Windows only** — .NET has no user environment store on macOS or Linux, and the script says so instead of silently saving nothing.
+- `-Persist` stores your VM and SQL passwords in plain text (`HKCU\Environment`). Fine for a throwaway lab machine; remove them afterwards on your own machine with `./scripts/Load-LabSettings.ps1 -Clear`.
+
+### `Clear-LabCredentials.ps1`
+- Takes the lab off **your machine**: signs out of `az` and `gh`, removes the values `-Persist` saved, and deletes `lab-settings.csv` (which holds your passwords in plain text).
+- Deletes nothing in Azure. It checks first and warns if resources are still deployed, because once you are signed out you can no longer tear them down and they keep billing.
+- Always preview: `./scripts/Clear-LabCredentials.ps1 -WhatIf` · Keep your values for a later run with `-KeepSettingsFile`.
+- Full walkthrough: [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset).
 
 ### `Setup-Oidc.ps1`
 - One-command GitHub↔Azure OIDC handshake: creates the Entra app registration, adds the federated credential, grants Contributor on your resource group, and pushes all repo secrets and variables.

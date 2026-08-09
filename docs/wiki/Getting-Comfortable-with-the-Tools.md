@@ -5,17 +5,21 @@
 
 ## Which machine are you on?
 
-Everything below is identical on both — only the *install* commands differ, and those live on the [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist).
+This workshop is built for **Windows 11**. Install commands live on the [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist).
 
 <table>
 <tr>
-<td align="center" width="360"><img src="icon-windows.svg" width="56"><br><br><b>Windows</b><br><sub>One winget command per tool, or the installer script</sub></td>
-<td align="center" width="360"><img src="icon-macos-linux.svg" width="56"><br><br><b>macOS or Linux</b><br><sub>Download links; use pwsh or bash instead of PowerShell</sub></td>
+<td align="center" width="360"><img src="icon-windows.svg" width="56"><br><br><b>Windows 11</b><br><sub>Supported — one winget command per tool, or the installer script</sub></td>
+<td align="center" width="360"><img src="icon-macos-linux.svg" width="56"><br><br><b>macOS or Linux</b><br><sub>Not supported today — see below</sub></td>
 </tr>
 </table>
 
-> [!TIP]
-> On macOS and Linux, the repo's `.ps1` helper scripts run under [PowerShell 7](https://github.com/PowerShell/PowerShell/releases). If you would rather not install it, the [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide) Option B gives you the same steps as plain `az` and `gh` commands.
+> [!IMPORTANT]
+> **macOS and Linux are not supported today.** Two hard dependencies, not preferences:
+> - `Install-LabTools.ps1` installs the whole toolchain with **`winget`**, which is Windows-only.
+> - `Load-LabSettings.ps1 -Persist` writes to the **Windows user environment store**. .NET has no equivalent elsewhere, so on macOS and Linux that flag silently saves nothing.
+>
+> The rest of the workshop is genuinely platform-agnostic — the Bicep templates, the GitHub Actions workflows, and Azure do not care what you are typing on. It is the **on-ramp** that is Windows-bound. Making it portable is a known future improvement, not a supported path today.
 
 ---
 
