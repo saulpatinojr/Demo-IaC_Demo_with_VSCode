@@ -79,8 +79,8 @@ everything else in all four labs combined.
 > [!NOTE]
 > **In review:** a proposed redesign takes these four labs and makes them the
 > first level of a six-level path that follows an environment's operational
-> lifecycle — deploy, monitor, secure, protect, detect, recover. It is a
-> curriculum outline only and changes nothing above.
+> lifecycle — deploy, monitor, secure, protect, detect, recover. Eighteen
+> chapters, each with its own template and walkthrough. Nothing above changes.
 > [Curriculum Redesign →](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign)
 
 ---
