@@ -89,13 +89,27 @@ $persistable = $required + @('ALERT_EMAIL')
 # terminals" and the next terminal would have nothing.
 $canPersist = $IsWindows -or ($null -eq $IsWindows)   # $IsWindows is absent on PS 5.1, which is Windows
 
+# Opposite intents. -Clear exits early, so accepting both would silently do the
+# reverse of what someone who fat-fingered the flag expected.
+if ($Clear -and $Persist) {
+    Write-Host ""
+    Write-Fail '-Persist and -Clear do opposite things; pass one or the other.'
+    Write-Host "         -Persist  save the values to this machine" -ForegroundColor DarkGray
+    Write-Host "         -Clear    remove values already saved" -ForegroundColor DarkGray
+    Write-Host ""
+    exit 1
+}
+
 # ---- -Clear: remove what -Persist wrote ------------------------------------
 if ($Clear) {
     Write-Host ""
     Write-Host "  Clearing saved lab settings" -ForegroundColor White
     $removed = 0
     foreach ($name in $persistable) {
-        if ($canPersist -and [Environment]::GetEnvironmentVariable($name, 'User')) {
+        # $null -ne, not truthiness: a variable set to an empty string is falsy
+        # but still present in the registry. Testing truth would leave it there
+        # while reporting nothing was saved.
+        if ($canPersist -and $null -ne [Environment]::GetEnvironmentVariable($name, 'User')) {
             [Environment]::SetEnvironmentVariable($name, $null, 'User')
             Write-Ok "removed saved $name"
             $removed++

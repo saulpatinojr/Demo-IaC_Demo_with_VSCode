@@ -79,26 +79,46 @@ Write-Banner 'Clear lab credentials from this machine'
 # teardown, and they bill until someone notices. Worth one check.
 Write-Step 'Checking for resources still deployed'
 $rg = $env:AZURE_RESOURCE_GROUP
-if ((Get-Command az -ErrorAction SilentlyContinue) -and $rg) {
+$uncertain = $false      # could not establish what is deployed
+$stillUp   = $false      # confirmed something is deployed
+
+if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+    Write-Skip 'cannot check - az is not installed'
+    $uncertain = $true
+} elseif (-not $rg) {
+    Write-Skip 'cannot check - AZURE_RESOURCE_GROUP is not set'
+    $uncertain = $true
+} else {
     $count = az resource list --resource-group $rg --query 'length(@)' -o tsv 2>$null
-    if ($LASTEXITCODE -eq 0 -and $count -and [int]$count -gt 0) {
+    if ($LASTEXITCODE -ne 0) {
+        # Never fold this into the "none found" branch. The query fails when you
+        # are signed out, the group is gone, or you lack permission -- and
+        # reporting "no resources" there would be a reassurance handed out
+        # moments before the sign-out that makes teardown impossible.
+        Write-Warn "could NOT check '$rg' - signed out, group missing, or no permission."
+        $uncertain = $true
+    } elseif ($count -and [int]$count -gt 0) {
         Write-Warn "$count resource(s) still deployed in '$rg'."
-        Write-Warn 'Tear them down BEFORE signing out - afterwards you cannot,'
-        Write-Warn 'and Firewall, Bastion, Front Door and SQL bill while they run:'
-        Write-Host "           ./scripts/Cleanup-Labs.ps1 -ResourceGroup `"$rg`"" -ForegroundColor Cyan
-        Write-Host ""
-        if (-not $WhatIfPreference) {
-            $go = Read-Host '    Continue clearing credentials anyway? (y/N)'
-            if ($go -notmatch '^[Yy]') {
-                Write-Info 'Stopped. Nothing was changed.'
-                exit 0
-            }
-        }
+        $stillUp = $true
     } else {
         Write-Ok "no resources found in '$rg'"
     }
-} else {
-    Write-Skip 'cannot check (az missing, or AZURE_RESOURCE_GROUP not set)'
+}
+
+if ($stillUp -or $uncertain) {
+    $lead = if ($stillUp) { 'Tear them down BEFORE signing out' } else { 'Confirm the group is empty BEFORE signing out' }
+    Write-Warn "$lead - afterwards you cannot,"
+    Write-Warn 'and Firewall, Bastion, Front Door and SQL bill while they run:'
+    $shown = if ($rg) { $rg } else { '<your resource group>' }
+    Write-Host "           ./scripts/Cleanup-Labs.ps1 -ResourceGroup `"$shown`"" -ForegroundColor Cyan
+    Write-Host ""
+    if (-not $WhatIfPreference) {
+        $go = Read-Host '    Continue clearing credentials anyway? (y/N)'
+        if ($go -notmatch '^[Yy]') {
+            Write-Info 'Stopped. Nothing was changed.'
+            exit 0
+        }
+    }
 }
 
 # ---- Azure CLI -------------------------------------------------------------
@@ -150,8 +170,13 @@ $persistable = @(
 # always a no-op, so there is nothing stored to remove.
 $canPersist = $IsWindows -or ($null -eq $IsWindows)
 $cleared = 0
+$found   = 0
 foreach ($name in $persistable) {
-    if ($canPersist -and [Environment]::GetEnvironmentVariable($name, 'User')) {
+    # $null -ne, not truthiness: a value of "" is falsy but still present in the
+    # registry, and skipping it would leave an entry behind while reporting that
+    # nothing was saved.
+    if ($canPersist -and $null -ne [Environment]::GetEnvironmentVariable($name, 'User')) {
+        $found++
         if ($PSCmdlet.ShouldProcess("saved $name", 'Remove')) {
             [Environment]::SetEnvironmentVariable($name, $null, 'User')
             $cleared++
@@ -161,7 +186,11 @@ foreach ($name in $persistable) {
     }
     if (Test-Path "env:$name") { Remove-Item "env:$name" -ErrorAction SilentlyContinue }
 }
-if ($cleared -gt 0)      { Write-Ok "removed $cleared saved value(s) from this machine" }
+# $found, not $cleared, drives the summary: under -WhatIf nothing is removed, so
+# reporting on $cleared would say "nothing was saved" while listing values it
+# had just found.
+if ($cleared -gt 0)       { Write-Ok "removed $cleared saved value(s) from this machine" }
+elseif ($found -gt 0)     { Write-Skip "$found saved value(s) found - none removed (dry run)" }
 elseif (-not $canPersist) { Write-Skip 'nothing to remove (-Persist never stored anything on this platform)' }
 else                      { Write-Skip 'nothing was saved to this machine' }
 
