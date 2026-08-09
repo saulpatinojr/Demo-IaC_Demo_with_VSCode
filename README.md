@@ -2,6 +2,9 @@
 
 Learn to author **Azure Bicep** infrastructure-as-code with **GitHub Copilot agent mode in VS Code**, built entirely from **Azure Verified Modules (AVM)**, and deploy it to Azure with **GitHub Actions (OIDC)** — no stored cloud credentials.
 
+> [!IMPORTANT]
+> **Windows 11 only.** The setup and helper scripts target Windows 11 — they use `winget` to install the toolchain and the Windows user environment store to save settings. macOS and Linux are **not supported today**: `Install-LabTools.ps1` will not run, and `Load-LabSettings.ps1 -Persist` silently saves nothing. Everything *after* setup — the Bicep templates, the GitHub Actions workflows, Azure itself — is platform-agnostic; it is the on-ramp that is Windows-bound.
+
 The demo is four **cumulative lab stages**. Each stage builds on the infrastructure the previous one deployed, and each gives you 2–3 ways to test what you built:
 
 | Stage | What you build | What it adds | Tests |
@@ -22,7 +25,7 @@ The demo is four **cumulative lab stages**. Each stage builds on the infrastruct
 
 ## 1. Install the software
 
-Everything installs on Windows via `winget` (or use the download links). macOS/Linux users: use the links.
+Everything installs on **Windows 11** via `winget`, or from the download links if `winget` is unavailable. macOS and Linux are not supported — see the note at the top.
 
 No execution-policy bypass command is required for this lab setup.
 
@@ -97,7 +100,7 @@ This creates the Entra app + service principal, adds a federated credential for 
 
 After setup succeeds, trigger **Deploy L1 - Hub & Spoke** in GitHub Actions (`Actions` tab -> select workflow -> `Run workflow`).
 
-> Want to understand each step, or on macOS/Linux? The manual `az`/`gh` walkthrough is in **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**. New to secrets vs. variables? See **[Wiki → GitHub Essentials](../../wiki/GitHub-Essentials)**.
+> Want to understand each step rather than run one script? The manual `az`/`gh` walkthrough is in **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**. New to secrets vs. variables? See **[Wiki → GitHub Essentials](../../wiki/GitHub-Essentials)**.
 
 ## 5. Start the workshop
 

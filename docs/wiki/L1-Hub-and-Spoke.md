@@ -100,13 +100,22 @@ Fill in one small file instead of typing variables into every command. Copy `lab
 | `SQL_ADMIN_PASSWORD` | You choose it. Not used until L3, but set it now. |
 | `ALERT_EMAIL` | Where L3 sends its alert. |
 
-Then load it — `-Persist` keeps the values in future terminals too:
+Then load it. Leave `-Persist` off and the values last for this terminal only; add it and they survive new terminals:
 
 ```powershell
-./scripts/Load-LabSettings.ps1 -Persist
+./scripts/Load-LabSettings.ps1            # this terminal only
+./scripts/Load-LabSettings.ps1 -Persist   # also save for future terminals
 ```
 
 `lab-settings.csv` is in `.gitignore`, so your passwords are never committed.
+
+> [!IMPORTANT]
+> **`-Persist` writes your passwords to this machine in plain text** (Windows registry, `HKCU\Environment`), and they stay until removed. That is fine on a classroom laptop that gets reimaged. **On your own machine, remove them when you finish:**
+> ```powershell
+> ./scripts/Load-LabSettings.ps1 -Clear          # just the saved values
+> ./scripts/Clear-LabCredentials.ps1             # also sign out of az and gh
+> ```
+> This workshop is **Windows 11 only**. If you try it on macOS or Linux anyway, `-Persist` does nothing at all — only Windows has a user environment store for it to write to. Re-run the plain command in each new terminal; `lab-settings.csv` is the persistence. Full details on [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset).
 
 ### Then deploy
 

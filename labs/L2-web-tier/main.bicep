@@ -174,6 +174,12 @@ module webSubnet '../modules/subnet.bicep' = {
 // blocked curl from L1 starts working, and the firewall logs show why.
 // dependsOn is required: two concurrent subnet writes on one VNet fail with
 // AnotherOperationInProgress.
+//
+// networkSecurityGroupResourceId is omitted deliberately: L1 attaches no NSG
+// to snet-workload, so there is nothing to preserve. The module does a full
+// PUT, so any association left out here is set to null. If an NSG is ever
+// added to snet-workload in L1, pass it here as well -- otherwise this
+// deployment DETACHES it, silently and with no error to read.
 module workloadSubnet '../modules/subnet.bicep' = {
   name: 'l2-workload-subnet'
   params: {

@@ -109,6 +109,28 @@ function Winget-Install($id, $name) {
     else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
 }
 
+# ── Platform check ────────────────────────────────────────────────────────────
+# This has to come first. The admin check below calls WindowsIdentity, which
+# throws "Windows Principal functionality is not supported on this platform" on
+# macOS and Linux -- so without this guard the first thing a Mac user sees is a
+# raw .NET exception, not the reason. ($IsWindows is absent on PS 5.1, which is
+# Windows by definition, so treat $null as Windows.)
+if ($IsWindows -eq $false) {
+    Write-Host ""
+    Write-Fail "This workshop is Windows 11 only, and this script cannot run here."
+    Write-Host ""
+    Write-Host "  Two hard dependencies, not preferences:" -ForegroundColor Yellow
+    Write-Host "    - it installs the toolchain with winget, which is Windows-only" -ForegroundColor Yellow
+    Write-Host "    - Load-LabSettings.ps1 -Persist writes to the Windows user" -ForegroundColor Yellow
+    Write-Host "      environment store, which has no equivalent here" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Everything after setup -- the Bicep, the workflows, Azure -- is" -ForegroundColor DarkGray
+    Write-Host "  platform-agnostic. It is the on-ramp that is Windows-bound." -ForegroundColor DarkGray
+    Write-Host "  See the wiki: Getting Comfortable with the Tools." -ForegroundColor DarkGray
+    Write-Host ""
+    exit 1
+}
+
 # ── Admin check ───────────────────────────────────────────────────────────────
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(

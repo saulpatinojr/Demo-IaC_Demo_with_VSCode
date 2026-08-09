@@ -36,11 +36,13 @@ Outline only — the labs above are unchanged.
 - [Copilot Prompt Library](Copilot-Prompt-Library)
 - [Troubleshooting](Troubleshooting)
 - [Tools and References](Tools-and-References)
+- [Cleanup & Reset](Cleanup-and-Reset)
 
 ### Instructors
 - [Instructor Setup Guide](Instructor-Setup)
 - [Instructor Admin Tools](Instructor-Admin-Tools)
 
 ---
-**Done for the day?** [Tear it down](Deployment-Guide) — Firewall, Bastion,
-SQL and Front Door all bill while idle.
+**Done for the day?** [Tear it down](Cleanup-and-Reset) — Firewall, Bastion,
+SQL and Front Door all bill while idle. Ran the labs on your own machine?
+That page clears the saved tokens too.
