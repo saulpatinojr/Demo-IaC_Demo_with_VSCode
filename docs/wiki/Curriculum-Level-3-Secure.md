@@ -12,8 +12,9 @@ built and instrumented — without deploying a single new workload to attack.
 | **Running cost at end of level** | **~$2.01/hr** with the recommended plan set |
 
 > [!NOTE]
-> **Build status:** L3.1 is built — template, workflow, walkthrough, and the
-> instructor script for the subscription-scoped half. L3.2–L3.4 are outline only.
+> **Build status:** L3.1 and L3.2 are built — templates, workflow, walkthroughs,
+> and the instructor script for the subscription-scoped half. L3.3 and L3.4 are
+> outline only.
 
 ## Where this level sits
 
@@ -94,14 +95,23 @@ size — so it belongs in an instructor-led window, not as a default on.
 
 ## L3.2 — Workload Protection
 
+**Built:** [`curriculum/L3.2-workload-protection`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.2-workload-protection/main.bicep) ·
+**walkthrough:** [L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection)
+
 **Objective.** Turn on threat detection where it applies, one plan at a time,
 with the per-node meter visible.
 
 **Learning objectives**
 
-- Enable Defender for Servers, Defender for SQL, Defender for Key Vault and
-  Defender for Resource Manager, and describe what each one detects that the
-  others cannot.
+- Enable Defender for SQL at **resource** scope yourself, and explain why that
+  bills per server instance the moment it is enabled, independently of the
+  subscription plan.
+- Configure SQL auditing into the Level 2 workspace, and know that it takes
+  **two** resources — the auditing setting and a `master`-database diagnostic
+  setting — with either alone sending nothing.
+- Describe what Defender for Servers, Key Vault and Resource Manager each detect
+  that the others cannot, and identify which of them you can turn on and which
+  need the instructor.
 - Choose between Servers **Plan 1** and **Plan 2**, and justify the 3× price
   difference in terms of the capabilities gained.
 - Use just-in-time VM access and explain what it replaces.

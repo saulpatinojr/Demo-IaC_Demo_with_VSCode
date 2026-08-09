@@ -16,11 +16,22 @@ on:
         default: "L3.1 - Security Foundation"
         options:
           - "L3.1 - Security Foundation"
+          - "L3.2 - Workload Protection"
       include_web_tier:
         description: "L1.2 (firewall + web tier) is still deployed"
         type: boolean
         required: true
         default: true
+      secondary_region:
+        description: "L1.4 (second region + DR SQL server) is deployed"
+        type: boolean
+        required: true
+        default: true
+      enable_jit:
+        description: "Deploy just-in-time VM access (needs Defender for Servers P2)"
+        type: boolean
+        required: true
+        default: false
       dry_run:
         description: "Stop after what-if — show the changes, deploy nothing"
         type: boolean
@@ -41,6 +52,10 @@ env:
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
   CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
   ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
+  # Read by L3.2. JIT needs Defender for Servers Plan 2 on the subscription,
+  # which the instructor script does not enable by default.
+  CURRICULUM_ENABLE_JIT: ${{ inputs.enable_jit }}
+  CURRICULUM_SECONDARY_REGION: ${{ inputs.secondary_region }}
 
 jobs:
   deploy:
@@ -68,6 +83,7 @@ jobs:
         run: |
           case "${{ inputs.chapter }}" in
             "L3.1 - Security Foundation") dir="curriculum/L3.1-security-foundation" ;;
+            "L3.2 - Workload Protection") dir="curriculum/L3.2-workload-protection" ;;
             *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
           esac
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
