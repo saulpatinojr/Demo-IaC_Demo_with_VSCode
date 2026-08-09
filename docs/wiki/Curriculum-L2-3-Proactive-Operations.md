@@ -97,6 +97,31 @@ maintenance does not page anyone.
 
 <br>
 
+## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+
+<table>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
+<td valign="top">
+<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Contributor</b>, or <b>Monitoring Contributor</b> on the lab resource group.<br>
+<sub>Why: alert rules, action groups and alert processing rules are all <code>Microsoft.Insights</code> and <code>Microsoft.AlertsManagement</code> resources. The Service Health alert is scoped to the <b>subscription</b> and needs read access there — with resource-group-only rights it will fail, which is the first place this lab's permission ceiling shows up.</sub>
+</td>
+</tr>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-entra-id.svg" width="44"></td>
+<td valign="top">
+<b>Microsoft Entra ID roles</b><br><br>
+<b>None.</b><br>
+<sub>Email receivers are plain addresses, not directory objects. Notifying a Microsoft Entra ID <i>group</i> instead would need someone who can read that group in the directory.</sub>
+</td>
+</tr>
+</table>
+
+<sub><a href="https://learn.microsoft.com/azure/azure-monitor/roles-permissions-security">For more info</a> — Azure Monitor roles, permissions and security</sub>
+
+<br>
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>

@@ -76,6 +76,31 @@ the most common reason a SQL audit log turns out to be silently empty.
 
 <br>
 
+## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+
+<table>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
+<td valign="top">
+<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Contributor</b> on the lab resource group. <b>SQL Security Manager</b> is the least-privilege alternative for the SQL half.<br>
+<sub>Why: <code>securityAlertPolicies</code> and <code>auditingSettings</code> are child resources of the SQL server, so ordinary resource rights are enough — which is exactly how a resource-level Defender plan can start billing without anyone touching the subscription. Just-in-time access is different: the policy deploys with Contributor but does nothing without <b>Defender for Servers Plan 2</b>, and only an instructor can turn that on.</sub>
+</td>
+</tr>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-entra-id.svg" width="44"></td>
+<td valign="top">
+<b>Microsoft Entra ID roles</b><br><br>
+<b>None.</b><br>
+<sub>Note what this means for the SQL server: it still has a SQL-authentication admin from L1.3. Moving it to Microsoft Entra-only authentication would need a directory reader to resolve the admin principal — a genuine hardening step this chapter does not take.</sub>
+</td>
+</tr>
+</table>
+
+<sub><a href="https://learn.microsoft.com/azure/defender-for-cloud/permissions">For more info</a> — Microsoft Defender for Cloud roles and permissions</sub>
+
+<br>
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>

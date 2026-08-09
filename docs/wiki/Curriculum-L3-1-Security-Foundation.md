@@ -69,6 +69,31 @@ Resource Graph and workbooks all cost nothing on any subscription.
 
 <br>
 
+## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+
+<table>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
+<td valign="top">
+<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Contributor</b> on the lab resource group to deploy the workbook. <b>Security Reader</b> at <b>subscription</b> scope to see the whole picture.<br>
+<sub>Why: secure score and Defender assessments are subscription-scoped. With resource-group rights alone the workbook renders what it can see and the plan tile may come back empty — which is <i>no permission to look</i>, not <i>no plans enabled</i>. Your instructor needs <b>Security Admin</b> or <b>Owner</b> to enable plans at all; that is <code>scripts/admin/Enable-DefenderPlans.ps1</code>, not this template.</sub>
+</td>
+</tr>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-entra-id.svg" width="44"></td>
+<td valign="top">
+<b>Microsoft Entra ID roles</b><br><br>
+<b>None yet.</b><br>
+<sub>Defender for Cloud roles are Azure RBAC, not directory roles. This changes at Level 5: Sentinel's Microsoft Entra ID connector needs a <b>Global Administrator</b> or <b>Security Administrator</b> in the directory, which is a different person in most organisations.</sub>
+</td>
+</tr>
+</table>
+
+<sub><a href="https://learn.microsoft.com/azure/defender-for-cloud/permissions">For more info</a> — Microsoft Defender for Cloud roles and permissions</sub>
+
+<br>
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>

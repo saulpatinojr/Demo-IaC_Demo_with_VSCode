@@ -12,9 +12,8 @@ built and instrumented — without deploying a single new workload to attack.
 | **Running cost at end of level** | **~$2.01/hr** with the recommended plan set |
 
 > [!NOTE]
-> **Build status:** L3.1 and L3.2 are built — templates, workflow, walkthroughs,
-> and the instructor script for the subscription-scoped half. L3.3 and L3.4 are
-> outline only.
+> **Build status:** Level 3 is fully built — four templates, one workflow, four
+> walkthroughs, and the instructor script for the subscription-scoped half.
 
 ## Where this level sits
 
@@ -144,6 +143,9 @@ level inside it makes L3.2 free once.
 
 ## L3.3 — Security Operations
 
+**Built:** [`curriculum/L3.3-security-operations`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.3-security-operations/main.bicep) ·
+**walkthrough:** [L3.3 — Security Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-3-Security-Operations)
+
 **Objective.** Work an alert from detection to closure, and automate the parts
 that should never be manual.
 
@@ -179,6 +181,9 @@ that deliberately. `SecurityAlert` data is free when Sentinel is enabled, which
 is a strong argument for sequencing the export decision *after* L5.1.
 
 ## L3.4 — Enterprise Security Architecture
+
+**Built:** [`curriculum/L3.4-security-architecture`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.4-security-architecture/main.bicep) ·
+**walkthrough:** [L3.4 — Enterprise Security Architecture](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-4-Security-Architecture)
 
 **Objective.** Draw the target-state security architecture for this workload and
 put a price on each control.

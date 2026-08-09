@@ -93,6 +93,31 @@ and one forecast threshold notifies the action group L2.3 built.
 
 <br>
 
+## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+
+<table>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
+<td valign="top">
+<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Contributor</b> for the tables and the budget. <b>Resource Policy Contributor</b> or <b>Owner</b> <i>only</i> if you set <code>assignAuditPolicy = true</code>.<br>
+<sub>Why: Contributor explicitly <b>cannot</b> create a policy assignment — <code>Microsoft.Authorization/*/Write</code> sits in the role's <code>notActions</code>, which covers policy assignments as well as role assignments. That is why the policy in this chapter is off by default. Budgets need <code>Microsoft.Consumption/budgets/write</code>, which Contributor does have.</sub>
+</td>
+</tr>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-entra-id.svg" width="44"></td>
+<td valign="top">
+<b>Microsoft Entra ID roles</b><br><br>
+<b>None.</b><br>
+<sub>Governance here is Azure-plane only. Directory-scoped governance — Conditional Access, PIM, access reviews — is a different plane with different roles entirely.</sub>
+</td>
+</tr>
+</table>
+
+<sub><a href="https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged">For more info</a> — Contributor and the roles that can assign policy</sub>
+
+<br>
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>

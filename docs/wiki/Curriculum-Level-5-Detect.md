@@ -18,6 +18,15 @@ depend on Level 6.
 > Curriculum outline only. No hands-on steps or exercises are defined yet.
 
 > [!IMPORTANT]
+> **Arrange the permissions before the class, not during it.** This is the first
+> level that needs a role **outside Azure**: the Microsoft Entra ID data
+> connector is granted by a **Global Administrator** or **Security
+> Administrator** in the directory, which in most organisations is a different
+> person on a different team. On the Azure side you need **Microsoft Sentinel
+> Contributor** on the workspace. Neither is something a lab participant holding
+> Contributor on one resource group can grant themselves.
+
+> [!IMPORTANT]
 > **Sequence this level against the calendar.** Microsoft Sentinel's free trial
 > waives both Log Analytics ingestion and Sentinel analysis for the first
 > 10 GB/day for **31 days**. Every chapter below fits inside that allowance for

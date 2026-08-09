@@ -17,6 +17,8 @@ on:
         options:
           - "L3.1 - Security Foundation"
           - "L3.2 - Workload Protection"
+          - "L3.3 - Security Operations"
+          - "L3.4 - Enterprise Security Architecture"
       include_web_tier:
         description: "L1.2 (firewall + web tier) is still deployed"
         type: boolean
@@ -84,6 +86,8 @@ jobs:
           case "${{ inputs.chapter }}" in
             "L3.1 - Security Foundation") dir="curriculum/L3.1-security-foundation" ;;
             "L3.2 - Workload Protection") dir="curriculum/L3.2-workload-protection" ;;
+            "L3.3 - Security Operations") dir="curriculum/L3.3-security-operations" ;;
+            "L3.4 - Enterprise Security Architecture") dir="curriculum/L3.4-security-architecture" ;;
             *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
           esac
           echo "dir=$dir" >> "$GITHUB_OUTPUT"

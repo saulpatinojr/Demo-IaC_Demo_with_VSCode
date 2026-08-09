@@ -90,6 +90,31 @@ the whole estate rather than creating a second one.
 
 <br>
 
+## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+
+<table>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
+<td valign="top">
+<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Contributor</b> on the lab resource group — what <code>Setup-Oidc.ps1</code> already granted you.<br>
+<sub>Why: the template installs a VM extension, creates a data collection rule and writes diagnostic settings onto resources another template owns. All three are ordinary resource writes. <b>Monitoring Contributor</b> plus <b>Virtual Machine Contributor</b> is the least-privilege equivalent if you are building this for production rather than a lab.</sub>
+</td>
+</tr>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-entra-id.svg" width="44"></td>
+<td valign="top">
+<b>Microsoft Entra ID roles</b><br><br>
+<b>None.</b><br>
+<sub>Nothing here touches directory objects. The Azure Monitor Agent authenticates with the VM's own managed identity, which already exists — no app registration, no consent, no directory role.</sub>
+</td>
+</tr>
+</table>
+
+<sub><a href="https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/monitor">For more info</a> — Azure built-in roles for monitoring</sub>
+
+<br>
+
 ## 🚀 Deploy it — pick any one of three ways
 
 All three deploy the **same** template and give the **same** result.

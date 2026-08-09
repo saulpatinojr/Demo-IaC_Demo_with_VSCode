@@ -77,6 +77,31 @@ executions are frequency times locations.
 
 <br>
 
+## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+
+<table>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
+<td valign="top">
+<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Contributor</b> on the lab resource group.<br>
+<sub>Why: workbooks, saved searches and availability tests are all ordinary resources. <b>Monitoring Contributor</b> alone covers every one of them — this is the first chapter where the least-privilege role is genuinely enough, and worth noticing.</sub>
+</td>
+</tr>
+<tr>
+<td width="72" align="center" valign="top"><img src="icon-entra-id.svg" width="44"></td>
+<td valign="top">
+<b>Microsoft Entra ID roles</b><br><br>
+<b>None.</b><br>
+<sub>Availability tests run from Microsoft-operated regions and need no identity of yours.</sub>
+</td>
+</tr>
+</table>
+
+<sub><a href="https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/monitor">For more info</a> — Azure built-in roles for monitoring</sub>
+
+<br>
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>

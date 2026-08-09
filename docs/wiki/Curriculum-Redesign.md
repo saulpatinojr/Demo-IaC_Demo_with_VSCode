@@ -8,7 +8,8 @@ learning objectives, dependencies, service inventory and cost. Chapters gain a
 |---|---|---|
 | Level 1 · Deploy | ✅ | ✅ — the existing labs, unchanged |
 | Level 2 · Monitor | ✅ | ✅ L2.1 · L2.2 · L2.3 · L2.4 |
-| Levels 3–6 | ✅ | outline only so far |
+| Level 3 · Secure | ✅ | ✅ L3.1 · L3.2 · L3.3 · L3.4 |
+| Levels 4–6 | ✅ | outline only so far |
 
 Nothing on this branch changes the four labs that exist today. The existing
 [L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)–[L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)
@@ -206,6 +207,39 @@ Two facts shape the entire design:
 > **8 August 2026**. Usage-based lines depend on assumptions that are stated
 > where they are used. Confirm against Azure Cost Management before committing a
 > budget.
+
+## Permissions escalate as the levels do
+
+Every chapter page carries an **Azure Up to date** box stating the minimum RBAC
+and Microsoft Entra ID roles that chapter needs, and why. The pattern across the
+curriculum is worth seeing in one place, because it is not flat — the deeper the
+level, the further the required rights move away from the person doing the lab.
+
+| Level | Azure RBAC | Microsoft Entra ID | Who holds it |
+|---|---|---|---|
+| **1 · Deploy** | Contributor on one resource group | — | The participant |
+| **2 · Monitor** | Contributor (Monitoring Contributor is enough) | — | The participant |
+| | *Policy assignment* → Resource Policy Contributor | — | Instructor |
+| **3 · Secure** | Contributor for per-resource settings | — | The participant |
+| | Security Reader (subscription) to see the whole score | — | Instructor grants |
+| | *Defender plans* → Security Admin or Owner | — | Instructor |
+| | *Attaching WAF* → CDN Profile Contributor | — | The participant |
+| **4 · Protect** | Contributor; Backup Contributor for vault work | — | The participant |
+| | *Multi-user authorization* → Owner on the Resource Guard | — | Instructor |
+| **5 · Detect** | **Microsoft Sentinel Contributor** on the workspace | **Global Administrator** or **Security Administrator** to connect Microsoft Entra ID logs | Instructor + a directory admin |
+| **6 · Recover** | Contributor; Site Recovery Contributor for replication | — | The participant |
+
+Two things follow from that table, and both belong in the lab design rather than
+in a troubleshooting page:
+
+- **Level 5 is the first level that needs a role outside Azure.** The Microsoft
+  Entra ID data connector is granted in the directory, not the subscription, and
+  in most organisations that is a different person on a different team. A class
+  that reaches L5.1 without arranging it in advance stops there.
+- **`Setup-Oidc.ps1` grants Contributor on one resource group, deliberately.**
+  Anything above that line is an instructor action with its own script, so the
+  lab identity never quietly accumulates rights it does not need. Where a
+  chapter needs more, its template defaults to off and says so.
 
 ## Recommendations for balancing scope, cost and learning
 
