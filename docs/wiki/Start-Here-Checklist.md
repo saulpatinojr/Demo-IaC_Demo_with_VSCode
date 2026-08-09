@@ -2,6 +2,9 @@
 
 Work top to bottom. Each item is one small, checkable thing. If you can tick every box, your first deploy will work.
 
+> [!IMPORTANT]
+> **You need Windows 11.** Section C installs the toolchain with `winget`, which is Windows-only, and the settings helper writes to the Windows user environment store. macOS and Linux are **not supported today** — see [Getting Comfortable with the Tools](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Getting-Comfortable-with-the-Tools) for exactly which two dependencies block them.
+
 > [!TIP]
 > New to the vocabulary — repo, fork, secret, OIDC? Skim [Understanding IaC](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Understanding-IaC) and [GitHub Essentials](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials) first. Ten minutes that make everything below make sense.
 
@@ -85,7 +88,7 @@ When the script reaches **Configuring Git**, enter values like these when prompt
 
 ---
 
-### Option 2 — Manual (Windows via winget, or macOS/Linux via download links)
+### Option 2 — Manual (Windows 11, via winget or the download links)
 
 | Tool | Why | winget | Download |
 |------|-----|--------|----------|

@@ -115,7 +115,7 @@ Then load it. Leave `-Persist` off and the values last for this terminal only; a
 > ./scripts/Load-LabSettings.ps1 -Clear          # just the saved values
 > ./scripts/Clear-LabCredentials.ps1             # also sign out of az and gh
 > ```
-> On **macOS or Linux, `-Persist` does nothing** — only Windows has a user environment store. Re-run the plain command in each new terminal instead; `lab-settings.csv` is the persistence. Full details on [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset).
+> This workshop is **Windows 11 only**. If you try it on macOS or Linux anyway, `-Persist` does nothing at all — only Windows has a user environment store for it to write to. Re-run the plain command in each new terminal; `lab-settings.csv` is the persistence. Full details on [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset).
 
 ### Then deploy
 

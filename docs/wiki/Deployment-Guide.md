@@ -106,13 +106,13 @@ Optional flags:
 
 It is **idempotent** — safe to re-run. Re-running **rewrites** the identity and resource-group secrets, so they always match the app and group that run just configured, and **keeps** any `VM_ADMIN_PASSWORD` / `SQL_ADMIN_PASSWORD` you already have — a deployed VM or SQL server holds whatever password it was built with, so overwriting the secret would only put GitHub out of step with it. To force a fresh password, delete that secret in GitHub and re-run.
 
-> **Prefer to see the moving parts, or on macOS/Linux?** Do Option B instead — it's the same steps by hand.
+> **Prefer to see the moving parts?** Do Option B instead — it's the same steps by hand.
 
 ---
 
 ## <img src="icon-step-by-step.svg" width="26" align="top">&nbsp; Option B — the manual steps (what the script does)
 
-**Best if you want to see every moving part**, or you are on macOS or Linux where the PowerShell script is less convenient.
+**Best if you want to see every moving part.** These are the same steps the script performs, one command at a time — useful for understanding the handshake, not a substitute for the Windows 11 requirement (you still need `az` and `gh` installed and signed in).
 
 ### 1. App registration + service principal + federated credential
 

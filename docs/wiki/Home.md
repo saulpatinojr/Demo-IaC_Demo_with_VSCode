@@ -2,6 +2,9 @@
 
 Learn to author **Azure Bicep** with **GitHub Copilot**, and deploy it from **GitHub Actions** with no stored cloud credentials — across four cumulative labs.
 
+> [!IMPORTANT]
+> **Windows 11 only.** The setup and helper scripts target Windows 11 — they install the toolchain with `winget` and save settings to the Windows user environment store. macOS and Linux are **not supported today**. Everything after setup (the Bicep, the workflows, Azure) is platform-agnostic; it is the on-ramp that is Windows-bound.
+
 ## Start where you are
 
 <table>

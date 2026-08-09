@@ -66,7 +66,7 @@ Only clearing the saved settings, staying signed in:
 > [!IMPORTANT]
 > **`-Persist` writes your lab passwords to disk in plain text.** On Windows they go to the registry under `HKCU\Environment` and stay until removed. That is a deliberate convenience for a throwaway lab, not a habit to carry to work — real credentials belong in a secret store, which is exactly what the OIDC path in these labs demonstrates.
 >
-> On **macOS and Linux `-Persist` does nothing at all** — only Windows has a user environment store for it to write to. The script says so rather than pretending. There, `lab-settings.csv` is your persistence: re-run `./scripts/Load-LabSettings.ps1` in each new terminal.
+> This workshop is **Windows 11 only**. On macOS or Linux `-Persist` does nothing at all — only Windows has a user environment store for it to write to — so there is nothing stored to clean up there either. The script says so rather than pretending. `lab-settings.csv` is the persistence in that case: re-run `./scripts/Load-LabSettings.ps1` per terminal.
 
 ---
 
