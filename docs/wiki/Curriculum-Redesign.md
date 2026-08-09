@@ -9,7 +9,8 @@ learning objectives, dependencies, service inventory and cost. Chapters gain a
 | Level 1 · Deploy | ✅ | ✅ — the existing labs, unchanged |
 | Level 2 · Monitor | ✅ | ✅ L2.1 · L2.2 · L2.3 · L2.4 |
 | Level 3 · Secure | ✅ | ✅ L3.1 · L3.2 · L3.3 · L3.4 |
-| Levels 4–6 | ✅ | outline only so far |
+| Level 4 · Protect | ✅ | ✅ L4.1 · L4.2 · L4.3 · L4.4 |
+| Levels 5–6 | ✅ | outline only so far |
 
 Nothing on this branch changes the four labs that exist today. The existing
 [L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)–[L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)

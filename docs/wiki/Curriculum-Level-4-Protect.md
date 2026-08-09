@@ -12,7 +12,14 @@
 | **Running cost at end of level** | **~$2.10/hr** |
 
 > [!NOTE]
-> Curriculum outline only. No hands-on steps or exercises are defined yet.
+> **Build status:** Level 4 is fully built — four templates, one workflow, four
+> walkthroughs.
+
+> [!WARNING]
+> **L4.1 contains the one irreversible decision in the curriculum.** Vault
+> redundancy and cross-region restore freeze the moment the first item is
+> protected, and L4.4 needs the second one. Read L4.1 before running anything
+> in this level.
 
 ## Where this level sits
 
@@ -54,6 +61,9 @@ prerequisite for both parallel tracks that follow.
 
 ## L4.1 — Backup Fundamentals
 
+**Built:** [`curriculum/L4.1-backup-fundamentals`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.1-backup-fundamentals/main.bicep) ·
+**walkthrough:** [L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals)
+
 **Objective.** Protect the Level 1 virtual machines, and understand what a
 recovery point actually is.
 
@@ -89,6 +99,9 @@ Retention length multiplies storage linearly, so a 10-year policy on a lab VM is
 a cost lesson, not a compliance one.
 
 ## L4.2 — PaaS Protection
+
+**Built:** [`curriculum/L4.2-paas-protection`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.2-paas-protection/main.bicep) ·
+**walkthrough:** [L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection)
 
 **Objective.** Protect the data that is not on a disk, where "backup" often
 means something already switched on that nobody has verified.
@@ -128,6 +141,9 @@ PaaS backup cost actually comes from.
 
 ## L4.3 — Operational Backup Management
 
+**Built:** [`curriculum/L4.3-backup-operations`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.3-backup-operations/main.bicep) ·
+**walkthrough:** [L4.3 — Operational Backup Management](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-3-Backup-Operations)
+
 **Objective.** Run backup as an operational service — monitored, reported,
 rehearsed, and protected against its own operators.
 
@@ -163,6 +179,9 @@ unpatched duplicate of production, which is a security cost as well as a
 financial one.
 
 ## L4.4 — Enterprise Data Protection Strategy
+
+**Built:** [`curriculum/L4.4-data-protection-strategy`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.4-data-protection-strategy/main.bicep) ·
+**walkthrough:** [L4.4 — Enterprise Data Protection Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-4-Data-Protection-Strategy)
 
 **Objective.** Turn per-resource backup into an estate-wide, policy-enforced,
 ransomware-aware strategy with a defensible price.
