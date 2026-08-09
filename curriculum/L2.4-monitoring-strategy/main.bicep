@@ -10,10 +10,15 @@
 //   * Workspace-level settings (retention, daily cap, SKU) belong to the
 //     template that CREATES the workspace -- labs/L3-containers. This chapter
 //     configures TABLES, which nothing else owns.
-//   * The policy assignment uses AuditIfNotExists, not DeployIfNotExists.
-//     DINE needs a managed identity and a role assignment, and classroom
-//     participants hold Contributor, which cannot create role assignments.
-//     Audit tells you what is missing; fixing it is still a pull request.
+//   * The policy assignment is OFF by default and gated behind a parameter.
+//     Contributor cannot create policy assignments at all -- the role's
+//     notActions include Microsoft.Authorization/*/Write, which covers policy
+//     assignments as well as role assignments. Classroom participants and the
+//     OIDC identity both hold plain Contributor on one resource group, so
+//     turning this on without Resource Policy Contributor fails the deploy.
+//     Instructors have scripts/admin/Set-LabPolicy.ps1 for the same job.
+//     It is AuditIfNotExists rather than DeployIfNotExists for a second
+//     reason: DINE also needs a managed identity and a role assignment.
 //
 // Prerequisite: L2.1 (tables exist once data arrives), L2.3 (the action group
 // the budget notifies).
@@ -44,6 +49,9 @@ param monthlyBudgetUsd int = 1450
 
 @description('First day of the month the budget starts. Defaults to the current month — budgets reject a start date that is not the first of a month.')
 param budgetStartDate string = '${utcNow('yyyy-MM')}-01T00:00:00Z'
+
+@description('Assign the diagnostic-settings audit policy. OFF by default because plain Contributor cannot create a policy assignment — the role excludes Microsoft.Authorization/*/Write. Turn it on only if you hold Resource Policy Contributor or Owner on the resource group; otherwise read the compliance view your instructor already assigned.')
+param assignAuditPolicy bool = false
 
 @description('Where budget alerts go directly. The budget API requires at least one contact email even when an action group is also attached, so this is not optional.')
 param alertEmail string = 'you@example.com'
@@ -103,12 +111,13 @@ resource heartbeatTable 'Microsoft.OperationalInsights/workspaces/tables@2023-09
 }
 
 // ---------------------------------------------------------------------------
-// Governance. AuditIfNotExists, because Contributor cannot create the role
-// assignment a DeployIfNotExists policy needs for its managed identity. The
-// compliance view answers "did anyone add a resource and forget to wire it
-// up", which is the question that actually matters at a hundred environments.
+// Governance. Off unless you have the rights for it: creating a policy
+// assignment needs Resource Policy Contributor or Owner, and this lab hands
+// out Contributor. When it is on, the compliance view answers "did anyone add
+// a resource and forget to wire it up", which is the question that actually
+// matters at a hundred environments.
 // ---------------------------------------------------------------------------
-resource diagnosticsAudit 'Microsoft.Authorization/policyAssignments@2024-04-01' = {
+resource diagnosticsAudit 'Microsoft.Authorization/policyAssignments@2024-04-01' = if (assignAuditPolicy) {
   name: 'audit-diag-${prefix}'
   properties: {
     displayName: 'Audit missing diagnostic settings (${prefix})'
@@ -176,7 +185,7 @@ resource budget 'Microsoft.Consumption/budgets@2023-05-01' = {
   }
 }
 
-output policyAssignmentId string = diagnosticsAudit.id
+output policyAssignmentId string = assignAuditPolicy ? diagnosticsAudit!.id : 'not assigned — needs Resource Policy Contributor, see assignAuditPolicy'
 output budgetName string = budget.name
 output basicPlanTable string = useBasicPlanForFirewallLogs ? 'AZFWApplicationRule moved to Basic ($0.50/GB vs $2.76/GB)' : 'All tables left on Analytics'
 output tablesLeftOnAnalytics array = ['Syslog', 'Heartbeat']

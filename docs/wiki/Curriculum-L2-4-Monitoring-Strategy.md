@@ -74,13 +74,22 @@ and one forecast threshold notifies the action group L2.3 built.
 **Source:** [`curriculum/L2.4-monitoring-strategy/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.4-monitoring-strategy/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.4-monitoring-strategy/main.bicepparam)
 
 > [!IMPORTANT]
-> **Why audit and not auto-fix?** A `DeployIfNotExists` policy needs a managed
-> identity, and giving that identity permissions needs a role assignment —
-> which **Contributor cannot create**. Classroom participants hold Contributor
-> on their resource group, so a DINE assignment would fail at deployment. That
-> is not a lab limitation to apologise for; it is the actual boundary between
-> "team that runs a workload" and "team that governs a platform", and it is
-> worth ten minutes of discussion.
+> **The policy assignment is off by default, and that is the lesson.**
+> Contributor cannot create a policy assignment at all — the role's `notActions`
+> include `Microsoft.Authorization/*/Write`, which covers policy assignments as
+> well as role assignments. Classroom participants and the OIDC identity both
+> hold plain Contributor on one resource group, so leaving it on would fail the
+> deploy for everyone it was written for.
+>
+> Turn it on with `CURRICULUM_ASSIGN_POLICY=true` only if you hold **Resource
+> Policy Contributor** or **Owner**. Your instructor already has the same job
+> covered by `scripts/admin/Set-LabPolicy.ps1`.
+>
+> It is `AuditIfNotExists` rather than `DeployIfNotExists` for a second reason:
+> DINE also needs a managed identity, and giving that identity permissions needs
+> a role assignment — the same wall. None of this is a lab limitation to
+> apologise for. It is the actual boundary between "team that runs a workload"
+> and "team that governs a platform", and it is worth ten minutes of discussion.
 
 <br>
 
@@ -187,10 +196,11 @@ is the actual skill this chapter is teaching.
      --query "value[0].results" -o json
    ```
 
-   **You should see:** a compliance summary within about 30 minutes. Non-
-   compliant resources are ones with no diagnostic setting — if L2.1 did its
-   job, the list should be short and everything on it should be a resource
-   Level 1 created after L2.1 ran.
+   **You should see:** a compliance summary within about 30 minutes — *if* the
+   assignment was made. With the default `assignAuditPolicy = false` there is
+   nothing to summarise, and the template's `policyAssignmentId` output says so
+   rather than pretending. Non-compliant resources are ones with no diagnostic
+   setting; if L2.1 did its job, the list should be short.
 
 4. **The budget exists and has three thresholds:**
 
