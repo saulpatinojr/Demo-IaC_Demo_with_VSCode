@@ -71,8 +71,11 @@ describe it as building on L2.
 ## Documentation
 
 `docs/wiki/` is a mirror of the GitHub Wiki and is published from here. It is
-validated by `scripts/Publish-Wiki.ps1`, which runs on every pull request, so
-match the existing page structure: one H1 per page, absolute links, GitHub
-alerts rather than emoji blockquotes, and a `<details>` text description after
-every mermaid diagram. Run `./scripts/Publish-Wiki.ps1 -CheckOnly -Strict`
-before proposing wiki changes.
+validated by `scripts/Publish-Wiki.ps1` via the *Wiki check* workflow, which is
+path-filtered — it runs only for changes touching `docs/wiki/**`,
+`scripts/Publish-Wiki.ps1`, `.github/workflows/wiki-check.yml` or `README.md`,
+so do not rely on it to catch anything outside those. Match the existing page
+structure: one H1 per page, absolute links, GitHub alerts rather than emoji
+blockquotes, and a `<details>` text description after every mermaid diagram.
+Run `./scripts/Publish-Wiki.ps1 -CheckOnly -Strict` before proposing wiki
+changes — `-Strict` is what CI uses, and without it warnings do not fail.
