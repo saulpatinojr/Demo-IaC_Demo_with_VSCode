@@ -1,0 +1,78 @@
+name: "Publish wiki"
+
+# Mirrors docs/wiki (the source of truth) onto the GitHub wiki, the same way
+# scripts/Publish-Wiki.ps1 does from a workstation: copy every file over,
+# delete anything the mirror no longer has, push to the wiki's MASTER branch
+# -- GitHub serves master only, so pushing anywhere else looks successful and
+# changes nothing.
+#
+# GITHUB_TOKEN with contents:write can push to <repo>.wiki.git (it could not
+# before GitHub's 2022 token change, which is why publishing used to be
+# manual-only here). The wiki repository must already exist: enable Wikis
+# under Settings -> Features and create any first page once. Forks don't get
+# a wiki at all (GitHub does not fork wikis), so in a fork this job fails
+# with a clear message instead of pretending to publish.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/wiki/**"
+      - ".github/workflows/publish-wiki.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two publishes racing would fight over the wiki's master branch.
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Never publish a mirror that fails its own content standard.
+      - name: Check the wiki mirror first
+        shell: pwsh
+        run: |
+          ./scripts/Publish-Wiki.ps1 -CheckOnly -Strict
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Mirror docs/wiki onto the wiki repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki-live; then
+            echo "::error::Cannot reach ${GITHUB_REPOSITORY}.wiki.git. Enable Wikis under Settings -> Features (and create one page once so GitHub initializes the wiki repository). Forks never get a wiki."
+            exit 1
+          fi
+          cd wiki-live
+
+          # The 'main' branch trap: GitHub serves master only, so a stray
+          # main branch swallows pushes silently. Same guard as the script.
+          if git ls-remote --heads origin main | grep -q main; then
+            echo "::error::The wiki has a 'main' branch. GitHub serves 'master' only -- delete it: git push origin --delete main"
+            exit 1
+          fi
+          git checkout -B master origin/master 2>/dev/null || git checkout -B master
+
+          # Mirror, including deletions: docs/wiki is the source of truth.
+          # find on both sides, not a glob copy -- a bash * skips dotfiles,
+          # which would strip docs/wiki/.gitattributes from the wiki and let
+          # a later CRLF checkout mark every page as modified.
+          find . -maxdepth 1 -type f -delete
+          find ../docs/wiki -maxdepth 1 -type f -exec cp {} . \;
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "The wiki already matches docs/wiki; nothing to publish."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "Publish docs/wiki @ ${GITHUB_SHA::7}"
+          git push origin HEAD:master
+          echo "Published $(git rev-parse --short HEAD) -> https://github.com/${GITHUB_REPOSITORY}/wiki"

@@ -8,10 +8,10 @@ name: "Wiki check"
 # GitHub App -- the stock GITHUB_TOKEN with contents:read is enough. That also
 # means it works unchanged in a fork: it validates that fork's own files.
 #
-# Publishing is deliberately NOT automated. GITHUB_TOKEN cannot push to a wiki
-# repository, and forks don't get a wiki at all (GitHub does not fork wikis),
-# so a publish job would be dead weight in every fork of this teaching repo.
-# Publish from a machine instead: ./scripts/Publish-Wiki.ps1 -WhatIf
+# Publishing lives in publish-wiki.yml, which mirrors docs/wiki onto the wiki
+# after a push to main. (GITHUB_TOKEN could not push to a wiki repository
+# before GitHub's 2022 token change -- it can now, with contents:write.)
+# Publishing from a machine still works too: ./scripts/Publish-Wiki.ps1 -WhatIf
 on:
   pull_request:
     paths:
