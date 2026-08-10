@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Azure RBAC permissions">
+  <!-- PLACEHOLDER. Swap for the official Azure PNG when one is available;
+       the pages reference this filename, so replacing the file is enough. -->
+  <defs>
+    <linearGradient id="az" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3aa0e8"/>
+      <stop offset="1" stop-color="#1466b0"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 4 56 12v20c0 14-10 24-24 28C18 56 8 46 8 32V12z" fill="url(#az)"/>
+  <path d="M32 4 56 12v20c0 14-10 24-24 28z" fill="#0f4f8f" opacity=".25"/>
+  <circle cx="32" cy="27" r="7" fill="#fff"/>
+  <path d="M32 34c-6 0-11 3.6-13 9 3.6 4 8 6.8 13 8.4 5-1.6 9.4-4.4 13-8.4-2-5.4-7-9-13-9z" fill="#fff"/>
+</svg>

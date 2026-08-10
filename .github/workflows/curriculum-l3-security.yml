@@ -1,0 +1,162 @@
+name: "Curriculum L3 - Security & Defender for Cloud"
+
+# Manual only. Prerequisites: Levels 1 and 2 deployed with the same prefix.
+#
+# Everything this workflow deploys is scoped to the RESOURCE GROUP, because
+# that is all the lab identity has. Defender PLANS are subscription-scoped and
+# are not here at all -- an instructor runs scripts/admin/Enable-DefenderPlans.ps1
+# once per subscription. See the Wiki -> Curriculum Level 3 - Secure.
+on:
+  workflow_dispatch:
+    inputs:
+      chapter:
+        description: "Which chapter to deploy"
+        type: choice
+        required: true
+        default: "L3.1 - Security Foundation"
+        options:
+          - "L3.1 - Security Foundation"
+          - "L3.2 - Workload Protection"
+          - "L3.3 - Security Operations"
+          - "L3.4 - Enterprise Security Architecture"
+      include_web_tier:
+        description: "L1.2 (firewall + web tier) is still deployed"
+        type: boolean
+        required: true
+        default: true
+      secondary_region:
+        description: "L1.4 (second region + DR SQL server) is deployed"
+        type: boolean
+        required: true
+        default: true
+      enable_jit:
+        description: "Deploy just-in-time VM access (needs Defender for Servers P2)"
+        type: boolean
+        required: true
+        default: false
+      dry_run:
+        description: "Stop after what-if — show the changes, deploy nothing"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: curriculum-l3
+  cancel-in-progress: false
+
+env:
+  AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
+  ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
+  # Read by L3.2. JIT needs Defender for Servers Plan 2 on the subscription,
+  # which the instructor script does not enable by default.
+  CURRICULUM_ENABLE_JIT: ${{ inputs.enable_jit }}
+  CURRICULUM_SECONDARY_REGION: ${{ inputs.secondary_region }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight - verify required secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          missing=0
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+
+      - name: Resolve chapter to a template path
+        id: chapter
+        env:
+          CHAPTER: ${{ inputs.chapter }}
+        run: |
+          case "$CHAPTER" in
+            "L3.1 - Security Foundation") dir="curriculum/L3.1-security-foundation" ;;
+            "L3.2 - Workload Protection") dir="curriculum/L3.2-workload-protection" ;;
+            "L3.3 - Security Operations") dir="curriculum/L3.3-security-operations" ;;
+            "L3.4 - Enterprise Security Architecture") dir="curriculum/L3.4-security-architecture" ;;
+            *) echo "::error::Unknown chapter '$CHAPTER'"; exit 1 ;;
+          esac
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "slug=$(echo "$dir" | sed 's|curriculum/||; s|[^a-zA-Z0-9]|-|g')" >> "$GITHUB_OUTPUT"
+          echo "Deploying $dir"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint (compile + linter)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+        run: |
+          az bicep build --file $CHAPTER_DIR/main.bicep --stdout > /dev/null
+          az bicep build-params --file $CHAPTER_DIR/main.bicepparam --stdout > /dev/null
+
+      - name: What-if (preview changes)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
+        run: |
+          az deployment group what-if \
+            --name $CHAPTER_SLUG-whatif-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters $CHAPTER_DIR/main.bicepparam
+
+      - name: Deploy
+        if: ${{ !inputs.dry_run }}
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
+        run: |
+          az deployment group create \
+            --name $CHAPTER_SLUG-deploy-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters $CHAPTER_DIR/main.bicepparam
+
+      # Which plans are on decides what half of Level 3 can actually detect, and
+      # the answer lives outside this resource group. Print it rather than let
+      # anyone assume.
+      - name: Report which Defender plans are on
+        if: ${{ !inputs.dry_run }}
+        continue-on-error: true
+        env:
+          CHAPTER: ${{ inputs.chapter }}
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+        run: |
+          {
+            echo "## $CHAPTER"
+            echo ""
+            echo "Deployed from \`$CHAPTER_DIR\`."
+            echo ""
+            echo "### Defender plans on this subscription"
+            echo ""
+            echo "Plans are subscription-scoped. The lab identity holds Contributor on one"
+            echo "resource group and cannot change them — an instructor runs"
+            echo "\`scripts/admin/Enable-DefenderPlans.ps1\`."
+            echo ""
+            echo '```'
+            az security pricing list --query "value[].{Plan:name,Tier:pricingTier,SubPlan:subPlan}" -o table 2>&1 || echo "Not readable with this identity's permissions."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dry run - nothing was deployed
+        if: ${{ inputs.dry_run }}
+        run: echo "::notice::Dry run. The what-if above shows what a real run would change."

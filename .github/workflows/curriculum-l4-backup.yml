@@ -1,0 +1,169 @@
+name: "Curriculum L4 - Backup & Recovery Readiness"
+
+# Manual only. Prerequisites: Levels 1-3 deployed with the same prefix.
+#
+# Read the L4.1 page before the first run. Vault redundancy and cross-region
+# restore FREEZE the moment the first item is protected, so those two inputs
+# are decisions, not defaults -- and L4.4 cannot undo them.
+# See the Wiki -> Curriculum Level 4 - Protect.
+on:
+  workflow_dispatch:
+    inputs:
+      chapter:
+        description: "Which chapter to deploy"
+        type: choice
+        required: true
+        default: "L4.1 - Backup Fundamentals"
+        options:
+          - "L4.1 - Backup Fundamentals"
+          - "L4.2 - PaaS Protection"
+          - "L4.3 - Operational Backup Management"
+          - "L4.4 - Enterprise Data Protection Strategy"
+      include_web_tier:
+        description: "L1.2 (firewall + web tier) is still deployed"
+        type: boolean
+        required: true
+        default: true
+      secondary_region:
+        description: "L1.4 (second region + DR SQL server) is deployed"
+        type: boolean
+        required: true
+        default: true
+      vault_redundancy:
+        description: "Vault redundancy — FROZEN once anything is protected (L4.1 only)"
+        type: choice
+        required: true
+        default: "GeoRedundant"
+        options: ["GeoRedundant", "ZoneRedundant", "LocallyRedundant"]
+      cross_region_restore:
+        description: "Enable cross-region restore — needs GeoRedundant, cannot be added later"
+        type: boolean
+        required: true
+        default: false
+      dry_run:
+        description: "Stop after what-if — show the changes, deploy nothing"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: curriculum-l4
+  cancel-in-progress: false
+
+env:
+  AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
+  ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
+  # Read by L4.1. Both freeze once the vault protects its first item, so they
+  # are surfaced as run inputs rather than buried in the parameter file.
+  CURRICULUM_SECONDARY_REGION: ${{ inputs.secondary_region }}
+  CURRICULUM_VAULT_REDUNDANCY: ${{ inputs.vault_redundancy }}
+  CURRICULUM_CROSS_REGION_RESTORE: ${{ inputs.cross_region_restore }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight - verify required secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          missing=0
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+
+      - name: Resolve chapter to a template path
+        id: chapter
+        env:
+          CHAPTER: ${{ inputs.chapter }}
+        run: |
+          case "$CHAPTER" in
+            "L4.1 - Backup Fundamentals") dir="curriculum/L4.1-backup-fundamentals" ;;
+            "L4.2 - PaaS Protection") dir="curriculum/L4.2-paas-protection" ;;
+            "L4.3 - Operational Backup Management") dir="curriculum/L4.3-backup-operations" ;;
+            "L4.4 - Enterprise Data Protection Strategy") dir="curriculum/L4.4-data-protection-strategy" ;;
+            *) echo "::error::Unknown chapter '$CHAPTER'"; exit 1 ;;
+          esac
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "slug=$(echo "$dir" | sed 's|curriculum/||; s|[^a-zA-Z0-9]|-|g')" >> "$GITHUB_OUTPUT"
+          echo "Deploying $dir"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Lint (compile + linter)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+        run: |
+          az bicep build --file $CHAPTER_DIR/main.bicep --stdout > /dev/null
+          az bicep build-params --file $CHAPTER_DIR/main.bicepparam --stdout > /dev/null
+
+      - name: What-if (preview changes)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
+        run: |
+          az deployment group what-if \
+            --name $CHAPTER_SLUG-whatif-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters $CHAPTER_DIR/main.bicepparam
+
+      - name: Deploy
+        if: ${{ !inputs.dry_run }}
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
+        run: |
+          az deployment group create \
+            --name $CHAPTER_SLUG-deploy-${{ github.run_number }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --parameters $CHAPTER_DIR/main.bicepparam
+
+      # Redundancy is the one setting nobody can fix later, so surface what the
+      # vault actually ended up with rather than what was requested.
+      - name: Report vault redundancy and protected items
+        if: ${{ !inputs.dry_run }}
+        continue-on-error: true
+        env:
+          CHAPTER: ${{ inputs.chapter }}
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+        run: |
+          {
+            echo "## $CHAPTER"
+            echo ""
+            echo "Deployed from \`$CHAPTER_DIR\`."
+            echo ""
+            echo "### Vault state"
+            echo ""
+            echo "Redundancy freezes once the first item is protected. If this is not what"
+            echo "you want, the vault has to be rebuilt — L4.4 cannot change it."
+            echo ""
+            echo '```'
+            az backup vault backup-properties show -n "rsv-$AZURE_PREFIX-backup" -g $AZURE_RESOURCE_GROUP -o table 2>&1 || echo "Vault not deployed yet (expected before L4.1)."
+            az backup item list --vault-name "rsv-$AZURE_PREFIX-backup" -g $AZURE_RESOURCE_GROUP --query "[].{item:properties.friendlyName,health:properties.healthStatus,lastBackup:properties.lastBackupStatus}" -o table 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Dry run - nothing was deployed
+        if: ${{ inputs.dry_run }}
+        run: echo "::notice::Dry run. The what-if above shows what a real run would change."
