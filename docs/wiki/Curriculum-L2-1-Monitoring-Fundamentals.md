@@ -1,11 +1,18 @@
 # L2.1 — Monitoring Fundamentals 🔵
 
-**Goal:** point everything Level 1 deployed at **one** Log Analytics workspace —
-an Azure Monitor Agent and a data collection rule on every VM, and diagnostic
-settings on the firewall, load balancer, Bastion, Key Vault, SQL database and
-container app. Nothing new is deployed. Nothing here has an hourly rate; from
-this chapter on, you pay per **GB collected**, which makes the parameters the
-price dial.
+**📍 [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L1.4 — Production-Ready Platform](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform) &nbsp;·&nbsp; Next: [L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility)
+
+---
+
+**Goal:** point everything Level 1 built at **one** Log Analytics workspace.
+Nothing new gets deployed and nothing here has an hourly rate — from this
+chapter on you pay per **GB collected**.
+
+**The IaC lesson:** one template wires up an entire estate — four agent
+installs and six diagnostic settings that would otherwise be forty portal
+clicks, done identically every time.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
@@ -13,48 +20,33 @@ price dial.
 
 > [!IMPORTANT]
 > **Level 1 must already be deployed.** This template creates no workspace — it
-> reuses `log-<prefix>-l3`, the one L1.3 made. That single decision is what lets
-> Level 5 put Microsoft Sentinel on a workspace that already has the whole
-> estate in it, instead of starting again.
+> reuses `log-<prefix>-l3`, the one L1.3 made.
+
+<br>
 
 ## What you're building
 
+Two collection paths, one destination. VMs get an **agent** that gathers what
+a **data collection rule** tells it to. Platform resources (firewall, load
+balancer, Bastion, Key Vault, SQL, container app) get **diagnostic settings** —
+no agent, nothing to install. Both land in the workspace L1.3 already created.
+
 ```mermaid
 flowchart LR
-  subgraph VMS["Level 1 VMs"]
-    VM1["vm-iacdemo-test<br/>from L1.1"]
-    VM2["vm-iacdemo-web0..2<br/>from L1.2"]
-  end
-
-  subgraph PLATFORM["Level 1 platform resources"]
-    FW["afw-iacdemo-hub"]
-    LB["lbi-iacdemo-web"]
-    BAS["bas-iacdemo-hub"]
-    KV["kv-iacdemo-xxxxxx"]
-    SQL["sqldb-iacdemo-app"]
-    APP["ca-iacdemo-web"]
-  end
-
-  AMA["Azure Monitor Agent<br/>+ dcr-iacdemo-vm<br/>perf counters, syslog"]
+  VMS["4 VMs<br/>from L1.1 + L1.2"]
+  RES["6 platform resources<br/>firewall · LB · Bastion<br/>Key Vault · SQL · container app"]
+  AMA["Azure Monitor Agent<br/>+ data collection rule"]
   DIAG["diagnostic settings<br/>named categories only"]
-  WS["log-iacdemo-l3<br/>created by L1.3<br/>REUSED, not replaced"]
+  WS["log-iacdemo-l3<br/>from L1.3 — reused,<br/>not replaced"]
 
-  VM1 --> AMA
-  VM2 --> AMA
-  FW --> DIAG
-  LB --> DIAG
-  BAS --> DIAG
-  KV --> DIAG
-  SQL --> DIAG
-  APP --> DIAG
-  AMA -->|"Microsoft-Perf<br/>Microsoft-Syslog"| WS
-  DIAG -->|"resource logs"| WS
+  VMS --> AMA --> WS
+  RES --> DIAG --> WS
 
   classDef compute fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
   classDef plat fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
   classDef mon fill:#fff9e6,stroke:#c9a227,color:#1a1a1a
-  class VM1,VM2 compute
-  class FW,LB,BAS,KV,SQL,APP plat
+  class VMS compute
+  class RES plat
   class AMA,DIAG,WS mon
 ```
 
@@ -62,43 +54,49 @@ flowchart LR
 
 Two collection paths converge on one workspace.
 
-VMs use an **agent**: the Azure Monitor Agent extension is installed on
-`vm-iacdemo-test` from L1.1 and the three `vm-iacdemo-web*` VMs from L1.2, and
-each one is associated with the data collection rule `dcr-iacdemo-vm`. The rule
-is what decides *what* the agent gathers — here, six performance counters every
-60 seconds and syslog at warning level and above.
+The four VMs (the L1.1 test VM and the three L1.2 web VMs) get the Azure
+Monitor Agent extension, associated with the data collection rule
+`dcr-iacdemo-vm`. The rule decides *what* the agent gathers — six performance
+counters every 60 seconds and syslog at warning level and above.
 
-Platform resources use **diagnostic settings** instead: the firewall, internal
-load balancer, Bastion host, Key Vault, SQL database and container app each get
-a setting that forwards named log categories. There is no agent involved and
-nothing to install.
+The six platform resources (firewall, internal load balancer, Bastion host,
+Key Vault, SQL database, container app) each get a diagnostic setting that
+forwards named log categories. No agent involved.
 
-Both land in `log-iacdemo-l3` — the workspace **L1.3 already created**. This
-chapter promotes it from an app-scoped workspace to the platform workspace for
-the whole estate rather than creating a second one.
+Both paths land in `log-iacdemo-l3` — the workspace **L1.3 already created**.
+This chapter promotes it from an app-scoped workspace to the platform
+workspace for the whole estate rather than creating a second one.
 
 </details>
 
 **Source:** [`curriculum/L2.1-monitoring-fundamentals/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.1-monitoring-fundamentals/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.1-monitoring-fundamentals/main.bicepparam)
 
-> [!NOTE]
-> **Why named categories instead of `allLogs`?** Because `allLogs` on the
-> firewall alone would out-ingest everything else in this chapter combined, for
-> data no later chapter reads. The template collects `AZFWNetworkRule` and
-> `AZFWApplicationRule` — "what did it allow" and "what did it block" — which is
-> exactly what the L2.2 queries need. Choosing categories *is* the cost control.
+<br>
+
+<details><summary><b>🔍 Going deeper — why named categories, not <code>allLogs</code></b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+`allLogs` on the firewall alone would out-ingest everything else in this
+chapter combined, for data no later chapter reads. The template collects
+`AZFWNetworkRule` and `AZFWApplicationRule` — "what did it allow" and "what
+did it block" — which is exactly what the L2.2 queries need.
+
+Choosing categories *is* the cost control. That single decision is what lets
+Level 5 put Microsoft Sentinel on a workspace that already has the whole
+estate in it, instead of starting again.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
-<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Azure RBAC</b><br><br>
 <b>Contributor</b> on the lab resource group — what <code>Setup-Oidc.ps1</code> already granted you.<br>
-<sub>Why: the template installs a VM extension, creates a data collection rule and writes diagnostic settings onto resources another template owns. All three are ordinary resource writes. <b>Monitoring Contributor</b> plus <b>Virtual Machine Contributor</b> is the least-privilege equivalent if you are building this for production rather than a lab.</sub>
+<sub>Why: the template installs a VM extension, creates a data collection rule and writes diagnostic settings onto resources another template owns. All three are ordinary resource writes. <b>Monitoring Contributor</b> plus <b>Virtual Machine Contributor</b> is the least-privilege equivalent for production.</sub>
 </td>
 </tr>
 <tr>
@@ -106,14 +104,18 @@ the whole estate rather than creating a second one.
 <td valign="top">
 <b>Microsoft Entra ID roles</b><br><br>
 <b>None.</b><br>
-<sub>Nothing here touches directory objects. The Azure Monitor Agent authenticates with the VM's own managed identity, which already exists — no app registration, no consent, no directory role.</sub>
+<sub>Nothing here touches directory objects. The agent authenticates with the VM's own managed identity, which already exists.</sub>
 </td>
 </tr>
 </table>
 
 <sub><a href="https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/monitor">For more info</a> — Azure built-in roles for monitoring</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -163,8 +165,8 @@ workflow**, then pick **L2.1 - Monitoring Fundamentals** from the dropdown.
 Two inputs matter:
 
 - **L1.2 is still deployed** — untick if you tore the firewall down.
-- **Stop after what-if** — shows every change and deploys nothing. Worth one run
-  on its own, because this is the first template in the curriculum that changes
+- **Stop after what-if** — shows every change and deploys nothing. Worth one
+  run on its own: this is the first template in the curriculum that changes
   resources somebody else's template owns.
 
 **You should see:** **Lint → What-if → Deploy**, then a run summary with the
@@ -205,8 +207,6 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
    ```
 
    **You should see:** four rows — the L1.1 test VM and the three L1.2 web VMs.
-   No rows at all usually means the agent installed but was never associated
-   with a rule; check the next step.
 
 2. **The rule is actually attached** — an unassociated agent collects nothing,
    and it is the most common "why is there no data?" in Azure Monitor:
@@ -227,8 +227,8 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
    ```
 
    **You should see:** at least the firewall tables once traffic has passed
-   through it. Quiet firewall, no rows — generate some by curling out from a web
-   VM, the same test you ran in L1.2.
+   through it. Quiet firewall, no rows — generate some by curling out from a
+   web VM, the same test you ran in L1.2.
 
 4. **Find out what it costs** — the point of the chapter:
 
@@ -240,6 +240,8 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
    **You should see:** a ranked list of what you are paying for. At $2.76/GB,
    multiply the total by 2.76 for a daily rate. Write the number down — L2.4
    asks you to beat it.
+
+<br>
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · One workflow, many chapters**
 >
@@ -261,8 +263,16 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
 ## ➡️ What carries forward
 
 L2.2 writes queries against exactly this data — the perf counters, the syslog,
-and the firewall categories you chose here. Anything you did not collect in this
-chapter is a query you cannot write in the next one, which is the trade-off
-being taught.
+and the firewall categories you chose here. Anything you did not collect in
+this chapter is a query you cannot write in the next one.
 
-**Leave it deployed** → **[back to Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — turn this data into answers | **[L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility)** |
+| Want the big picture of this level first | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -1,5 +1,9 @@
 # L1.4 — Production-Ready Platform Deployment 🔴
 
+**📍 [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy)** · Chapter 4 of 4 &nbsp;·&nbsp; Previous: [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application) &nbsp;·&nbsp; Next: [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)
+
+---
+
 **Goal:** the production upgrade of L1.3 — survive a regional outage. A second-region app stack in `westus2`, an **Azure SQL failover group**, and **Azure Front Door** as the single global entry point with health-probed failover. Then grade the result against the Well-Architected Framework, the way a real design review would.
 
 | Who this is for | Time | You need first | Cost while it runs |
@@ -263,4 +267,12 @@ idle — about **$1.84/hr** with everything running. Preview first:
 > [!CAUTION]
 > The second command deletes every resource in the group and prompts for confirmation. It leaves the resource group itself in place, which is what you want in a classroom — you usually can't recreate it.
 
-Stuck on anything, or curious where to go next? **[Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting)** · **[Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References)**
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Level 1 complete — start monitoring what you built | **[L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals)** |
+| See what Level 2 builds first | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) · [Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References) |
