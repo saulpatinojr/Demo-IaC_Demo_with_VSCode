@@ -60,8 +60,11 @@ jobs:
           git checkout -B master origin/master 2>/dev/null || git checkout -B master
 
           # Mirror, including deletions: docs/wiki is the source of truth.
+          # find on both sides, not a glob copy -- a bash * skips dotfiles,
+          # which would strip docs/wiki/.gitattributes from the wiki and let
+          # a later CRLF checkout mark every page as modified.
           find . -maxdepth 1 -type f -delete
-          cp ../docs/wiki/* .
+          find ../docs/wiki -maxdepth 1 -type f -exec cp {} . \;
           git add -A
 
           if git diff --cached --quiet; then
