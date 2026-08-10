@@ -9,8 +9,8 @@
 - [GitHub Essentials](GitHub-Essentials)
 - [Getting Comfortable with the Tools](Getting-Comfortable-with-the-Tools)
 
-### The labs
-All build on **L1**; L4 needs L3. **L3 does not need L2.** Costs are **running totals** with every lab still deployed, billed while deployed.
+### The labs — Level 1
+The four original labs, unchanged. All build on **L1**; L4 needs L3. **L3 does not need L2.** Costs are **running totals** with every lab still deployed, billed while deployed.
 
 | | Lab | Running cost |
 |---|---|---|
@@ -21,8 +21,8 @@ All build on **L1**; L4 needs L3. **L3 does not need L2.** Costs are **running t
 
 The jump at L2 is Azure Firewall — **$1.25/hr on its own.**
 
-### Curriculum redesign (proposal)
-Outline only — the labs above are unchanged.
+### The curriculum path
+The four labs above are **Level 1**. Levels 2-6 keep that same environment alive and walk it through monitor, secure, protect, detect, recover — 18 chapters in all.
 - [Overview & dependency map](Curriculum-Redesign)
 - [Level 1 · Deploy](Curriculum-Level-1-Deploy)
 - [Level 2 · Monitor](Curriculum-Level-2-Monitor)

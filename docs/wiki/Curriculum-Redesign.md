@@ -1,6 +1,6 @@
 # Curriculum Redesign — the Azure operational maturity path 🧭
 
-**Status: proposal, complete.** All six levels have chapter structure, learning
+**Status: merged to `main`.** All six levels have chapter structure, learning
 objectives, dependencies, service inventory, cost — and code.
 
 | Level | Outline | Code | Chapters |
@@ -16,7 +16,7 @@ objectives, dependencies, service inventory, cost — and code.
 compiles clean under Bicep 0.46.1 with no linter warnings. Nothing has been
 deployed against a live subscription.
 
-Nothing on this branch changes the four labs that exist today. The existing
+Nothing here changes the four labs that exist today. The existing
 [L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)–[L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)
 pages, their Bicep and their workflows are untouched and still deployable. The
 redesign *re-frames* them as the first level of a longer path.
@@ -280,11 +280,12 @@ in a troubleshooting page:
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Branches as proposals**
 >
-> **You are looking at one:** this curriculum lives on its own branch and its own
-> set of wiki pages. Nothing about the current learning path changed, so the
-> proposal can be read, reviewed and rejected without a single learner noticing.
-> **Find it:** the branch selector on the repository home page, and the pull
-> request that carries these pages.
+> **You are reading the result of one:** this curriculum was built on its own
+> branch with its own set of wiki pages. Nothing about the existing learning path
+> changed while it was in flight, so it could be read, reviewed and — had it come
+> to that — rejected without a single learner noticing.
+> **Find it:** the pull request that carried these pages, still readable in the
+> repository's merged pull requests.
 > **Beyond the lab:** because `docs/wiki/` is published to the wiki from the
 > repo, a documentation redesign gets the same review workflow as code — diffed,
 > commented on line by line, and merged only when someone approves it.
