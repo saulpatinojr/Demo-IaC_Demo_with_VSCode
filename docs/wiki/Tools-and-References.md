@@ -142,7 +142,7 @@ gh variable delete TEST_BODY_DASH --repo OWNER/REPO
 
 ## 🔒 Admin scripts (`scripts/admin/`) — Instructor only
 
-These scripts require the **Az PowerShell module** (`Install-Module Az -Scope CurrentUser`) and **Owner or User Access Administrator** on the subscription. Students never run these.
+These scripts require **Owner or User Access Administrator** on the subscription. `New-LabEnvironment.ps1` uses the Az PowerShell module (`Install-Module Az -Scope CurrentUser`); `Set-LabPolicy.ps1` and `Enable-DefenderPlans.ps1` deploy **Bicep templates** through the Azure CLI. Students never run these.
 
 ### `Setup-OidcAll.ps1`
 - Instructor-run bulk OIDC setup: for every student in `lab-user-data.csv`, creates the Entra app registration, federated credentials, Contributor role assignment, and pushes all 6 GitHub secrets + 2 variables to the student's fork.

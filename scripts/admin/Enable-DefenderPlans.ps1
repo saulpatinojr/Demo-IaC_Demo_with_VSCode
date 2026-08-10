@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Enables the Microsoft Defender for Cloud plans the curriculum's Level 3
-    needs, at subscription scope.
+    needs, at subscription scope, by deploying defender-plans.bicep.
 
 .DESCRIPTION
     Defender plans are a SUBSCRIPTION-scoped resource
@@ -10,12 +10,13 @@
     an instructor job, run once per lab subscription, exactly like
     Set-LabPolicy.ps1.
 
-    Enabling a plan here bills the WHOLE subscription, not just the lab
-    resource groups. That is the single most expensive button in this
-    curriculum if the subscription has resources outside the lab, so the
-    script refuses to run silently: it prints what each plan will cost against
-    the resources it can see, and -WhatIf shows the plan without touching
-    anything.
+    The plans themselves are declared in defender-plans.bicep, next to this
+    script -- the same tool the students use, reviewable in the same pull
+    requests. This wrapper adds the one thing a template cannot do: per-node
+    pricing bills whatever already lives in the subscription, and only a
+    reader can count that. The script counts, prints what each plan will cost
+    against the resources it can see, and only then deploys. -WhatIf runs the
+    deployment's own what-if and changes nothing.
 
     Rates (East US 2, US retail list, verified 2026-08-08):
 
@@ -77,10 +78,12 @@ $ErrorActionPreference = 'Stop'
 
 function Write-Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)   { Write-Host "    [ok]   $msg" -ForegroundColor Green }
-function Write-Skip($msg) { Write-Host "    [skip] $msg" -ForegroundColor DarkGray }
 function Write-Warn($msg) { Write-Host "    [warn] $msg" -ForegroundColor Yellow }
 function Write-Cost($msg) { Write-Host "    [cost] $msg" -ForegroundColor Yellow }
 function Fail($msg)       { Write-Host "`nERROR: $msg" -ForegroundColor Red; exit 1 }
+
+$TemplateFile = Join-Path $PSScriptRoot 'defender-plans.bicep'
+if (-not (Test-Path $TemplateFile)) { Fail "Template not found: $TemplateFile" }
 
 # ---------------------------------------------------------------------------- #
 #  Context                                                                      #
@@ -109,7 +112,9 @@ Write-Ok "name: $subName"
 # ---------------------------------------------------------------------------- #
 # Per-node pricing means the bill is a function of what is already in the
 # subscription, not of what the lab deployed. An instructor running this
-# against a shared subscription should see that number first.
+# against a shared subscription should see that number first. This is the
+# part that stays PowerShell: a template declares desired state, it cannot
+# count what already exists.
 Write-Step 'Counting billable resources across the whole subscription'
 
 $vmCount  = [int](az vm list --query 'length(@)' -o tsv 2>$null)
@@ -133,42 +138,32 @@ if ($vmCount -gt 10) {
 }
 
 # ---------------------------------------------------------------------------- #
-#  Build the plan set                                                           #
+#  Deploy the template                                                          #
 # ---------------------------------------------------------------------------- #
-$tier = if ($Disable) { 'Free' } else { 'Standard' }
-
-$plans = @(
-    @{ Name = 'VirtualMachines';  SubPlan = $ServersPlan; Skip = ($ServersPlan -eq 'None'); Why = 'Defender for Servers' }
-    @{ Name = 'SqlServers';       SubPlan = $null;        Skip = $false;                    Why = 'Defender for SQL (Azure SQL Database)' }
-    @{ Name = 'KeyVaults';        SubPlan = $null;        Skip = $false;                    Why = 'Defender for Key Vault' }
-    @{ Name = 'Arm';              SubPlan = $null;        Skip = $false;                    Why = 'Defender for Resource Manager' }
-    @{ Name = 'StorageAccounts';  SubPlan = $null;        Skip = (-not $IncludeStorage);    Why = 'Defender for Storage' }
+$enabled = (-not $Disable).ToString().ToLower()
+$includeStorageValue = $IncludeStorage.IsPresent.ToString().ToLower()
+$commonArgs = @(
+    '--location', 'eastus2'
+    '--name', 'lab-defender-plans'
+    '--template-file', $TemplateFile
+    '--parameters', "serversPlan=$ServersPlan", "includeStorage=$includeStorageValue", "enabled=$enabled"
 )
 
-Write-Step ("{0} Defender plans" -f $(if ($Disable) { 'Disabling' } else { 'Enabling' }))
+$action = if ($Disable) { 'Disable Defender plans (tier -> Free)' } else { "Enable Defender plans (Servers $ServersPlan)" }
 
-foreach ($plan in $plans) {
-    if ($plan.Skip) {
-        Write-Skip "$($plan.Name) -- $($plan.Why) not requested"
-        continue
-    }
+if ($WhatIfPreference) {
+    Write-Step 'What-if -- no changes will be made'
+    az deployment sub what-if @commonArgs
+    if ($LASTEXITCODE -ne 0) { Fail 'what-if failed.' }
+    exit 0
+}
 
-    $target = "$($plan.Why) [$($plan.Name)] -> $tier"
-    if (-not $PSCmdlet.ShouldProcess($subName, $target)) {
-        Write-Skip "would set $target"
-        continue
-    }
+if (-not $PSCmdlet.ShouldProcess($subName, $action)) { exit 0 }
 
-    $azArgs = @('security', 'pricing', 'create', '--name', $plan.Name, '--tier', $tier)
-    # subPlan only applies to VirtualMachines, and only when enabling.
-    if ($plan.SubPlan -and -not $Disable) { $azArgs += @('--subplan', $plan.SubPlan) }
-
-    az @azArgs --only-show-errors 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warn "failed to set $($plan.Name). Do you hold Security Admin or Owner on this subscription?"
-    } else {
-        Write-Ok $target
-    }
+Write-Step $action
+az deployment sub create @commonArgs --query 'properties.outputs' -o jsonc
+if ($LASTEXITCODE -ne 0) {
+    Fail 'Deployment failed. Do you hold Security Admin or Owner on this subscription?'
 }
 
 # ---------------------------------------------------------------------------- #
