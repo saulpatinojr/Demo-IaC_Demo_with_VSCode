@@ -1,5 +1,9 @@
 # Level 5 — Microsoft Sentinel 🟠
 
+**📍 [Curriculum overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign)** · Level 5 of 6 &nbsp;·&nbsp; Previous: [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) &nbsp;·&nbsp; Next: [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)
+
+---
+
 **Theme: Detect.** Stand up a SIEM on the workspace this curriculum has been
 filling since L2.1, and run a security incident from signal to closure.
 
@@ -229,3 +233,13 @@ which can be taken before or after this one.
 
 When the class is finished, tear down deliberately: disabling Sentinel does not
 delete the workspace, and retained data keeps billing.
+
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Start the first chapter | **[L5.1 — Sentinel Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-1-Sentinel-Foundation)** |
+| Level 5 done — move to the next level | [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover) |
+| Back to the previous level | [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
+| What does the whole curriculum cost? | [Cost model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model) |

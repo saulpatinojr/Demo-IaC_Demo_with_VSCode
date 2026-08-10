@@ -1,5 +1,9 @@
 # Level 6 — Disaster Recovery & Redundancy 🔴
 
+**📍 [Curriculum overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign)** · Level 6 of 6 &nbsp;·&nbsp; Previous: [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) &nbsp;·&nbsp; Next: [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset)
+
+---
+
 **Theme: Recover.** Answer the question L1.4 raised and did not settle: this
 environment is deployed in two regions, but would it survive losing one?
 
@@ -209,13 +213,20 @@ money.
 ## What carries forward
 
 Level 6 closes the lifecycle: **Deploy → Monitor → Secure → Protect → Detect →
-Recover**. Pair it with
-**[Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)**
-in either order, and review the full cost picture on the
-**[Curriculum Cost Model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model)**.
+Recover**.
 
 > [!WARNING]
 > Tear down in reverse order of creation, and check three things that outlive a
 > resource-group cleanup: Site Recovery replication (disable it, or it keeps
 > billing per instance), Recovery Services vault contents from Level 4, and
 > retained Log Analytics data from Levels 2 and 5.
+
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Start the first chapter | **[L6.1 — High Availability & Redundancy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-1-High-Availability)** |
+| Curriculum complete — tear it down | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Skipped Level 5? It only needs Levels 1–4 | [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
+| What does the whole curriculum cost? | [Cost model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model) |

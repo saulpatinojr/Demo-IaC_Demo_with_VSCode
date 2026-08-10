@@ -1,6 +1,19 @@
 # L6.3 — Business Continuity & Validation 🔴
 
-**Goal:** prove the recovery capability instead of asserting it — an availability SLO alert, and a drill workbook that turns each exercise into evidence with numbers in it.
+**📍 [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** · Chapter 3 of 3 &nbsp;·&nbsp; Previous: [L6.2 — Disaster Recovery Implementation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-2-Disaster-Recovery) &nbsp;·&nbsp; Next: [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset)
+
+---
+
+**Goal:** prove the recovery capability instead of asserting it. An
+availability SLO alert, plus a drill workbook that turns each exercise into
+evidence with numbers in it.
+
+**The IaC lesson:** evidence as code — the SLO target, the drill record and
+every continuity query live in the repository, so "we meet 99%" has a
+definition, a measurement and a commit history instead of being a claim in a
+slide deck.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
@@ -9,11 +22,18 @@
 > [!IMPORTANT]
 > **Every query on this chapter's workbook reads data an earlier level already
 > collects** — availability from L2.2, backup and restore history from L4.3,
-> replication health from L6.2. Nothing new is instrumented. That is the
-> finding: a well-instrumented estate can already answer continuity questions
-> without a special project.
+> replication health from L6.2. Nothing new is instrumented.
+
+<br>
 
 ## What you're building
+
+Two small deployments, both made entirely of data the estate already collects.
+An SLO alert watches the L2.2 availability test over a 24-hour window and
+fires when the promise slips below target, and a continuity workbook puts
+measured availability, backup history and a fill-in-during-the-exercise drill
+record on one page. That a well-instrumented estate can already answer
+continuity questions without a special project is the finding.
 
 ```mermaid
 flowchart LR
@@ -54,16 +74,21 @@ matters is the gap between the target and the measured number.
 
 **Source:** [`curriculum/L6.3-continuity-validation/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.3-continuity-validation/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.3-continuity-validation/main.bicepparam)
 
-> [!NOTE]
-> **The cheapest possible DR posture is an untested one.** That is exactly why
-> it is a false saving. A drill costs $2–5 in temporary resources and an hour of
-> someone's time; discovering the plan does not work during a real outage costs
-> considerably more. Schedule the drill, keep the receipts, and delete the
-> temporary resources the same day.
+<br>
+
+<details><summary><b>🔍 Going deeper — why an untested DR posture is a false saving</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+The cheapest possible DR posture is an untested one. That is exactly why it is
+a false saving. A drill costs $2–5 in temporary resources and an hour of
+someone's time; discovering the plan does not work during a real outage costs
+considerably more. Schedule the drill, keep the receipts, and delete the
+temporary resources the same day.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -86,7 +111,11 @@ matters is the gap between the target and the measured number.
 
 <sub><a href="https://learn.microsoft.com/entra/identity/role-based-access-control/security-emergency-access">For more info</a> — Break-glass accounts, and why DR plans need them</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -195,6 +224,8 @@ listening. A runbook only its author can follow is not a runbook.
    output of Level 6 — and of the curriculum. The numbers in it are defensible
    because you measured them rather than quoting an SLA.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Evidence with a commit behind it**
 >
 > **You just used it:** the SLO target, the queries and the drill record are all
@@ -214,10 +245,17 @@ listening. A runbook only its author can follow is not a runbook.
 
 **The curriculum is complete.** Deploy → Monitor → Secure → Protect → Detect →
 Recover, on one environment, for about $2.55/hr — of which the Azure Firewall
-from L1.2 alone is $1.25/hr, more than Levels 2 through 6 combined.
+from L1.2 alone is $1.25/hr. Tear down in reverse order, and check the three
+things that outlive a resource group cleanup: Site Recovery replication,
+Recovery Services vault contents, and retained Log Analytics data.
 
-Tear down in reverse order, and check the three things that outlive a resource
-group cleanup: Site Recovery replication, Recovery Services vault contents, and
-retained Log Analytics data.
+<br>
 
-**Leave it deployed** → **[back to Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)**.
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Curriculum complete 🎉 — tear the estate down | **[Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset)** |
+| Review the whole journey | [Curriculum overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign) |
+| Skipped Level 5? It only needs Levels 1–4 | [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

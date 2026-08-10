@@ -1,6 +1,18 @@
 # L4.1 — Backup Fundamentals 🟣
 
-**Goal:** protect the Level 1 virtual machines, and understand what a recovery point actually is — starting with the one decision this chapter will not let you take back.
+**📍 [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L3.4 — Security Architecture](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-4-Security-Architecture) &nbsp;·&nbsp; Next: [L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection)
+
+---
+
+**Goal:** protect the Level 1 virtual machines, and understand what a recovery
+point actually is. This chapter also contains the one decision the curriculum
+will not let you take back.
+
+**The IaC lesson:** irreversible settings belong in the template as reviewed
+parameters — and `dependsOn` is how a template forces them to deploy before
+the resources that freeze them.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
@@ -8,12 +20,17 @@
 
 > [!WARNING]
 > **Vault redundancy freezes the moment the first item is protected.** LRS, ZRS
-> or GRS is chosen once, for the life of the vault, and cross-region restore
-> cannot be added afterwards. L4.4 needs it and will not be able to turn it on
-> retrospectively — so decide now, before you run this, rather than accepting
-> the default because it is the default.
+> or GRS is chosen once, for the life of the vault — decide before you run this.
+> L4.4 needs cross-region restore and cannot turn it on retrospectively.
+
+<br>
 
 ## What you're building
+
+One vault, one policy, four protected VMs. The template's whole shape is an
+ordering constraint: vault redundancy lives on a storage config that is only
+writable while the vault has **never** protected anything, so that config
+deploys first and every protected item depends on it.
 
 ```mermaid
 flowchart LR
@@ -62,17 +79,22 @@ does not immediately stop the storage meter.
 
 **Source:** [`curriculum/L4.1-backup-fundamentals/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.1-backup-fundamentals/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.1-backup-fundamentals/main.bicepparam)
 
-> [!NOTE]
-> **Those semicolon-separated names are not a typo.** Azure Backup addresses an
-> IaaS VM through a container/item pair whose names encode the resource group
-> and the VM name — `iaasvmcontainer;iaasvmcontainerv2;<rg>;<vm>`. Getting them
-> wrong produces an unhelpful error, and it is the single most common reason
-> this resource fails. Read the `protectedItems` loop in the template once,
-> slowly.
+<br>
+
+<details><summary><b>🔍 Going deeper — the semicolon-separated item names</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+Those semicolon-separated names are not a typo. Azure Backup addresses an
+IaaS VM through a container/item pair whose names encode the resource group
+and the VM name — `iaasvmcontainer;iaasvmcontainerv2;<rg>;<vm>`. Getting them
+wrong produces an unhelpful error, and it is the single most common reason
+this resource fails. Read the `protectedItems` loop in the template once,
+slowly.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -95,7 +117,11 @@ does not immediately stop the storage meter.
 
 <sub><a href="https://learn.microsoft.com/azure/backup/backup-rbac-rs-vault">For more info</a> — Azure RBAC roles for Azure Backup</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -156,8 +182,7 @@ Load your values first: `./scripts/Load-LabSettings.ps1`. Then in
 
 It will edit the parameter happily. The deployment then fails, because Azure
 refuses the change once an item is protected. This is a good failure to see
-once: the constraint lives in the platform, not in the template, and no amount
-of correct-looking Bicep gets around it.
+once: the constraint lives in the platform, not in the template.
 
 <br>
 
@@ -203,6 +228,8 @@ of correct-looking Bicep gets around it.
    does not delete their recovery points, and soft delete holds them 14 days
    longer.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · The template that owns a frozen decision**
 >
 > **You just used it:** redundancy and cross-region restore are parameters on
@@ -225,4 +252,13 @@ of correct-looking Bicep gets around it.
 L4.2 protects the data that is not on a disk — where "backup" usually turns out
 to mean something already switched on that nobody has verified.
 
-**Leave it deployed** → **[back to Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — protect the data that isn't on a disk | **[L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection)** |
+| Want the big picture of this level first | [Level 4 · Protect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

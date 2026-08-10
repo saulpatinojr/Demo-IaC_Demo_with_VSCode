@@ -1,20 +1,37 @@
 # L6.1 — High Availability & Redundancy 🔴
 
-**Goal:** grade the architecture Level 1 built, honestly, against availability zones and component redundancy — before spending anything on fixing it.
+**📍 [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** · Chapter 1 of 3 &nbsp;·&nbsp; Previous: [L5.3 — SOC Operations & Automation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-3-SOC-Operations) &nbsp;·&nbsp; Next: [L6.2 — Disaster Recovery Implementation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-2-Disaster-Recovery)
+
+---
+
+**Goal:** grade the architecture Level 1 built, honestly, against availability
+zones and component redundancy — before spending anything on fixing it. This
+chapter deploys a report, not redundancy.
+
+**The IaC lesson:** an audit only turns into improvement when each finding
+names the template that owns the fix — L6.1 measures, and every fix arrives as
+a reviewed pull request against the Level 1 file that owns the resource.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 1 of Level 6 · everyone | ~20 min | **Levels 1–4**, and L2.2 for the measured half | 🟢 **$0.00/hr** — this chapter deploys a report, not redundancy |
 
 > [!IMPORTANT]
-> **This chapter changes nothing, deliberately.** Every redundancy upgrade in
-> this estate belongs to the template that owns the resource — the container
-> app replica count is in `curriculum/L1.3-multi-service-application`, the load balancer zones in
-> `curriculum/L1.2-architecture-expansion`. Fixing them from here would break the ownership rule the
-> whole curriculum runs on. So L6.1 **measures**, and each fix arrives as a
-> reviewed pull request against the right file.
+> **This chapter changes nothing, deliberately.** Every redundancy upgrade
+> belongs to the template that owns the resource, so L6.1 **measures** — and
+> each fix arrives as a reviewed pull request against the right file.
+
+<br>
 
 ## What you're building
+
+One workbook, and no new redundancy. Azure Resource Graph — which is free —
+reads the zone posture of everything in the resource group, and the workbook
+grades it and names the four single points of failure L1.4 left behind. Each
+finding points at the Level 1 template that owns the fix, with a price
+attached.
 
 ```mermaid
 flowchart LR
@@ -63,16 +80,33 @@ them is how templates end up fighting each other.
 
 **Source:** [`curriculum/L6.1-high-availability/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.1-high-availability/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.1-high-availability/main.bicepparam)
 
-> [!NOTE]
-> **An SLA is not an SLO is not a measurement.** Azure publishes an SLA for each
-> service; you choose an SLO; L2.2's availability test tells you what actually
-> happened. Put all three side by side for this environment and the gaps are
-> instructive — a 99.99% SLA on a component sitting behind a single Basic
-> Bastion does not make the *system* 99.99%.
+<br>
+
+<details><summary><b>🔍 Going deeper — the ownership rule, in full</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+Every redundancy upgrade in this estate belongs to the template that owns the
+resource — the container app replica count is in
+`curriculum/L1.3-multi-service-application`, the load balancer zones in
+`curriculum/L1.2-architecture-expansion`. Fixing them from here would break the
+ownership rule the whole curriculum runs on. So L6.1 **measures**, and each fix
+arrives as a reviewed pull request against the right file.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — an SLA is not an SLO is not a measurement</b></summary>
+
+<br>
+
+Azure publishes an SLA for each service; you choose an SLO; L2.2's availability
+test tells you what actually happened. Put all three side by side for this
+environment and the gaps are instructive — a 99.99% SLA on a component sitting
+behind a single Basic Bastion does not make the *system* 99.99%.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -95,7 +129,11 @@ them is how templates end up fighting each other.
 
 <sub><a href="https://learn.microsoft.com/azure/reliability/availability-zones-overview">For more info</a> — Availability zones, zonal vs zone-redundant</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -188,6 +226,8 @@ nothing. The hard part was never the Bicep; it was knowing which file.
    container replica plus the free zone settings — and *declining* the database
    upgrade with numbers is worth more than agreeing to it.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · A finding that names the file that fixes it**
 >
 > **You just used it:** the workbook does not only say "this is not
@@ -208,4 +248,13 @@ nothing. The hard part was never the Bicep; it was knowing which file.
 L6.2 builds the regional recovery capability for the tier that cannot simply be
 redeployed — the stateful one.
 
-**Leave it deployed** → **[back to Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — survive losing a whole region | **[L6.2 — Disaster Recovery Implementation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-2-Disaster-Recovery)** |
+| Want the big picture of this level first | [Level 6 · Recover overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

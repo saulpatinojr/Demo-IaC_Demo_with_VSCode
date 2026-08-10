@@ -1,5 +1,9 @@
 # Level 4 — Backup, Protection & Recovery Readiness 🟣
 
+**📍 [Curriculum overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign)** · Level 4 of 6 &nbsp;·&nbsp; Previous: [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) &nbsp;·&nbsp; Next: [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)
+
+---
+
 **Theme: Protect.** Make the environment recoverable. Not "backed up" —
 *recoverable*, which is only true once a restore has been performed.
 
@@ -255,6 +259,16 @@ mis-forecast line in a real Azure bill.
 ## What carries forward
 
 Levels 5 and 6 both start here, and they are independent of each other:
+Level 5 puts Microsoft Sentinel on the workspace this curriculum has been
+filling since L2.1, and Level 6 covers high availability and disaster recovery,
+which starts by asking whether L1.4's two regions are real resilience.
 
-- **[Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)** — Microsoft Sentinel on the workspace this curriculum has been filling since L2.1.
-- **[Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** — high availability and disaster recovery, which starts by asking whether L1.4's two regions are real resilience.
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Start the first chapter | **[L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals)** |
+| Level 4 done — move to the next level | [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
+| Levels 5 and 6 are parallel — go straight to resilience | [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover) |
+| What does the whole curriculum cost? | [Cost model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model) |

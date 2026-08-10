@@ -1,6 +1,18 @@
 # L4.2 — PaaS Protection 🟣
 
-**Goal:** protect the data that is not on a disk. Azure SQL has been backing itself up since L1.3 deployed, so this chapter is as much about verifying what already exists as configuring what does not.
+**📍 [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)** · Chapter 2 of 4 &nbsp;·&nbsp; Previous: [L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals) &nbsp;·&nbsp; Next: [L4.3 — Operational Backup Management](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-3-Backup-Operations)
+
+---
+
+**Goal:** protect the data that is not on a disk. Azure SQL has been backing
+itself up since L1.3 deployed, so this chapter is as much about verifying what
+already exists as configuring what does not.
+
+**The IaC lesson:** version-pinned templates are themselves a recovery
+mechanism — "redeploy from `main`" is a legitimate strategy for everything no
+backup service covers, which is why every module in this repo pins a version.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
@@ -8,11 +20,18 @@
 
 > [!IMPORTANT]
 > **A geo-replicated database is not a backup.** The failover group from L1.4
-> replicates a `DROP TABLE` faithfully and immediately, to both regions. Only
-> point-in-time restore undoes it. If this chapter teaches one sentence, that is
-> the one.
+> replicates a `DROP TABLE` faithfully and immediately, to both regions — only
+> point-in-time restore undoes it.
+
+<br>
 
 ## What you're building
+
+Almost nothing new is deployed — two retention policies land on the existing
+SQL database, and the rest is verification. Point-in-time restore answers
+"undo the last few days" and has been running free since L1.3. Long-term
+retention answers a compliance question and bills for it. The geo-secondary
+from L1.4 answers neither, and proving that is the exercise.
 
 ```mermaid
 flowchart LR
@@ -57,17 +76,22 @@ chapter verifies them rather than re-creating them.
 
 **Source:** [`curriculum/L4.2-paas-protection/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.2-paas-protection/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.2-paas-protection/main.bicepparam)
 
-> [!NOTE]
-> **What this estate cannot protect, and why that is fine.** Container Apps
-> configuration and private DNS records have no backup service — they are
-> redeployed from `curriculum/L1.3-multi-service-application` instead, which is a legitimate recovery
-> strategy precisely because the templates are version-pinned and in git. The
-> lab deploys no storage account, so there is nothing for a Backup vault to
-> protect. Saying what is *not* covered is part of a protection review.
+<br>
+
+<details><summary><b>🔍 Going deeper — what this estate cannot protect, and why that is fine</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+Container Apps configuration and private DNS records have no backup service —
+they are redeployed from `curriculum/L1.3-multi-service-application` instead,
+which is a legitimate recovery strategy precisely because the templates are
+version-pinned and in git. The lab deploys no storage account, so there is
+nothing for a Backup vault to protect. Saying what is *not* covered is part of
+a protection review.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -90,7 +114,11 @@ chapter verifies them rather than re-creating them.
 
 <sub><a href="https://learn.microsoft.com/azure/azure-sql/database/long-term-backup-retention-configure">For more info</a> — Azure SQL long-term retention, and what PITR already covers</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -204,6 +232,8 @@ ask for it explicitly.
    off again once on — a deliberate one-way door, and the same shape of decision
    as L4.1 redundancy.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Recovery that lives in the repository**
 >
 > **Why it belongs here:** the things this chapter lists as unprotected —
@@ -226,4 +256,13 @@ L4.3 makes all of this operational: the vault reports into the Level 2
 workspace, failed *and missing* jobs page someone, and you rehearse a restore
 against a written expectation.
 
-**Leave it deployed** → **[back to Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — make backup an operational service | **[L4.3 — Operational Backup Management](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-3-Backup-Operations)** |
+| Want the big picture of this level first | [Level 4 · Protect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

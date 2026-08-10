@@ -1,22 +1,38 @@
 # L5.1 — Sentinel Foundation 🟠
 
-**Goal:** enable Microsoft Sentinel on the workspace this curriculum has been filling since L2.1, and connect only what is free before anything paid.
+**📍 [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)** · Chapter 1 of 3 &nbsp;·&nbsp; Previous: [L4.4 — Enterprise Data Protection Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-4-Data-Protection-Strategy) &nbsp;·&nbsp; Next: [L5.2 — Detection & Investigation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-2-Detection-Investigation)
+
+---
+
+**Goal:** enable Microsoft Sentinel on the workspace this curriculum has been
+filling since L2.1, and connect only what is free before anything paid.
+Nothing new gets built — the SIEM sits on top of data every previous level
+already collected.
+
+**The IaC lesson:** a template can declare its limits as well as its resources —
+this one onboards Sentinel and its free connectors in a single deploy, and its
+`paidAndBlocked` output names the one connector no template can enable.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 1 of Level 5 · everyone | ~20 min | **Levels 1–4**, and Sentinel Contributor | 🟠 **$0.00/hr in the trial** · +$0.31/hr after it |
 
 > [!WARNING]
-> **Sentinel bills analysis on everything in the workspace it is enabled on.**
-> The operations data Level 2 has been collecting is already there, so switching
-> Sentinel on applies a $4.76/GB analysis charge to it as well as the $2.76/GB
-> ingestion you were already paying. That is why L2.4's table-plan discipline
-> mattered, and why this template demotes the noisiest table on the way in.
->
-> The 31-day free trial waives both charges for the first 10 GB/day. This estate
-> fits inside it. **Run Level 5 inside the window.**
+> **Sentinel bills analysis on everything in the workspace it is enabled on** —
+> including the operations data Level 2 collected. The 31-day free trial waives
+> the charges for the first 10 GB/day. **Run Level 5 inside the window.**
+
+<br>
 
 ## What you're building
+
+One template turns the existing workspace into a SIEM. Sentinel is enabled on
+`log-iacdemo-l3` — the workspace every level has written into since L2.1 — and
+only the free data sources are connected. One paid source stays deliberately
+out of reach: Microsoft Entra ID sign-in and audit logs need a directory
+admin, and no template can substitute for that.
 
 ```mermaid
 flowchart LR
@@ -66,16 +82,37 @@ resource-group Contributor cannot get there from here.
 
 **Source:** [`curriculum/L5.1-sentinel-foundation/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.1-sentinel-foundation/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.1-sentinel-foundation/main.bicepparam)
 
-> [!NOTE]
-> **Where Sentinel lives from here.** The Azure portal experience retires after
-> **31 March 2027**, and the Microsoft Defender portal is the destination. The
-> resources this template deploys are unaffected — onboarding, connectors and
-> rules are the same ARM resources either way — but the screenshots in any
-> course written today will age out before the retirement does.
+<br>
+
+<details><summary><b>🔍 Going deeper — what switching Sentinel on does to the bill</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+The operations data Level 2 has been collecting is already in this workspace,
+so switching Sentinel on applies a $4.76/GB analysis charge to it as well as
+the $2.76/GB ingestion you were already paying — about $7.52/GB combined on
+the Analytics plan. That is why L2.4's table-plan discipline mattered, and why
+this template demotes the noisiest table on the way in.
+
+The 31-day free trial waives both charges for the first 10 GB/day. This estate
+fits inside it — which is what makes Level 5 nearly free inside the window and
+the most expensive level in the curriculum outside it.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — where Sentinel lives from here</b></summary>
+
+<br>
+
+The Azure portal experience retires after **31 March 2027**, and the Microsoft
+Defender portal is the destination. The resources this template deploys are
+unaffected — onboarding, connectors and rules are the same ARM resources
+either way — but the screenshots in any course written today will age out
+before the retirement does.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -98,7 +135,11 @@ resource-group Contributor cannot get there from here.
 
 <sub><a href="https://learn.microsoft.com/azure/sentinel/roles">For more info</a> — Microsoft Sentinel roles and permissions</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -200,6 +241,8 @@ before planning a Sentinel deployment for a real organisation.
    $2.76. Multiply it out. That number is the argument for every table-plan
    decision in the rest of Level 5.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · The connector you cannot merge your way past**
 >
 > **Why it belongs here:** everything else in this curriculum has been solvable
@@ -222,4 +265,13 @@ L5.2 writes detections against exactly this data — and one of them joins
 security data to operations data, which is only possible because every level
 wrote into the same workspace.
 
-**Leave it deployed** → **[back to Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — write detections on this data | **[L5.2 — Detection & Investigation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-2-Detection-Investigation)** |
+| Want the big picture of this level first | [Level 5 · Detect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

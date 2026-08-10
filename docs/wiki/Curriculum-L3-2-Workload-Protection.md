@@ -1,22 +1,37 @@
 # L3.2 — Workload Protection 🟡
 
+**📍 [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)** · Chapter 2 of 4 &nbsp;·&nbsp; Previous: [L3.1 — Security Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-1-Security-Foundation) &nbsp;·&nbsp; Next: [L3.3 — Security Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-3-Security-Operations)
+
+---
+
 **Goal:** turn on the protection you can actually turn on, one resource at a
 time, with the meter visible. Defender for SQL at server scope, SQL auditing
 into the Level 2 workspace, and just-in-time VM access.
+
+**The IaC lesson:** deployment outputs can carry more than resource IDs — this
+template prints its own running cost (`sqlDefenderHourlyCost`), so the price of
+a change is visible in the pipeline before it ever reaches an invoice.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 2 of Level 3 · everyone | ~25 min | **L3.1**, plus L1.3/L1.4 and L2.1 | 🟡 ~$0.04/hr added · ~$1.95/hr running total |
 
 > [!IMPORTANT]
-> **Enabling this costs money the moment it deploys.** A
-> `securityAlertPolicies` resource on a SQL server turns on Defender for SQL
-> **for that server** and bills **$0.0202/instance/hr (~$14.72/month)** whether
-> or not the subscription-wide plan is on. After L1.4 there are two servers, so
-> this chapter adds about **$0.04/hr**. Every Defender plan has a 30-day free
-> trial per subscription — running Level 3 inside it makes this free once.
+> **Enabling this costs money the moment it deploys.** Defender for SQL bills
+> **$0.0202/instance/hr (~$14.72/month)** per server — two servers after L1.4,
+> so this chapter adds about **$0.04/hr**.
+
+<br>
 
 ## What you're building
+
+Everything in the green box is yours to deploy with Contributor: Defender for
+SQL on both servers, SQL auditing flowing into the Level 2 workspace, and —
+conditionally — a just-in-time VM access policy. The subscription-wide Defender
+plans stay with the instructor, and the one dotted line shows exactly where
+that boundary blocks you: JIT does nothing without Defender for Servers Plan 2.
 
 ```mermaid
 flowchart LR
@@ -65,18 +80,34 @@ the most common reason a SQL audit log turns out to be silently empty.
 
 **Source:** [`curriculum/L3.2-workload-protection/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.2-workload-protection/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.2-workload-protection/main.bicepparam)
 
-> [!NOTE]
-> **What is missing here, and why.** The container app from L1.3 gets no
-> workload plan in this chapter — **Defender for Containers protects AKS,
-> Arc-enabled Kubernetes and registry images, and does not provide runtime
-> protection for Azure Container Apps.** It is covered by CSPM posture only.
-> That is a real gap in a real architecture, and the honest thing to do with it
-> is name it, price the alternative (moving the workload to AKS, which is a
-> different lab and a different bill), and move on.
+<br>
+
+<details><summary><b>🔍 Going deeper — how resource-level Defender billing works</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+A `securityAlertPolicies` resource on a SQL server turns on Defender for SQL
+**for that server** and bills **$0.0202/instance/hr (~$14.72/month)** whether
+or not the subscription-wide plan is on. After L1.4 there are two servers, so
+this chapter adds about **$0.04/hr**. Every Defender plan has a 30-day free
+trial per subscription — running Level 3 inside it makes this free once.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — why the container app gets no workload plan</b></summary>
+
+<br>
+
+The container app from L1.3 gets no workload plan in this chapter — **Defender
+for Containers protects AKS, Arc-enabled Kubernetes and registry images, and
+does not provide runtime protection for Azure Container Apps.** It is covered
+by CSPM posture only. That is a real gap in a real architecture, and the honest
+thing to do with it is name it, price the alternative (moving the workload to
+AKS, which is a different lab and a different bill), and move on.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -99,7 +130,11 @@ the most common reason a SQL audit log turns out to be silently empty.
 
 <sub><a href="https://learn.microsoft.com/azure/defender-for-cloud/permissions">For more info</a> — Microsoft Defender for Cloud roles and permissions</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -225,6 +260,8 @@ is "all of it".
    that? For a production system holding customer data the answer is obviously
    yes. Being able to tell those two cases apart is the chapter.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · The cost of a change, in the pull request**
 >
 > **Why it belongs here:** this template prints its own price as a deployment
@@ -247,4 +284,13 @@ L3.3 works the alerts these protections produce — triage, routing through the
 Level 2 action groups, and automating the responses that should never be manual.
 Every alert it handles exists because something here was switched on.
 
-**Leave it deployed** → **[back to Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — work the alerts these protections raise | **[L3.3 — Security Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-3-Security-Operations)** |
+| Want the big picture of this level first | [Level 3 · Secure overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
