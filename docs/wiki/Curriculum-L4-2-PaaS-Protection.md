@@ -60,7 +60,7 @@ chapter verifies them rather than re-creating them.
 > [!NOTE]
 > **What this estate cannot protect, and why that is fine.** Container Apps
 > configuration and private DNS records have no backup service — they are
-> redeployed from `labs/L3-containers` instead, which is a legitimate recovery
+> redeployed from `curriculum/L1.3-multi-service-application` instead, which is a legitimate recovery
 > strategy precisely because the templates are version-pinned and in git. The
 > lab deploys no storage account, so there is nothing for a Backup vault to
 > protect. Saying what is *not* covered is part of a protection review.
@@ -210,7 +210,7 @@ ask for it explicitly.
 > Container Apps configuration, DNS records, the templates themselves — are all
 > recoverable from git. "Redeploy from `main`" is a real recovery strategy, and
 > it is free.
-> **Find it:** the version pins on every AVM module in `labs/`. A pinned module
+> **Find it:** the version pins on every AVM module in `curriculum/`. A pinned module
 > recreates the environment; a floating tag creates a new one.
 > **Beyond the lab:** backup protects state, source control protects shape. A
 > recovery plan needs both, and only one of them has a monthly bill.

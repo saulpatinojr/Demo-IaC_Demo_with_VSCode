@@ -70,9 +70,9 @@ from `docs/wiki/`, which defeats the point of reviewing the mirror.
 
 | Link target | Use |
 |---|---|
-| A file in this repo | absolute — `https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/…` |
-| Another wiki page, from a page body | absolute — `https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L2-Web-Tier-and-Firewall` |
-| Another wiki page, from `_Sidebar.md` / `_Footer.md` | relative — `L2-Web-Tier-and-Firewall` |
+| A file in this repo | absolute — `https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/…` |
+| Another wiki page, from a page body | absolute — `https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion` |
+| Another wiki page, from `_Sidebar.md` / `_Footer.md` | relative — `Curriculum-L1-2-Architecture-Expansion` |
 | An image | relative — `bicep.png` |
 
 Absolute links hardcode `saulpatinojr`. That is deliberate: the wiki is only ever
@@ -111,13 +111,13 @@ where the repo copy was deliberately kept:
 
 | Page | Why it differs from live |
 |---|---|
-| `L1-Hub-and-Spoke.md` | Carries the correction that the test VM has **no** internet egress. Default outbound access was retired 30 Sep 2025, so the live page's "outbound works" test could never pass. |
-| `L2-Web-Tier-and-Firewall.md` | Documents routing L1's `snet-workload` through the firewall, and an IP-flow test that looks up the VM's real address instead of a hardcoded one. |
+| `Curriculum-L1-1-Core-Deployment.md` | Carries the correction that the test VM has **no** internet egress. Default outbound access was retired 30 Sep 2025, so the live page's "outbound works" test could never pass. |
+| `Curriculum-L1-2-Architecture-Expansion.md` | Documents routing L1.1's `snet-workload` through the firewall, and an IP-flow test that looks up the VM's real address instead of a hardcoded one. |
 
 Going the other way, the **live** pages were ahead on a point the repo drafts had
 lost: all four labs use `## Deploy …` (H2), while the drafts had regressed it to a
-second `#` competing with the page title. Live's `##` was restored on L1 and L2, and
-L3/L4 were taken from live wholesale.
+second `#` competing with the page title. Live's `##` was restored on L1.1 and L1.2, and
+L1.3/L1.4 were taken from live wholesale.
 
 That reconciliation is why this mirror was hand-diffed rather than copied. Once
 publishing runs from `docs/wiki/`, the two copies cannot drift again.

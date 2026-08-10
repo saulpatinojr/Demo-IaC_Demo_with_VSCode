@@ -95,8 +95,8 @@ output ltrPolicy object = {
   yearly: yearlyLtrRetention
 }
 output whatIsNotProtected array = [
-  'Container Apps configuration — redeploy from labs/L3-containers instead'
-  'Private DNS zone records — redeploy from labs/L3-containers instead'
+  'Container Apps configuration — redeploy from curriculum/L1.3-multi-service-application instead'
+  'Private DNS zone records — redeploy from curriculum/L1.3-multi-service-application instead'
   'Key Vault — soft delete and purge protection are already on from L1.3; verify, do not re-create'
   'Blob storage — the lab deploys no storage account, so there is nothing to protect with a Backup vault'
 ]

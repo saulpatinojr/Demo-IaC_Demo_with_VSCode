@@ -207,12 +207,12 @@ gh variable list
 
 ---
 
-## 🚀 H. First deploy (L1)
+## 🚀 H. First deploy (L1.1)
 
 - [ ] On GitHub, open **Actions** and click the green **"I understand my workflows, go ahead and enable them"** button if prompted (forks disable workflows by default).
-- [ ] Run **Deploy L1 — Hub & Spoke** → **Run workflow** → **Run workflow**.
+- [ ] Run **Curriculum L1.1 - Core Deployment** → **Run workflow** → **Run workflow**.
 - [ ] Watch the **What-if** step — it lists every resource that will be created. Read it before the deploy step runs.
-- [ ] Green check on all three steps (Lint → What-if → Deploy)? 🎉 Continue with the **[L1 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)**.
+- [ ] Green check on all three steps (Lint → What-if → Deploy)? 🎉 Continue with the **[L1.1 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment)**.
 
 ---
 

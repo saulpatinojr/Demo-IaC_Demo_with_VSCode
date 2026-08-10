@@ -72,7 +72,7 @@ A **repository** ("repo") is a project folder that GitHub tracks with **git** �
 > [!NOTE]
 > This repo's workflows are all **manual** — they use `on: workflow_dispatch`, so they only run when you click **Run workflow**. Nothing deploys by surprise.
 
-Key anatomy (from `deploy-l1.yml`):
+Key anatomy (from `curriculum-l1-1-core-deployment.yml`):
 
 | Part | What it does |
 |------|-------------|
@@ -81,7 +81,7 @@ Key anatomy (from `deploy-l1.yml`):
 | `concurrency:` | Prevents two runs of the same lab from clobbering each other |
 | `steps:` | checkout → preflight secret check → Azure login → lint → what-if → deploy |
 
-**Try it:** Actions → **Deploy L1** → **Run workflow** → expand the **What-if** step to see what would be created.
+**Try it:** Actions → **Curriculum L1.1 - Core Deployment** → **Run workflow** → expand the **What-if** step to see what would be created.
 
 > **Actions on forks are disabled by default.** The first time you visit the Actions tab on your fork, GitHub will ask you to enable them — click the green button.
 
@@ -94,7 +94,7 @@ Learn more: https://docs.github.com/actions
 The **Wiki** (what you are reading) is a separate git repository attached to the main repo, used for long-form docs. Pages are Markdown files and `_Sidebar.md` controls the navigation.
 
 - Edit in the browser (**Edit** button on any page) or clone it: `git clone https://github.com/<owner>/<repo>.wiki.git`
-- Links between pages: `[L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)` (page name without extension)
+- Links between pages: `[L1.1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment)` (page name without extension)
 
 ---
 
@@ -156,7 +156,7 @@ gh variable set NAME   --body "value"
 gh secret list
 gh variable list
 gh workflow list
-gh workflow run "Deploy L1 - Hub & Spoke"
+gh workflow run "Curriculum L1.1 - Core Deployment"
 gh run list
 gh run watch
 ```

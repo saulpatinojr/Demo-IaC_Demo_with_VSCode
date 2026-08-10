@@ -9,10 +9,10 @@ The demo is four **cumulative lab stages**. Each stage builds on the infrastruct
 
 | Stage | What you build | What it adds | Tests |
 |-------|----------------|--------------|-------|
-| **[L1 — Hub & Spoke](../../wiki/L1-Hub-and-Spoke)** | Hub + spoke VNets (peered), Bastion, 1 Linux VM | Core networking & connectivity | Bastion SSH, cross-peering curl/ping, peering state check |
-| **[L2 — Web Tier & Firewall](../../wiki/L2-Web-Tier-and-Firewall)** | 3 nginx VMs behind an internal LB, Azure Firewall (DNAT + egress control), NSGs, route tables | Traffic inspection & load balancing | Round-robin curl via firewall, blocked vs allowed egress, NSG flow verify |
-| **[L3 — Containers & Data](../../wiki/L3-Containers-and-Data)** | Azure Container Apps, Azure SQL, Key Vault, managed identity, monitoring + alerting | Containers, data tier, **private networking** (private endpoints, no public data plane) | Hit the app URL, prove SQL is private-only, trigger an alert |
-| **[L4 — Global Scale](../../wiki/L4-Global-Scale)** | Second region, SQL failover group, Azure Front Door | Multi-region HA & global entry point | Front Door URL, simulated regional failover, SQL failover group |
+| **[L1.1 — Core Deployment](../../wiki/Curriculum-L1-1-Core-Deployment)** | Hub + spoke VNets (peered), Bastion, 1 Linux VM | Core networking & connectivity | Bastion SSH, cross-peering curl/ping, peering state check |
+| **[L1.2 — Architecture Expansion](../../wiki/Curriculum-L1-2-Architecture-Expansion)** | 3 nginx VMs behind an internal LB, Azure Firewall (DNAT + egress control), NSGs, route tables | Traffic inspection & load balancing | Round-robin curl via firewall, blocked vs allowed egress, NSG flow verify |
+| **[L1.3 — Multi-Service Application](../../wiki/Curriculum-L1-3-Multi-Service-Application)** | Azure Container Apps, Azure SQL, Key Vault, managed identity, monitoring + alerting | Containers, data tier, **private networking** (private endpoints, no public data plane) | Hit the app URL, prove SQL is private-only, trigger an alert |
+| **[L1.4 — Production-Ready Platform](../../wiki/Curriculum-L1-4-Production-Platform)** | Second region, SQL failover group, Azure Front Door | Multi-region HA & global entry point | Front Door URL, simulated regional failover, SQL failover group |
 
 > 📖 **The full workshop guide lives in the [Wiki](../../wiki).**
 > - Brand new to any of this? Start with the **[Start-Here Checklist](../../wiki/Start-Here-Checklist)** and **[Understanding IaC](../../wiki/Understanding-IaC)**.
@@ -98,28 +98,29 @@ This creates the Entra app + service principal, adds a federated credential for 
 **Secrets set:** `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD`  
 **Variables set:** `AZURE_PREFIX` (your unique prefix), `AZURE_LOCATION` (defaults to `eastus2`)
 
-After setup succeeds, trigger **Deploy L1 - Hub & Spoke** in GitHub Actions (`Actions` tab -> select workflow -> `Run workflow`).
+After setup succeeds, trigger **Curriculum L1.1 - Core Deployment** in GitHub Actions (`Actions` tab -> select workflow -> `Run workflow`).
 
 > Want to understand each step rather than run one script? The manual `az`/`gh` walkthrough is in **[Wiki → Deployment Guide](../../wiki/Deployment-Guide)**. New to secrets vs. variables? See **[Wiki → GitHub Essentials](../../wiki/GitHub-Essentials)**.
 
 ## 5. Start the workshop
 
-Head to the **[Wiki Home](../../wiki)** and begin with **L1**. Each lab guide shows you the Copilot agent-mode prompts to author/modify the Bicep, the workflow to deploy it, and the tests to prove it works.
+Head to the **[Wiki Home](../../wiki)** and begin with **L1.1**. Each lab guide shows you the Copilot agent-mode prompts to author/modify the Bicep, the workflow to deploy it, and the tests to prove it works.
 
 ## Repo map
 
 ```
-labs/
-  L1-hub-spoke/     hub+spoke, Bastion, test VM
-  L2-web-tier/      internal LB + 3 web VMs + Azure Firewall
-  L3-containers/    Container Apps, SQL, Key Vault, monitoring, private endpoints
-  L4-global/        second region, SQL failover group, Front Door
-  modules/          the only two non-AVM modules (subnet-on-existing-VNet, failover group)
+curriculum/
+  L1.1-core-deployment/            hub+spoke, Bastion, test VM
+  L1.2-architecture-expansion/     internal LB + 3 web VMs + Azure Firewall
+  L1.3-multi-service-application/  Container Apps, SQL, Key Vault, monitoring, private endpoints
+  L1.4-production-platform/        second region, SQL failover group, Front Door
+  L2.1 ... L6.3/                   18 chapters: monitor, secure, protect, detect, recover
+  modules/                         the only two non-AVM modules (subnet-on-existing-VNet, failover group)
 scripts/
   Connect-AzureAndGitHub.ps1  auto-fork + clone helper (sets upstream remote)
   Setup-Oidc.ps1    one-command GitHub↔Azure OIDC handshake (+ repo secrets)
   Cleanup-Labs.ps1  tear down lab resources (and optionally the OIDC identity)
-.github/workflows/  deploy-l1..l4.yml + teardown.yml (all OIDC, all manual dispatch)
+.github/workflows/  curriculum-l1-1..l1-4 + curriculum-l2..l6 + teardown.yml (all OIDC, manual dispatch)
 unit cost/
   Build-CostDocs.ps1  regenerates both cost handouts from one unit-rate table
 bicepconfig.json    linter settings
@@ -133,12 +134,12 @@ These labs create real, billable resources. Running totals in East US 2, verifie
 
 | After deploying | Cost per hour |
 |---|---|
-| L1 — hub & spoke | ~$0.24 |
-| L2 — web tier & firewall | ~$1.65 |
-| L3 — containers & data | ~$1.73 |
-| L4 — global scale | ~$1.84 |
+| L1.1 — core deployment | ~$0.24 |
+| L1.2 — architecture expansion | ~$1.65 |
+| L1.3 — multi-service application | ~$1.73 |
+| L1.4 — production-ready platform | ~$1.84 |
 
-**Azure Firewall Standard is $1.25/hr of that on its own** — more than everything else in all four labs combined — and Bastion adds $0.19/hr. Both bill while deployed, whether or not anyone is using the lab. Budget ~$2.00–$2.25 for a full L4 demo hour including traffic.
+**Azure Firewall Standard is $1.25/hr of that on its own** — more than everything else in all four labs combined — and Bastion adds $0.19/hr. Both bill while deployed, whether or not anyone is using the lab. Budget ~$2.00–$2.25 for a full L1.4 demo hour including traffic.
 
 Full breakdown: [`unit cost/`](unit%20cost/) — regenerate the handouts after any price or template change with `./unit\ cost/Build-CostDocs.ps1`.
 
@@ -153,4 +154,4 @@ When you're done (or pausing overnight), tear everything down:
 Or via the **Teardown labs** workflow in GitHub Actions — it runs against your `AZURE_RESOURCE_GROUP` secret, defaults to a dry run, and needs `DELETE` typed in to actually delete.
 
 > [!WARNING]
-> Don't delete just the firewall to save money. After L2 both spoke subnets route `0.0.0.0/0` at its private IP, so removing it alone black-holes the surviving VMs while they keep billing. Tear down the whole lab, or leave it running.
+> Don't delete just the firewall to save money. After L1.2 both spoke subnets route `0.0.0.0/0` at its private IP, so removing it alone black-holes the surviving VMs while they keep billing. Tear down the whole lab, or leave it running.

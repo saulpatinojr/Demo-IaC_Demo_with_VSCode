@@ -1,13 +1,13 @@
 // ============================================================================
-// L2 — Web Tier + Azure Firewall (builds on L1)
-// Adds to L1's network: a web subnet in the spoke, 3 nginx VMs behind an
+// L1.2 — Web Tier + Azure Firewall (builds on L1.1)
+// Adds to L1.1's network: a web subnet in the spoke, 3 nginx VMs behind an
 // INTERNAL load balancer, and an Azure Firewall in the hub. Inbound traffic
 // enters through a firewall DNAT rule -> internal LB (this avoids the
 // asymmetric-routing problem of a public LB + forced tunneling). Egress from
-// the web subnet AND from L1's workload subnet is forced through the firewall
-// by a route table — which is also how L1's test VM gets internet access at
+// the web subnet AND from L1.1's workload subnet is forced through the firewall
+// by a route table — which is also how L1.1's test VM gets internet access at
 // all, since default outbound access was retired on 30 Sep 2025.
-// Prerequisite: L1 must be deployed (same prefix, same resource group).
+// Prerequisite: L1.1 must be deployed (same prefix, same resource group).
 // Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
 
@@ -28,7 +28,7 @@ param adminPassword string
 var hubVnetName = 'vnet-${prefix}-hub'
 var spokeVnetName = 'vnet-${prefix}-spoke1'
 var webSubnetPrefix = '10.1.1.0/24'
-var workloadSubnetPrefix = '10.1.0.0/24' // created by L1
+var workloadSubnetPrefix = '10.1.0.0/24' // created by L1.1
 var ilbFrontendIp = '10.1.1.100'
 var vmCount = 3
 
@@ -57,7 +57,7 @@ module fwPip 'br/public:avm/res/network/public-ip-address:0.12.0' = {
   }
 }
 
-// --- Azure Firewall in L1's hub (AzureFirewallSubnet was reserved by L1) ---
+// --- Azure Firewall in L1.1's hub (AzureFirewallSubnet was reserved by L1.1) ---
 module firewall 'br/public:avm/res/network/azure-firewall:0.10.1' = {
   name: 'l2-firewall'
   params: {
@@ -152,7 +152,7 @@ module webRouteTable 'br/public:avm/res/network/route-table:0.5.0' = {
   }
 }
 
-// --- Add the web subnet to L1's spoke VNet (local module: AVM has no
+// --- Add the web subnet to L1.1's spoke VNet (local module: AVM has no
 //     standalone-subnet module) ----------------------------------------------
 module webSubnet '../modules/subnet.bicep' = {
   name: 'l2-web-subnet'
@@ -165,20 +165,20 @@ module webSubnet '../modules/subnet.bicep' = {
   }
 }
 
-// --- Give L1's workload subnet a way out to the internet --------------------
-// Default outbound access was retired on 30 Sep 2025, so L1's test VM has no
+// --- Give L1.1's workload subnet a way out to the internet --------------------
+// Default outbound access was retired on 30 Sep 2025, so L1.1's test VM has no
 // internet egress on its own (no public IP, no NAT gateway, no outbound rule).
-// Re-declaring L1's subnet here attaches the same route table the web tier
-// uses, so the L1 VM now reaches the internet through the firewall — and is
-// subject to the same allow-80/443 rule. This is the L1 -> L2 payoff: the
-// blocked curl from L1 starts working, and the firewall logs show why.
+// Re-declaring L1.1's subnet here attaches the same route table the web tier
+// uses, so the L1.1 VM now reaches the internet through the firewall — and is
+// subject to the same allow-80/443 rule. This is the L1.1 -> L1.2 payoff: the
+// blocked curl from L1.1 starts working, and the firewall logs show why.
 // dependsOn is required: two concurrent subnet writes on one VNet fail with
 // AnotherOperationInProgress.
 //
-// networkSecurityGroupResourceId is omitted deliberately: L1 attaches no NSG
+// networkSecurityGroupResourceId is omitted deliberately: L1.1 attaches no NSG
 // to snet-workload, so there is nothing to preserve. The module does a full
 // PUT, so any association left out here is set to null. If an NSG is ever
-// added to snet-workload in L1, pass it here as well -- otherwise this
+// added to snet-workload in L1.1, pass it here as well -- otherwise this
 // deployment DETACHES it, silently and with no error to read.
 module workloadSubnet '../modules/subnet.bicep' = {
   name: 'l2-workload-subnet'

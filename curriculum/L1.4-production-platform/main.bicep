@@ -1,24 +1,24 @@
 // ============================================================================
-// L4 — Global Scale (builds on L3)
-// The "upgrade" of L3: a second-region copy of the app tier, an Azure SQL
-// failover group between the L3 (primary) and new secondary SQL server, and
+// L1.4 — Global Scale (builds on L1.3)
+// The "upgrade" of L1.3: a second-region copy of the app tier, an Azure SQL
+// failover group between the L1.3 (primary) and new secondary SQL server, and
 // Azure Front Door as the single global entry point with health-probed
 // failover between the two regions.
-// Prerequisite: L3 deployed (same prefix, same resource group).
+// Prerequisite: L1.3 deployed (same prefix, same resource group).
 // Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
 
-@description('Same prefix used in L1–L3.')
+@description('Same prefix used in L1.1–L3.')
 @maxLength(12)
 param prefix string = 'iacdemo'
 
 @description('Secondary region for the failover stack.')
 param secondaryLocation string = 'westus2'
 
-@description('SQL admin login (must match L3).')
+@description('SQL admin login (must match L1.3).')
 param sqlAdminLogin string = 'sqladminuser'
 
-@description('SQL admin password (must match L3).')
+@description('SQL admin password (must match L1.3).')
 @secure()
 param sqlAdminPassword string
 
@@ -26,7 +26,7 @@ var suffix = take(uniqueString(subscription().id, prefix), 6)
 var primarySqlServerName = 'sql-${prefix}-${suffix}'
 var appDatabaseName = 'sqldb-${prefix}-app'
 
-// L3's container app — Front Door's primary origin.
+// L1.3's container app — Front Door's primary origin.
 resource primaryApp 'Microsoft.App/containerApps@2024-03-01' existing = {
   name: 'ca-${prefix}-web'
 }
@@ -79,7 +79,7 @@ module sqlSecondary 'br/public:avm/res/sql/server:0.21.4' = {
   }
 }
 
-// Failover group lives on the PRIMARY server (in same resource group as L3).
+// Failover group lives on the PRIMARY server (in same resource group as L1.3).
 module failoverGroup '../modules/sql-failover-group.bicep' = {
   name: 'l4-sql-failover-group'
   params: {

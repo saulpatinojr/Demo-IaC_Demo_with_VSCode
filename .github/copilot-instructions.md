@@ -8,7 +8,7 @@ read every diff you produce, so favour clarity over cleverness and explain
 
 - **Use Azure Verified Modules.** Prefer `br/public:avm/res/...` over raw
   `Microsoft.*` resources. Raw resources are acceptable only where no AVM module
-  exists — currently the two in `labs/modules/`.
+  exists — currently the two in `curriculum/modules/`.
 - **Pin every module version** (`avm/res/network/virtual-network:0.9.0`). Never
   use a floating tag. Reproducibility is one of the things the workshop teaches.
 - **Deploy at resource-group scope.** Every template targets a *pre-existing*
@@ -42,12 +42,12 @@ is $1.25/hr.
 
 | Lab | Creates | Depends on |
 |---|---|---|
-| L1 | Hub + spoke1 VNets, Bastion, one VM | nothing |
-| L2 | Firewall in L1's hub, web subnet in L1's spoke, route tables on **both** spoke subnets | L1 |
-| L3 | A **new** spoke2, peered to L1's hub — Container Apps, SQL, Key Vault | L1 only, **not** L2 |
-| L4 | Second region, SQL failover group, Front Door | L3 |
+| L1.1 | Hub + spoke1 VNets, Bastion, one VM | nothing |
+| L1.2 | Firewall in L1.1's hub, web subnet in L1.1's spoke, route tables on **both** spoke subnets | L1.1 |
+| L1.3 | A **new** spoke2, peered to L1.1's hub — Container Apps, SQL, Key Vault | L1.1 only, **not** L1.2 |
+| L1.4 | Second region, SQL failover group, Front Door | L1.3 |
 
-L3 does not reuse L1's spoke and does not route through L2's firewall. Do not
+L1.3 does not reuse L1.1's spoke and does not route through L1.2's firewall. Do not
 describe it as building on L2.
 
 ## Scripts

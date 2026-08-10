@@ -1,13 +1,13 @@
-# L4 — Global Scale 🔴
+# L1.4 — Production-Ready Platform Deployment 🔴
 
-**Goal:** the production upgrade of L3 — survive a regional outage. A second-region app stack in `westus2`, an **Azure SQL failover group**, and **Azure Front Door** as the single global entry point with health-probed failover. Then grade the result against the Well-Architected Framework, the way a real design review would.
+**Goal:** the production upgrade of L1.3 — survive a regional outage. A second-region app stack in `westus2`, an **Azure SQL failover group**, and **Azure Front Door** as the single global entry point with health-probed failover. Then grade the result against the Well-Architected Framework, the way a real design review would.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Lab 4 of 4 · everyone | ~15 min, plus ~10 for Front Door to propagate | L3 deployed | 🔴 ~$1.84/hr running total |
+| Lab 4 of 4 · everyone | ~15 min, plus ~10 for Front Door to propagate | L1.3 deployed | 🔴 ~$1.84/hr running total |
 
 > [!IMPORTANT]
-> **L3 must already be deployed.** L4 joins L3's SQL server to a failover group, and uses the **same** `SQL_ADMIN_PASSWORD` — a failover group requires matching logins on both servers.
+> **L1.3 must already be deployed.** L1.4 joins L1.3's SQL server to a failover group, and uses the **same** `SQL_ADMIN_PASSWORD` — a failover group requires matching logins on both servers.
 
 ## What you're building
 
@@ -16,7 +16,7 @@ flowchart LR
   USERS(["Users worldwide"])
   AFD["afd-iacdemo-xxxxxx<br/>Front Door Standard<br/>health probe GET / every 30s"]
 
-  subgraph P["PRIMARY · eastus2 · all of L3"]
+  subgraph P["PRIMARY · eastus2 · all of L1.3"]
     APP1["ca-iacdemo-web<br/>priority 1"]
     SQL1["sql-iacdemo-xxxxxx<br/>private endpoint + private DNS"]
   end
@@ -51,7 +51,7 @@ flowchart LR
 
 Front Door is the single global entry point. It health-probes both regions with
 `GET /` every 30 seconds and sends traffic to the **priority 1** origin — the
-L3 app in `eastus2` — falling back to the **priority 2** secondary in
+L1.3 app in `eastus2` — falling back to the **priority 2** secondary in
 `westus2` only when the primary stops answering.
 
 The two SQL servers are joined by a **failover group**. Its listener hostname
@@ -70,7 +70,7 @@ further down this page does exactly that.
 
 </details>
 
-**Source:** [`labs/L4-global/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L4-global/main.bicep) · [`labs/modules/sql-failover-group.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/modules/sql-failover-group.bicep)
+**Source:** [`curriculum/L1.4-production-platform/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L1.4-production-platform/main.bicep) · [`curriculum/modules/sql-failover-group.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/modules/sql-failover-group.bicep)
 
 > [!NOTE]
 > **The secondary region is deliberately slim.** It has no VNet integration, no Key Vault and no Application Insights, and the DR database has no private endpoint. That is a teaching choice, not an oversight — it keeps the lab affordable and gives you something concrete to fix. The [Well-Architected scorecard](#-what-the-well-architected-framework-would-say) at the end of this page is where that bill comes due.
@@ -95,11 +95,11 @@ All three deploy the **same** template and give the **same** result.
 
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1) — nothing to re-type.
+**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
 
 ```powershell
-az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L4-global/main.bicepparam
-az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L4-global/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.4-production-platform/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.4-production-platform/main.bicepparam
 ```
 
 **You should see:** a `frontDoorEndpoint` output — a full URL including `https://`. The deployment finishes before Front Door is actually serving; allow about ten more minutes for the edge to propagate before test 1 succeeds.
@@ -110,9 +110,9 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
+**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
 
-On GitHub: **Actions → "Deploy L4 - Global Scale" → Run workflow** (or `gh workflow run deploy-l4.yml`).
+On GitHub: **Actions → "Curriculum L1.4 - Production-Ready Platform" → Run workflow** (or `gh workflow run curriculum-l1-4-production-platform.yml`).
 
 **You should see:** **Lint → What-if → Deploy**, then a final step printing the Front Door endpoint.
 
@@ -128,15 +128,15 @@ Copilot runs the deploy **locally**, so load your values once first (same file a
 
 Open **Copilot Chat → Agent mode**:
 
-> Deploy `labs/L4-global/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
+> Deploy `curriculum/L1.4-production-platform/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
 
 **Want to change the routing first?** Ask:
 
-> Switch the Front Door origin group in `labs/L4-global/main.bicep` to weighted round-robin between both regions instead of priority failover, run `az bicep build`, then deploy.
+> Switch the Front Door origin group in `curriculum/L1.4-production-platform/main.bicep` to weighted round-robin between both regions instead of priority failover, run `az bicep build`, then deploy.
 
 **Or close the Well-Architected gap** — the flagship exercise for this lab:
 
-> In `labs/L4-global/main.bicep`, the DR server `sql-<prefix>-<suffix>-dr` sets `publicNetworkAccess: 'Disabled'` but has no private endpoint, so nothing can reach it after a failover. Add a secondary VNet in `westus2` with a private-endpoint subnet, a private DNS zone linked to it, and a private endpoint on the DR server. Run `az bicep build`, then `what-if`.
+> In `curriculum/L1.4-production-platform/main.bicep`, the DR server `sql-<prefix>-<suffix>-dr` sets `publicNetworkAccess: 'Disabled'` but has no private endpoint, so nothing can reach it after a failover. Add a secondary VNet in `westus2` with a private-endpoint subnet, a private DNS zone linked to it, and a private endpoint on the DR server. Run `az bicep build`, then `what-if`.
 
 Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
@@ -214,10 +214,10 @@ $FDE = az afd endpoint list -g $env:AZURE_RESOURCE_GROUP `
 
 ## 📋 What the Well-Architected Framework would say
 
-L4 is the production upgrade of L3, and grading it against WAF is the point of
+L1.4 is the production upgrade of L1.3, and grading it against WAF is the point of
 the lab — a real design review does exactly this.
 
-| Pillar | How L4 scores |
+| Pillar | How L1.4 scores |
 |---|---|
 | **Reliability** | ✅ Two regions, health-probed automatic failover, geo-replicated data, and a failover-group listener that survives promotion without a connection-string change. |
 | **Operational Excellence** | ✅ The whole topology is one template. Front Door, the second region and the failover group deploy together or not at all. |
@@ -235,9 +235,9 @@ lab that demonstrates multi-region and a design that would pass review.
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Traceable deployments**
 >
-> **You just used it:** every deployment this repo creates is named with the run that produced it — `l4-deploy-42` comes from GitHub Actions run number 42. Azure's deployment history and your CI history share a key.
+> **You just used it:** every deployment this repo creates is named with the run that produced it — `l1-4-deploy-42` comes from GitHub Actions run number 42. Azure's deployment history and your CI history share a key.
 > **Find it:** `az deployment group list -g $env:AZURE_RESOURCE_GROUP --query "[].name" -o tsv`, then open that run number in the **Actions** tab to see exactly what was deployed, by whom, from which commit.
-> **Beyond the lab:** during an incident, "which change did this?" becomes one lookup instead of an archaeology session. It costs one line of YAML: `--name l4-deploy-${{ github.run_number }}`.
+> **Beyond the lab:** during an incident, "which change did this?" becomes one lookup instead of an archaeology session. It costs one line of YAML: `--name l1-4-deploy-${{ github.run_number }}`.
 > [Docs →](https://docs.github.com/actions/learn-github-actions/contexts#github-context)
 
 <br>

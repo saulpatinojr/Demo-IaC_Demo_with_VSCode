@@ -1,11 +1,11 @@
 // ============================================================================
-// L3 — Containers + Data + Private Networking (builds on L1/L2)
+// L1.3 — Containers + Data + Private Networking (builds on L1.1/L1.2)
 // Swaps the VM web tier for Azure Container Apps, adds an Azure SQL backend,
 // Key Vault, managed identity, monitoring and alerting. This is where PRIVATE
 // networking is introduced: SQL and Key Vault have public access disabled and
-// are reachable only through private endpoints in a new spoke peered to L1's
+// are reachable only through private endpoints in a new spoke peered to L1.1's
 // hub. The container app itself stays publicly reachable so you can test it.
-// Prerequisite: L1 deployed (same prefix, same resource group). L2 is not
+// Prerequisite: L1.1 deployed (same prefix, same resource group). L1.2 is not
 // required but can coexist.
 // Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
@@ -35,7 +35,7 @@ resource hubVnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
   name: hubVnetName
 }
 
-// --- New spoke: ACA infrastructure + private endpoints, peered to L1 hub ---
+// --- New spoke: ACA infrastructure + private endpoints, peered to L1.1 hub ---
 module spoke2 'br/public:avm/res/network/virtual-network:0.9.0' = {
   name: 'l3-spoke2-vnet'
   params: {
@@ -123,7 +123,7 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.13.3' = {
     enableRbacAuthorization: true
     // The AVM default is true. Purge protection cannot be turned off once set,
     // and the vault name is deterministic per subscription+prefix, so leaving
-    // it on would block redeploying L3 for the 90-day soft-delete window after
+    // it on would block redeploying L1.3 for the 90-day soft-delete window after
     // a teardown. Soft delete still applies; the vault is just purgeable.
     enablePurgeProtection: false
     publicNetworkAccess: 'Disabled'

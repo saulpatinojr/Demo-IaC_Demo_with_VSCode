@@ -32,7 +32,7 @@ Also removing the Entra app registration this workshop created:
 ```
 
 > [!WARNING]
-> **Do not delete only the Azure Firewall.** After L2, both spoke subnets route `0.0.0.0/0` at its private IP. Removing it alone black-holes every VM's outbound traffic while they keep billing. Tear down all of L2, route table included, or run the full teardown.
+> **Do not delete only the Azure Firewall.** After L1.2, both spoke subnets route `0.0.0.0/0` at its private IP. Removing it alone black-holes every VM's outbound traffic while they keep billing. Tear down all of L1.2, route table included, or run the full teardown.
 
 ---
 

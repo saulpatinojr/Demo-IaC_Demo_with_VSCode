@@ -6,7 +6,7 @@
 //
 // Two reasons it stays detached, and both are the lesson:
 //
-//   1. Ownership. The Front Door profile belongs to labs/L4-global. Attaching
+//   1. Ownership. The Front Door profile belongs to curriculum/L1.4-production-platform. Attaching
 //      a security policy from here would make two templates owners of one
 //      resource, and the next L1.4 redeploy would quietly drop the
 //      association. The same rule that kept L2.3 out of L1.3's action group.
@@ -156,7 +156,7 @@ output wafPolicyName string = wafPolicy.name
 output mode string = wafMode
 output customRuleCount int = length(customRules)
 output managedRulesEnabled bool = isPremium
-output attachmentStatus string = 'NOT attached to any Front Door. Attaching is a manual step against the profile labs/L4-global owns — see the wiki page.'
+output attachmentStatus string = 'NOT attached to any Front Door. Attaching is a manual step against the profile curriculum/L1.4-production-platform owns — see the wiki page.'
 output costIfAttached string = isPremium
   ? 'Front Door Premium base fee $330/month (~$0.4521/hr) versus Standard $35/month (~$0.0479/hr): about +$0.40/hr, plus WAF request meters.'
   : 'Custom rules on Standard add no base fee — you keep paying the $35/month Front Door Standard already costs, plus per-request WAF meters once attached.'

@@ -344,7 +344,7 @@ try {
     Set-RepoVariable 'AZURE_LOCATION' $Location
 
     if ($AlertEmail) {
-        Write-Step 'Setting ALERT_EMAIL variable (L3)'
+        Write-Step 'Setting ALERT_EMAIL variable (L1.3)'
         Set-RepoVariable 'ALERT_EMAIL' $AlertEmail
     }
 
@@ -395,7 +395,7 @@ try {
         Write-Warn 'DRY RUN complete - nothing was changed. Re-run without -WhatIf.'
     } else {
         Write-Ok 'OIDC handshake complete. GitHub can now deploy to Azure with no stored cloud credentials.'
-        Write-Ok "Next: GitHub -> Actions -> 'Deploy L1 - Hub & Spoke' -> Run workflow."
+        Write-Ok "Next: GitHub -> Actions -> 'Curriculum L1.1 - Core Deployment' -> Run workflow."
         Write-Host "    (Throwaway VM/SQL passwords were generated and stored as secrets;" -ForegroundColor DarkGray
         Write-Host "     you never need to see them. Re-runs keep the existing passwords so" -ForegroundColor DarkGray
         Write-Host "     they stay in step with anything already deployed - delete the secret" -ForegroundColor DarkGray

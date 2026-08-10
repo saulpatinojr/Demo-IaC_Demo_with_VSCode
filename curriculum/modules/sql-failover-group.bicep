@@ -1,4 +1,4 @@
-// Creates a failover group on an EXISTING primary SQL server (deployed by L3).
+// Creates a failover group on an EXISTING primary SQL server (deployed by L1.3).
 // Local module: the AVM sql/server module only supports failover groups on
 // servers it creates itself, not on pre-existing ones.
 param primaryServerName string

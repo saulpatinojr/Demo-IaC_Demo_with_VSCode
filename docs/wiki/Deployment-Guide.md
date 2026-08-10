@@ -183,9 +183,9 @@ gh variable set ALERT_EMAIL         --body "you@yourdomain.com"
 
 Notes:
 - `AZURE_RESOURCE_GROUP` is required for **every** deployment, not just classroom ones — each workflow's preflight step fails immediately without it.
-- `VM_ADMIN_PASSWORD` is used by L1/L2.
-- `SQL_ADMIN_PASSWORD` is used by L3/L4.
-- `ALERT_EMAIL` is optional (used by L3 alerting).
+- `VM_ADMIN_PASSWORD` is used by L1.1/L2.
+- `SQL_ADMIN_PASSWORD` is used by L1.3/L4.
+- `ALERT_EMAIL` is optional (used by L1.3 alerting).
 
 Not sure why some of these are **secrets** and some are **variables**? See [GitHub Essentials → Secrets vs. Variables](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials#-secrets-vs-variables).
 
@@ -211,10 +211,10 @@ All labs deploy into the **same resource group** (your `AZURE_RESOURCE_GROUP`). 
 
 | Lab | Requires | Key resources added |
 |-----|----------|---------------------|
-| L1 | — | Hub VNet, Spoke VNet (peered), Bastion, test VM |
-| L2 | L1 | Azure Firewall (in hub), 3 web VMs behind internal LB, NSG, route table |
-| L3 | L1 | Container Apps, SQL, Key Vault, managed identity, monitoring |
-| L4 | L3 | Secondary Container Apps (DR region), SQL failover group, Front Door |
+| L1.1 | — | Hub VNet, Spoke VNet (peered), Bastion, test VM |
+| L1.2 | L1.1 | Azure Firewall (in hub), 3 web VMs behind internal LB, NSG, route table |
+| L1.3 | L1.1 | Container Apps, SQL, Key Vault, managed identity, monitoring |
+| L1.4 | L1.3 | Secondary Container Apps (DR region), SQL failover group, Front Door |
 
 Same `AZURE_PREFIX` and `AZURE_LOCATION` must be used throughout — the labs find each other's resources by naming convention.
 

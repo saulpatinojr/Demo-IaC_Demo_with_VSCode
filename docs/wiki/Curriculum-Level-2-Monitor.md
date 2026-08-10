@@ -8,7 +8,7 @@ you pay for.
 |---|---|
 | **Builds on** | All of Level 1 (L1.1 – L1.4) |
 | **Chapters** | L2.1 · L2.2 · L2.3 · L2.4 |
-| **Existing assets reused** | The Log Analytics workspace and Application Insights from L1.3; the alert rule pattern already in `labs/L3-containers/main.bicep` |
+| **Existing assets reused** | The Log Analytics workspace and Application Insights from L1.3; the alert rule pattern already in `curriculum/L1.3-multi-service-application/main.bicep` |
 | **New Azure resources** | Almost none — this level is mostly configuration on existing resources |
 | **Running cost at end of level** | **~$1.93/hr** (~$1.91/hr after L2.4's tiering work) |
 

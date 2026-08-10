@@ -1,8 +1,8 @@
 // ============================================================================
-// L1 — Hub & Spoke Connectivity
+// L1.1 — Hub & Spoke Connectivity
 // Deploys: hub VNet (Bastion + reserved firewall subnet), spoke VNet (peered),
 // and one Linux VM in the spoke. Built entirely from Azure Verified Modules.
-// L2 builds on top of this deployment — do not tear it down between labs.
+// L1.2 builds on top of this deployment — do not tear it down between labs.
 // Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
 
@@ -10,7 +10,7 @@
 @maxLength(12)
 param prefix string = 'iacdemo'
 
-@description('Azure region for all L1 resources.')
+@description('Azure region for all L1.1 resources.')
 param location string = 'eastus2'
 
 @description('Admin username for the test VM.')
@@ -23,7 +23,7 @@ param adminPassword string
 var hubVnetName = 'vnet-${prefix}-hub'
 var spokeVnetName = 'vnet-${prefix}-spoke1'
 
-// --- Hub VNet: Bastion subnet now, AzureFirewallSubnet reserved for L2 -----
+// --- Hub VNet: Bastion subnet now, AzureFirewallSubnet reserved for L1.2 -----
 module hubVnet 'br/public:avm/res/network/virtual-network:0.9.0' = {
   name: 'l1-hub-vnet'
   params: {
@@ -32,12 +32,12 @@ module hubVnet 'br/public:avm/res/network/virtual-network:0.9.0' = {
     addressPrefixes: ['10.0.0.0/16']
     subnets: [
       { name: 'AzureBastionSubnet', addressPrefix: '10.0.0.0/26' }
-      { name: 'AzureFirewallSubnet', addressPrefix: '10.0.1.0/26' } // used by L2
+      { name: 'AzureFirewallSubnet', addressPrefix: '10.0.1.0/26' } // used by L1.2
     ]
   }
 }
 
-// --- Spoke VNet: workload subnet now, web subnet added by L2 ---------------
+// --- Spoke VNet: workload subnet now, web subnet added by L1.2 ---------------
 module spokeVnet 'br/public:avm/res/network/virtual-network:0.9.0' = {
   name: 'l1-spoke-vnet'
   params: {

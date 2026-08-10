@@ -9,7 +9,7 @@ price dial.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Chapter 1 of Level 2 · everyone | ~15 min | **All of Level 1** (labs L1–L4) | 🔵 ~$0.06/hr added · ~$1.90/hr running total |
+| Chapter 1 of Level 2 · everyone | ~15 min | **All of Level 1** (chapters L1.1–L1.4) | 🔵 ~$0.06/hr added · ~$1.90/hr running total |
 
 > [!IMPORTANT]
 > **Level 1 must already be deployed.** This template creates no workspace — it
@@ -133,7 +133,7 @@ All three deploy the **same** template and give the **same** result.
 
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-Your values are already loaded from `lab-settings.csv` (set up in L1) — nothing
+Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing
 to re-type.
 
 ```powershell

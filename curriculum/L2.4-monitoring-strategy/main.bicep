@@ -8,7 +8,7 @@
 // Two ownership boundaries are respected on purpose, and they are half the
 // lesson:
 //   * Workspace-level settings (retention, daily cap, SKU) belong to the
-//     template that CREATES the workspace -- labs/L3-containers. This chapter
+//     template that CREATES the workspace -- curriculum/L1.3-multi-service-application. This chapter
 //     configures TABLES, which nothing else owns.
 //   * The policy assignment is OFF by default and gated behind a parameter.
 //     Contributor cannot create policy assignments at all -- the role's

@@ -71,7 +71,7 @@ function Write-Fail($m) { Write-Host "    [FAIL] $m" -ForegroundColor Red }
 function Write-Info($m) { Write-Host "    [INFO] $m" -ForegroundColor DarkCyan }
 function Write-Warn($m) { Write-Host "    [WARN] $m" -ForegroundColor Yellow }
 
-# Every lab reads these; ALERT_EMAIL is optional (L3 falls back to a default).
+# Every lab reads these; ALERT_EMAIL is optional (L1.3 falls back to a default).
 $required = @(
     'AZURE_PREFIX'
     'AZURE_LOCATION'
@@ -251,5 +251,5 @@ else {
     Write-Host "         (Windows only, and it stores passwords on disk)." -ForegroundColor DarkGray
 }
 Write-Host "  Now deploy any lab, e.g.:" -ForegroundColor DarkCyan
-Write-Host '    az deployment group create --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L1-hub-spoke/main.bicepparam' -ForegroundColor Cyan
+Write-Host '    az deployment group create --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.1-core-deployment/main.bicepparam' -ForegroundColor Cyan
 Write-Host ""

@@ -5,8 +5,8 @@
 //
 // This chapter deploys a REPORT, not redundancy, and that is deliberate. Every
 // zone-redundancy upgrade in this estate belongs to the template that owns the
-// resource: the container app's replica count is in labs/L3-containers, the
-// load balancer's zones are in labs/L2-web-tier. Adding them from here would
+// resource: the container app's replica count is in curriculum/L1.3-multi-service-application, the
+// load balancer's zones are in curriculum/L1.2-architecture-expansion. Adding them from here would
 // break the ownership rule the whole curriculum runs on. So L6.1 measures, and
 // the fix is a pull request against the right file.
 //
@@ -60,7 +60,7 @@ var workbookContent = {
     {
       type: 1
       content: {
-        json: '# ${prefix} — redundancy grade\n\nThis page measures. It does not fix anything, because every fix belongs to the template that owns the resource — the container app replica count lives in `labs/L3-containers`, the load balancer zones in `labs/L2-web-tier`. Read the grade, then open a pull request against the right file.\n\nAn honest reading of this estate: **two regions is not the same as surviving the loss of one.**'
+        json: '# ${prefix} — redundancy grade\n\nThis page measures. It does not fix anything, because every fix belongs to the template that owns the resource — the container app replica count lives in `curriculum/L1.3-multi-service-application`, the load balancer zones in `curriculum/L1.2-architecture-expansion`. Read the grade, then open a pull request against the right file.\n\nAn honest reading of this estate: **two regions is not the same as surviving the loss of one.**'
       }
     }
     {
@@ -96,7 +96,7 @@ var workbookContent = {
     {
       type: 1
       content: {
-        json: '## What the fixes cost\n\n| Fix | Where it lives | Cost |\n|---|---|---|\n| Second container replica per region | `labs/L3-containers` | +$0.054/hr each |\n| Zone-redundant firewall | `labs/L2-web-tier` | no extra charge — zones are free on the same SKU |\n| Zone-redundant load balancer | `labs/L2-web-tier` | no extra charge |\n| Zone-redundant SQL | not possible on Basic | +~$0.25/hr to leave Basic |\n\nThree of the four cost nothing but a redeploy. Spend the fixed budget where it buys the most nines, and decline the database upgrade with evidence.'
+        json: '## What the fixes cost\n\n| Fix | Where it lives | Cost |\n|---|---|---|\n| Second container replica per region | `curriculum/L1.3-multi-service-application` | +$0.054/hr each |\n| Zone-redundant firewall | `curriculum/L1.2-architecture-expansion` | no extra charge — zones are free on the same SKU |\n| Zone-redundant load balancer | `curriculum/L1.2-architecture-expansion` | no extra charge |\n| Zone-redundant SQL | not possible on Basic | +~$0.25/hr to leave Basic |\n\nThree of the four cost nothing but a redeploy. Spend the fixed budget where it buys the most nines, and decline the database upgrade with evidence.'
       }
     }
   ]
@@ -125,4 +125,4 @@ output paidFixes array = [
   'Second container replica per region — $0.054/hr each'
   'Zone-redundant SQL — requires leaving Basic, about +$0.25/hr'
 ]
-output ownershipRule string = 'Every fix belongs to the template that owns the resource. This chapter deliberately changes nothing, so the redundancy upgrade arrives as a reviewed pull request against labs/, not as a side effect of a Level 6 deployment.'
+output ownershipRule string = 'Every fix belongs to the template that owns the resource. This chapter deliberately changes nothing, so the redundancy upgrade arrives as a reviewed pull request against the Level 1 chapter templates, not as a side effect of a Level 6 deployment.'

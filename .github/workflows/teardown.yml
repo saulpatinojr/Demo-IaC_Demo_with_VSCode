@@ -2,13 +2,13 @@ name: "Teardown labs"
 
 # Deletes every resource INSIDE your lab resource group (the group itself is
 # left alone — students usually only have Contributor on it, not permission to
-# delete it). This matches how the labs deploy: L1-L4 all land in the single
+# delete it). This matches how the labs deploy: L1.1-L1.4 all land in the single
 # AZURE_RESOURCE_GROUP, so that group is the unit of teardown.
 #
 # There is also a local equivalent: scripts/Cleanup-Labs.ps1 -ResourceGroup <rg>
 # (supports -WhatIf).
 #
-# Partial "just tear down L2" is deliberately not offered: both spoke subnets
+# Partial "just tear down L1.2" is deliberately not offered: both spoke subnets
 # route 0.0.0.0/0 at the firewall's private IP, so removing the firewall on its
 # own black-holes the surviving VMs while they keep billing. Tear down all of
 # it, or leave it running.
@@ -94,7 +94,7 @@ jobs:
 
           # Private DNS virtual-network links are CHILD resources: they never
           # appear in `az resource list`, and a zone refuses to delete while a
-          # link still references it. Without this the two L3 privatelink zones
+          # link still references it. Without this the two L1.3 privatelink zones
           # survive all three passes below and teardown always exits 1.
           echo "::group::Remove private DNS virtual-network links"
           while read -r zone; do

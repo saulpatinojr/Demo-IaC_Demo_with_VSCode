@@ -204,7 +204,7 @@ template, and knowing which is a senior skill.
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Redeploy from source as a recovery path**
 >
-> **You already have it:** every template in `labs/` pins its AVM module
+> **You already have it:** every template in `curriculum/` pins its AVM module
 > versions and takes its parameters from the environment. That combination is
 > what makes "redeploy the region from `main`" a plan rather than a wish, and it
 > is why two of the four tiers here need no DR product at all.

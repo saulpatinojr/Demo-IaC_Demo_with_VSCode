@@ -195,7 +195,7 @@ money.
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Redeploy from source as a recovery path**
 >
-> **You already have it:** every template in `labs/` pins its Azure Verified
+> **You already have it:** every template in `curriculum/` pins its Azure Verified
 > Module versions, and every parameter comes from the environment rather than
 > from a portal click. That combination is what makes "redeploy the region from
 > `main`" a recovery plan instead of a wish.

@@ -213,7 +213,7 @@ enabled.
 > workbooks are ARM/Bicep resources. Kept in this repository they get pull
 > request review, version history, and deployment through the same OIDC
 > workflows that deploy the infrastructure.
-> **Find it:** the same pattern as `labs/` — one template, one parameter file,
+> **Find it:** the same pattern as the Level 1 chapters — one template, one parameter file,
 > one `workflow_dispatch` workflow.
 > **Beyond the lab:** "detection as code" is how a SOC stops losing rules to
 > portal edits nobody remembers making, and how a detection gets reviewed before

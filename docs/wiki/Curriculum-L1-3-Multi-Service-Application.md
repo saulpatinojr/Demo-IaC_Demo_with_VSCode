@@ -1,22 +1,22 @@
-# L3 — Containers, Data & Private Networking 🟠
+# L1.3 — Multi-Service Application Architecture 🟠
 
 **Goal:** modernize the app tier — Azure Container Apps instead of VMs, an Azure SQL backend, Key Vault and a managed identity for secrets, and Log Analytics / Application Insights monitoring with an email alert. This is where **private networking** arrives: SQL and Key Vault have public access **disabled** and are reachable only through private endpoints.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Lab 3 of 4 · everyone | ~20 min | L1 deployed. **L2 is not required.** | 🟠 ~$1.73/hr running total |
+| Lab 3 of 4 · everyone | ~20 min | L1.1 deployed. **L1.2 is not required.** | 🟠 ~$1.73/hr running total |
 
 > [!IMPORTANT]
-> **L1 must already be deployed** — L3 peers a new spoke to L1's hub. It also uses the **`SQL_ADMIN_PASSWORD`** from your `lab-settings.csv`, the one you set back in L1 and haven't needed until now.
+> **L1.1 must already be deployed** — L1.3 peers a new spoke to L1.1's hub. It also uses the **`SQL_ADMIN_PASSWORD`** from your `lab-settings.csv`, the one you set back in L1.1 and haven't needed until now.
 
 ## What you're building
 
 ```mermaid
 flowchart LR
   YOU(["You"])
-  HUB["vnet-iacdemo-hub<br/>from L1"]
+  HUB["vnet-iacdemo-hub<br/>from L1.1"]
 
-  subgraph SPOKE2["vnet-iacdemo-spoke2 · 10.2.0.0/16 · NEW in L3"]
+  subgraph SPOKE2["vnet-iacdemo-spoke2 · 10.2.0.0/16 · NEW in L1.3"]
     subgraph ACA["snet-aca 10.2.0.0/23 · delegated to Microsoft.App"]
       APP["ca-iacdemo-web<br/>cae-iacdemo-l3<br/>public ingress<br/>managed identity"]
     end
@@ -31,7 +31,7 @@ flowchart LR
   DNS["private DNS zones<br/>linked to spoke2 only"]
   MON["log-iacdemo-l3 + appi-iacdemo-l3<br/>alert: replicas >= 2 for 15 min"]
 
-  SPOKE2 <-->|"VNet peering to L1's hub"| HUB
+  SPOKE2 <-->|"VNet peering to L1.1's hub"| HUB
   YOU -->|"HTTPS, public ingress<br/>does NOT pass through the firewall"| APP
   APP --> PESQL --> SQL
   APP --> PEKV --> KV
@@ -50,9 +50,9 @@ flowchart LR
 
 <details><summary>Text description of this diagram</summary>
 
-L3 creates a **second spoke** — `vnet-iacdemo-spoke2` (`10.2.0.0/16`) — and
-peers it to L1's hub. It does not reuse L1's spoke, and it does not route
-through L2's firewall: this stack branches off the hub on its own. L2 is not a
+L1.3 creates a **second spoke** — `vnet-iacdemo-spoke2` (`10.2.0.0/16`) — and
+peers it to L1.1's hub. It does not reuse L1.1's spoke, and it does not route
+through L1.2's firewall: this stack branches off the hub on its own. L1.2 is not a
 prerequisite.
 
 The spoke holds two subnets. `snet-aca` (`10.2.0.0/23`) is delegated to
@@ -73,12 +73,12 @@ data tier, not the front door.
 
 </details>
 
-**Source:** [`labs/L3-containers/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L3-containers/main.bicep) · [`labs/L3-containers/main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L3-containers/main.bicepparam)
+**Source:** [`curriculum/L1.3-multi-service-application/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L1.3-multi-service-application/main.bicep) · [`curriculum/L1.3-multi-service-application/main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L1.3-multi-service-application/main.bicepparam)
 
 > [!NOTE]
-> **Why a second spoke instead of reusing L1's?** Because these workloads have different needs. The Container Apps environment requires a subnet **delegated** to `Microsoft.App/environments` — Azure hands that subnet over and you can't put anything else in it — and the private endpoints want their own space. Giving L3 its own spoke off the same hub is the standard pattern: shared services in the hub, each workload in its own spoke, none of them entangled.
+> **Why a second spoke instead of reusing L1.1's?** Because these workloads have different needs. The Container Apps environment requires a subnet **delegated** to `Microsoft.App/environments` — Azure hands that subnet over and you can't put anything else in it — and the private endpoints want their own space. Giving L1.3 its own spoke off the same hub is the standard pattern: shared services in the hub, each workload in its own spoke, none of them entangled.
 >
-> It also means L3 doesn't depend on L2. If you tore the firewall down to save money, this lab still works.
+> It also means L1.3 doesn't depend on L2. If you tore the firewall down to save money, this lab still works.
 
 <br>
 
@@ -100,11 +100,11 @@ All three deploy the **same** template and give the **same** result.
 
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1) — nothing to re-type.
+**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
 
 ```powershell
-az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L3-containers/main.bicepparam
-az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L3-containers/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.3-multi-service-application/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.3-multi-service-application/main.bicepparam
 ```
 
 **You should see:** an `appUrl` output ending in `.azurecontainerapps.io`. The alert email goes to whatever you put in the `ALERT_EMAIL` column.
@@ -115,9 +115,9 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
+**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
 
-On GitHub: **Actions → "Deploy L3 - Containers & Data" → Run workflow** (or `gh workflow run deploy-l3.yml`).
+On GitHub: **Actions → "Curriculum L1.3 - Multi-Service Application" → Run workflow** (or `gh workflow run curriculum-l1-3-multi-service-application.yml`).
 
 **You should see:** **Lint → What-if → Deploy**, then a final step printing the app URL.
 
@@ -133,11 +133,11 @@ Copilot runs the deploy **locally**, so load your values once first (same file a
 
 Open **Copilot Chat → Agent mode**:
 
-> Deploy `labs/L3-containers/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
+> Deploy `curriculum/L1.3-multi-service-application/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
 
 **Want to scale it first?** Ask:
 
-> In `labs/L3-containers/main.bicep`, raise `maxReplicas` to 5 and add an env var `GREETING=Hello L3` to the container, run `az bicep build`, then deploy.
+> In `curriculum/L1.3-multi-service-application/main.bicep`, raise `maxReplicas` to 5 and add an env var `GREETING=Hello L1.3` to the container, run `az bicep build`, then deploy.
 
 Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
@@ -173,7 +173,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
      --command "getent hosts $SQL.database.windows.net"
    ```
 
-   **You should see:** a **`10.2.2.x`** address — inside `snet-private-endpoints`. Same hostname, different answer depending on where you ask. That is exactly what a private endpoint plus a private DNS zone does, and why running this from L1's Bastion VM would fail: it sits in a different VNet with no link to those zones.
+   **You should see:** a **`10.2.2.x`** address — inside `snet-private-endpoints`. Same hostname, different answer depending on where you ask. That is exactly what a private endpoint plus a private DNS zone does, and why running this from L1.1's Bastion VM would fail: it sits in a different VNet with no link to those zones.
 
 4. **Monitoring fires** — scale up and wait for the alert:
 
@@ -196,6 +196,6 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
 ## ➡️ What carries forward
 
-L4 treats everything you just built as the **primary region**. It adds a second-region copy of the app, joins your SQL database to a failover group, and puts Azure Front Door in front of both — then asks whether the result would actually survive an outage.
+L1.4 treats everything you just built as the **primary region**. It adds a second-region copy of the app, joins your SQL database to a failover group, and puts Azure Front Door in front of both — then asks whether the result would actually survive an outage.
 
-**Leave L3 deployed** → **[continue to L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)**.
+**Leave L1.3 deployed** → **[continue to L1.4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform)**.

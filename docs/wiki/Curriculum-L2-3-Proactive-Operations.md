@@ -90,7 +90,7 @@ maintenance does not page anyone.
 > **Where is autoscale?** The learning objective is real, but this estate has
 > nowhere honest to put it. Azure Monitor autoscale targets virtual machine
 > scale sets and App Service plans; the only elastic thing here is the container
-> app, and its scale rules live inside `labs/L3-containers/main.bicep` — the
+> app, and its scale rules live inside `curriculum/L1.3-multi-service-application/main.bicep` — the
 > template that owns it. Adding them from this chapter would recreate exactly
 > the shared-ownership problem the callout above warns about. Read the scale
 > block in L1.3's template instead, and change it there.
@@ -162,7 +162,7 @@ $env:ALERT_EMAIL_SECONDARY = "someone.else@example.com"
 L2.3 - Proactive Operations**.
 
 The addresses come from repository variables `ALERT_EMAIL` and
-`ALERT_EMAIL_SECONDARY` — the first is the same one the L3 lab already uses, so
+`ALERT_EMAIL_SECONDARY` — the first is the same one the L1.3 lab already uses, so
 a class that set it once does not set it again.
 
 <br>
