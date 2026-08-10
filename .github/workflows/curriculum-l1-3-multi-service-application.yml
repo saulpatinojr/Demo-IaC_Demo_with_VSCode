@@ -1,6 +1,6 @@
-name: "Deploy L3 - Containers & Data"
+name: "Curriculum L1.3 - Multi-Service Application"
 
-# Manual only. Prerequisite: L1 deployed with the same prefix.
+# Manual only. Prerequisite: L1.1 deployed with the same prefix.
 on:
   workflow_dispatch:
 
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-l3
+  group: curriculum-l1-3
   cancel-in-progress: false
 
 env:
@@ -49,27 +49,27 @@ jobs:
 
       - name: Lint (compile + linter)
         run: |
-          az bicep build --file labs/L3-containers/main.bicep --stdout > /dev/null
+          az bicep build --file curriculum/L1.3-multi-service-application/main.bicep --stdout > /dev/null
           # Also compile the parameter file — build alone never reads it, so a
           # bad param name or a missing env var would slip through to deploy.
-          az bicep build-params --file labs/L3-containers/main.bicepparam --stdout > /dev/null
+          az bicep build-params --file curriculum/L1.3-multi-service-application/main.bicepparam --stdout > /dev/null
 
       - name: What-if (preview changes)
         run: |
           az deployment group what-if \
-            --name l3-whatif-${{ github.run_number }} \
+            --name l1-3-whatif-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters labs/L3-containers/main.bicepparam
+            --parameters curriculum/L1.3-multi-service-application/main.bicepparam
 
       - name: Deploy
         run: |
           az deployment group create \
-            --name l3-deploy-${{ github.run_number }} \
+            --name l1-3-deploy-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters labs/L3-containers/main.bicepparam
+            --parameters curriculum/L1.3-multi-service-application/main.bicepparam
 
       - name: Show app URL
         run: |
-          az deployment group show --name l3-deploy-${{ github.run_number }} \
+          az deployment group show --name l1-3-deploy-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
             --query properties.outputs.appUrl.value -o tsv

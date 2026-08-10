@@ -246,7 +246,7 @@ mis-forecast line in a real Azure bill.
 > answer for the infrastructure itself is *the Git history* — every template,
 > parameter file and workflow can be redeployed from this repository, which is
 > why "redeploy from IaC" is a legitimate recovery strategy in Level 6.
-> **Find it:** the commit history on `labs/`, and the version pins on every AVM
+> **Find it:** the commit history on `curriculum/`, and the version pins on every AVM
 > module that make a redeploy reproducible rather than approximate.
 > **Beyond the lab:** backup protects state; source control protects shape. A
 > recovery plan needs both, and only one of them is free.

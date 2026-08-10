@@ -57,11 +57,11 @@ $Rate = @{}; foreach ($r in $Rates) { $Rate[$r.Key] = $r.Rate }
 # =============================================================================
 $Levels = @(
     @{
-        Id      = 'L1'
-        Title   = 'L1 - Hub and spoke'
+        Id      = 'L1.1'
+        Title   = 'L1.1 - Hub and spoke'
         Summary = 'Creates the secure connectivity foundation and a test workload.'
         Detail  = 'Two virtual networks with bidirectional peering, a Basic Bastion host for browser SSH, and one Standard_B2s Linux VM with no public IP. Virtual networks, subnets, peering and NSGs carry no hourly charge - Bastion and the VM are the entire cost.'
-        Next    = 'L2 reuses the hub/spoke networks and adds a protected, load-balanced web tier and firewall.'
+        Next    = 'L1.2 reuses the hub/spoke networks and adds a protected, load-balanced web tier and firewall.'
         Items   = @(
             @{ Key = 'vm-b2s';  Qty = 1; Label = 'Linux VM (Standard_B2s)' }
             @{ Key = 'disk-s4'; Qty = 1; Label = 'OS disk' }
@@ -70,11 +70,11 @@ $Levels = @(
         )
     }
     @{
-        Id      = 'L2'
-        Title   = 'L2 - Web tier and firewall'
-        Summary = 'Adds redundancy and traffic governance to the L1 network.'
+        Id      = 'L1.2'
+        Title   = 'L1.2 - Web tier and firewall'
+        Summary = 'Adds redundancy and traffic governance to the L1.1 network.'
         Detail  = 'Three more B2s VMs behind an internal Standard Load Balancer, plus an Azure Firewall Standard in the hub with its own public IP. The firewall alone is $1.25/hr and dominates every later level - it is roughly five times the cost of the three VMs it protects. Azure Firewall Basic ($0.395/hr) would cut this substantially but needs a second /26 for AzureFirewallManagementSubnet.'
-        Next    = 'L3 adds containers, private data services, identity, and monitoring on the existing foundation.'
+        Next    = 'L1.3 adds containers, private data services, identity, and monitoring on the existing foundation.'
         Items   = @(
             @{ Key = 'vm-b2s';   Qty = 3; Label = 'Linux VMs (Standard_B2s)' }
             @{ Key = 'disk-s4';  Qty = 3; Label = 'OS disks' }
@@ -84,11 +84,11 @@ $Levels = @(
         )
     }
     @{
-        Id      = 'L3'
-        Title   = 'L3 - Containers and data'
+        Id      = 'L1.3'
+        Title   = 'L1.3 - Containers and data'
         Summary = 'Moves the demo toward a modern, secure application platform.'
         Detail  = 'A VNet-integrated Container Apps environment running one minimum replica, an Azure SQL Basic database, two private endpoints with their private DNS zones, Key Vault, a managed identity, Log Analytics and Application Insights. Assumes very light demo traffic; Log Analytics and Application Insights bill on ingestion and are effectively zero at this volume.'
-        Next    = 'L4 adds a second-region app, SQL failover capability, and global Front Door.'
+        Next    = 'L1.4 adds a second-region app, SQL failover capability, and global Front Door.'
         Items   = @(
             @{ Key = 'aca-replica';   Qty = 1; Label = 'Container Apps replica' }
             @{ Key = 'sql-basic';     Qty = 1; Label = 'Azure SQL Database Basic' }
@@ -98,8 +98,8 @@ $Levels = @(
         )
     }
     @{
-        Id      = 'L4'
-        Title   = 'L4 - Global scale'
+        Id      = 'L1.4'
+        Title   = 'L1.4 - Global scale'
         Summary = 'Adds regional resilience and a single global entry point.'
         Detail  = 'A second-region Container Apps environment with one replica, a secondary SQL server joined to the primary by a failover group, and Azure Front Door Standard as the global entry point. The geo-secondary database bills at the same rate as the primary. Front Door requests and data transfer are additional usage meters not included here.'
         Next    = 'Multi-region app delivery with health-probed routing and database failover.'
@@ -259,7 +259,7 @@ function Save-Docx([string] $path, [string] $body, [string] $title, [string] $fo
 $b = [System.Text.StringBuilder]::new()
 [void]$b.Append((Para 'IaC Demo Resource Cost Printout' 24 '0B2545' $true 60))
 [void]$b.Append((Para 'Estimated cost for one complete running hour' 15 '2E74B5' $false 280))
-[void]$b.Append((Para ('Scope: the Azure resources defined in the Demo-IaC repository. Levels are cumulative - L2 includes L1, L3 includes the earlier foundation, and L4 adds the second-region and global-access components. Rates are East US 2, verified {0}.' -f (Get-Date -Format 'd MMMM yyyy'))))
+[void]$b.Append((Para ('Scope: the Azure resources defined in the Demo-IaC repository. Levels are cumulative - L1.2 includes L1.1, L1.3 includes the earlier foundation, and L1.4 adds the second-region and global-access components. Rates are East US 2, verified {0}.' -f (Get-Date -Format 'd MMMM yyyy'))))
 
 [void]$b.Append((Para 'Executive summary' 16 '2E74B5' $true 160 240))
 $summaryRows = foreach ($lvl in $Levels) {
@@ -268,7 +268,7 @@ $summaryRows = foreach ($lvl in $Levels) {
     , @($lvl.Title, $inc, $cum)
 }
 [void]$b.Append((Table @('Level', 'Added by this level', 'Running total per hour') $summaryRows @(3100, 2800, 3460)))
-[void]$b.Append((Para ("Planning figure: about {0} per hour with the full L4 stack running, before traffic, log ingestion, backups or unusual data transfer. Azure Firewall Standard is {1}/hr of that on its own - it costs more than everything else in all four labs combined." -f (Money $FullStack), $Rate['firewall']) 10 '7A5A00' $true))
+[void]$b.Append((Para ("Planning figure: about {0} per hour with the full L1.4 stack running, before traffic, log ingestion, backups or unusual data transfer. Azure Firewall Standard is {1}/hr of that on its own - it costs more than everything else in all four labs combined." -f (Money $FullStack), $Rate['firewall']) 10 '7A5A00' $true))
 
 [void]$b.Append((Para 'Cost progression by level' 16 '2E74B5' $true 200 240))
 foreach ($lvl in $Levels) {
@@ -288,7 +288,7 @@ foreach ($lvl in $Levels) {
     $sub = Money $lvl.Incremental
     [void]$breakdown.Add(@('', ('{0} subtotal' -f $lvl.Id), '', '', $sub))
 }
-[void]$breakdown.Add(@('', 'Full L4 stack, per hour', '', '', (Money $FullStack)))
+[void]$breakdown.Add(@('', 'Full L1.4 stack, per hour', '', '', (Money $FullStack)))
 [void]$b.Append((Table @('Level', 'Resource', 'Qty', 'Unit rate/hr', 'Cost/hr') $breakdown.ToArray() @(760, 4000, 700, 1750, 2150)))
 
 [void]$b.Append((Para 'Where these rates come from' 16 '2E74B5' $true 200 240))
@@ -300,18 +300,18 @@ $rateRows = foreach ($r in $Rates) {
 
 [void]$b.Append((Para 'Assumptions' 16 '2E74B5' $true 200 240))
 foreach ($bullet in @(
-    'Region: East US 2 for L1-L3, with West US 2 as the L4 secondary region, matching the Bicep defaults.'
+    'Region: East US 2 for L1.1-L1.3, with West US 2 as the L1.4 secondary region, matching the Bicep defaults.'
     'Pricing basis: US pay-as-you-go retail list pricing. Your invoice will differ under an EA, CSP or MCA agreement.'
     'VMs run for the entire hour and are not deallocated.'
     'Container Apps run at the configured minimum of one 0.5 vCPU / 1 GiB replica per region. The monthly free grant is ignored, so short demos cost less than shown.'
     'Azure Firewall also bills $0.016 per GB processed, and a separate capacity-unit meter at $0.07/hr applies above the base deployment charge. Neither is included above.'
     'Network traffic, VNet peering data, SQL backup growth, Log Analytics ingestion, Application Insights telemetry and Front Door requests are excluded or assumed negligible.'
-    'The optional L1 VPN Gateway is not included because it is commented out in the template.'
+    'The optional L1.1 VPN Gateway is not included because it is commented out in the template.'
 )) { [void]$b.Append((Bullet $bullet)) }
 
 [void]$b.Append((Para 'Important cost notes' 16 '2E74B5' $true 200 240))
-[void]$b.Append((Para ("Azure Firewall and Bastion bill while deployed, whether or not anyone is using the lab - together they are {0}/hr, over 85 percent of the L2 running total. Tear the lab down when you are finished: run the Teardown labs workflow, or scripts/Cleanup-Labs.ps1 -ResourceGroup <rg>. Do not delete only the firewall to save money - both spoke subnets route 0.0.0.0/0 at its private IP, so the surviving VMs lose all connectivity and keep billing." -f (Money ($Rate['firewall'] + $Rate['bastion'])))))
-[void]$b.Append((Para ("For a live presentation, budget {0} to {1} for one full L4 hour to cover normal request and telemetry activity." -f (Money $BufferLow), (Money $BufferHigh)) 10 '7A5A00' $true))
+[void]$b.Append((Para ("Azure Firewall and Bastion bill while deployed, whether or not anyone is using the lab - together they are {0}/hr, over 85 percent of the L1.2 running total. Tear the lab down when you are finished: run the Teardown labs workflow, or scripts/Cleanup-Labs.ps1 -ResourceGroup <rg>. Do not delete only the firewall to save money - both spoke subnets route 0.0.0.0/0 at its private IP, so the surviving VMs lose all connectivity and keep billing." -f (Money ($Rate['firewall'] + $Rate['bastion'])))))
+[void]$b.Append((Para ("For a live presentation, budget {0} to {1} for one full L1.4 hour to cover normal request and telemetry activity." -f (Money $BufferLow), (Money $BufferHigh)) 10 '7A5A00' $true))
 [void]$b.Append((Para 'These are planning estimates, not a quote. Confirm with the Azure Pricing Calculator or Cost Management before committing a budget.'))
 
 [void]$b.Append((Para 'Reference links' 16 '2E74B5' $true 200 240))
@@ -332,7 +332,7 @@ Save-Docx (Join-Path $OutputDirectory 'IaC_Demo_Hourly_Cost_Printout.docx') $b.T
 $o = [System.Text.StringBuilder]::new()
 [void]$o.Append((Para 'IaC Demo Azure Cost Progression' 19 '0B2545' $true 40))
 [void]$o.Append((Para 'One-page handout | cost for one complete running hour' 10 '2E74B5' $true 100))
-[void]$o.Append((Para ('East US 2 (West US 2 for the L4 secondary region), US pay-as-you-go retail rates verified {0}. Levels are cumulative. Traffic, logging, backups and data transfer are excluded or assumed minimal.' -f (Get-Date -Format 'd MMMM yyyy')) 8.5 '555555' $false 140))
+[void]$o.Append((Para ('East US 2 (West US 2 for the L1.4 secondary region), US pay-as-you-go retail rates verified {0}. Levels are cumulative. Traffic, logging, backups and data transfer are excluded or assumed minimal.' -f (Get-Date -Format 'd MMMM yyyy')) 8.5 '555555' $false 140))
 
 $onePagerRows = foreach ($lvl in $Levels) {
     $resources = ($lvl.Items | ForEach-Object {
@@ -351,7 +351,7 @@ foreach ($lvl in $Levels) {
     [void]$o.Append((Para ($nextLabel + $lvl.Next) 8.5 '1F4D78' $true 60))
 }
 
-[void]$o.Append((Para ("Presenter takeaway: budget {0}-{1} for one full hour of the L4 demo. Azure Firewall ({2}/hr) and Bastion ({3}/hr) bill while deployed even when idle - run teardown when you finish." -f (Money $BufferLow), (Money $BufferHigh), (Money $Rate['firewall']), (Money $Rate['bastion'])) 8.5 '7A5A00' $true 100 100))
+[void]$o.Append((Para ("Presenter takeaway: budget {0}-{1} for one full hour of the L1.4 demo. Azure Firewall ({2}/hr) and Bastion ({3}/hr) bill while deployed even when idle - run teardown when you finish." -f (Money $BufferLow), (Money $BufferHigh), (Money $Rate['firewall']), (Money $Rate['bastion'])) 8.5 '7A5A00' $true 100 100))
 [void]$o.Append((Para 'Planning estimates only. Confirm in the Azure Pricing Calculator or Cost Management for the target subscription. Reference: azure.microsoft.com/pricing' 7.5 '666666' $false 0))
 
 Save-Docx (Join-Path $OutputDirectory 'IaC_Demo_Cost_One_Page.docx') $o.ToString() `

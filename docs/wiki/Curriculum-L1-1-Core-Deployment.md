@@ -1,4 +1,4 @@
-# L1 — Hub & Spoke Connectivity 🟢
+# L1.1 — Core Deployment 🟢
 
 **Goal:** deploy the network foundation every later lab builds on — a hub VNet, a peered spoke VNet, Azure Bastion for secure access, and one Linux test VM.
 
@@ -21,7 +21,7 @@ flowchart LR
 
   subgraph HUB["vnet-iacdemo-hub · 10.0.0.0/16"]
     BAS["AzureBastionSubnet<br/>10.0.0.0/26<br/>bas-iacdemo-hub (Basic)"]
-    AFW["AzureFirewallSubnet<br/>10.0.1.0/26<br/>reserved, empty until L2"]
+    AFW["AzureFirewallSubnet<br/>10.0.1.0/26<br/>reserved, empty until L1.2"]
   end
 
   subgraph SPOKE["vnet-iacdemo-spoke1 · 10.1.0.0/16"]
@@ -46,7 +46,7 @@ flowchart LR
 Two virtual networks, peered in both directions. The **hub**
 (`vnet-iacdemo-hub`, `10.0.0.0/16`) holds two subnets: `AzureBastionSubnet`
 (`10.0.0.0/26`) running the Basic Bastion host, and `AzureFirewallSubnet`
-(`10.0.1.0/26`), which L1 creates but leaves empty — L2 puts the firewall
+(`10.0.1.0/26`), which L1.1 creates but leaves empty — L1.2 puts the firewall
 there. The **spoke** (`vnet-iacdemo-spoke1`, `10.1.0.0/16`) holds
 `snet-workload` (`10.1.0.0/24`) with one Ubuntu VM that has no public IP.
 
@@ -60,7 +60,7 @@ whatever prefix you set.
 
 </details>
 
-**Source:** [`labs/L1-hub-spoke/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L1-hub-spoke/main.bicep) · [`labs/L1-hub-spoke/main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L1-hub-spoke/main.bicepparam)
+**Source:** [`curriculum/L1.1-core-deployment/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L1.1-core-deployment/main.bicep) · [`curriculum/L1.1-core-deployment/main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L1.1-core-deployment/main.bicepparam)
 
 > [!NOTE]
 > **Why Bastion and not a VPN Gateway?** A gateway is the real-world hybrid entry point, but takes 30–45 minutes to deploy. Bastion gives you the same "no public IP on the VM" story in about ten. The commented-out gateway module at the bottom of `main.bicep` shows what the real thing looks like.
@@ -97,8 +97,8 @@ Fill in one small file instead of typing variables into every command. Copy `lab
 | `AZURE_LOCATION` | `eastus2` unless told otherwise. |
 | `AZURE_RESOURCE_GROUP` | The group from the callout above. |
 | `VM_ADMIN_PASSWORD` | You choose it. **This is the password you SSH with below.** |
-| `SQL_ADMIN_PASSWORD` | You choose it. Not used until L3, but set it now. |
-| `ALERT_EMAIL` | Where L3 sends its alert. |
+| `SQL_ADMIN_PASSWORD` | You choose it. Not used until L1.3, but set it now. |
+| `ALERT_EMAIL` | Where L1.3 sends its alert. |
 
 Then load it. Leave `-Persist` off and the values last for this terminal only; add it and they survive new terminals:
 
@@ -122,8 +122,8 @@ Then load it. Leave `-Persist` off and the values last for this terminal only; a
 Preview first, then create. Run both from the repo root:
 
 ```powershell
-az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L1-hub-spoke/main.bicepparam
-az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L1-hub-spoke/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.1-core-deployment/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.1-core-deployment/main.bicepparam
 ```
 
 **You should see:** `what-if` lists the resources it would create and changes nothing. `create` takes about ten minutes — Bastion is the slow part — and ends with `"provisioningState": "Succeeded"`.
@@ -151,7 +151,7 @@ Store your credentials in GitHub. This registers the OIDC trust and pushes the s
 
 ### Then deploy
 
-On GitHub: **Actions → "Deploy L1 - Hub & Spoke" → Run workflow**. Prefer the terminal? `gh workflow run deploy-l1.yml`.
+On GitHub: **Actions → "Curriculum L1.1 - Core Deployment" → Run workflow**. Prefer the terminal? `gh workflow run curriculum-l1-1-core-deployment.yml`.
 
 **You should see:** three steps run in order — **Lint → What-if → Deploy** — and a green tick. It signs in with OIDC, so no password is stored anywhere.
 
@@ -167,7 +167,7 @@ Copilot runs the deploy **locally**, so load your values once first — same fil
 
 Open **Copilot Chat → Agent mode** and paste:
 
-> Deploy `labs/L1-hub-spoke/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
+> Deploy `curriculum/L1.1-core-deployment/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
 
 **Want to change something first?** Just ask — for example:
 
@@ -191,7 +191,7 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
    curl -s -m 5 ifconfig.me || echo "NO EGRESS - as designed"
    ```
 
-   **You should see:** the command hang for five seconds and print `NO EGRESS - as designed`. **That is the correct result.** The VM has no public IP, no NAT gateway and no route to a firewall, and [default outbound access was retired on 30 September 2025](https://azure.microsoft.com/en-us/updates?id=default-outbound-access-for-vms-in-azure-will-be-retired-transition-to-a-new-method-of-internet-access) — so a VM in a new VNet gets no internet unless you give it one explicitly. L2 is what gives it one. You will run this exact command again at the end of L2.
+   **You should see:** the command hang for five seconds and print `NO EGRESS - as designed`. **That is the correct result.** The VM has no public IP, no NAT gateway and no route to a firewall, and [default outbound access was retired on 30 September 2025](https://azure.microsoft.com/en-us/updates?id=default-outbound-access-for-vms-in-azure-will-be-retired-transition-to-a-new-method-of-internet-access) — so a VM in a new VNet gets no internet unless you give it one explicitly. L1.2 is what gives it one. You will run this exact command again at the end of L2.
 
 3. **Confirm the peering is live** — from your machine:
 
@@ -204,7 +204,7 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Manual workflows and the run log**
 >
 > **You just used it:** every deploy workflow here is `workflow_dispatch` only — it runs when a person clicks **Run workflow**, never automatically on a push. Nobody deploys to Azure by accident.
-> **Find it:** the **Actions** tab → *Deploy L1 - Hub & Spoke* → your run. Expand any step to see the exact `az` command and everything it printed.
+> **Find it:** the **Actions** tab → *Deploy L1.1 - Hub & Spoke* → your run. Expand any step to see the exact `az` command and everything it printed.
 > **Beyond the lab:** that run is a permanent, timestamped, linkable record of who deployed what and when — an audit trail you get for free, instead of screenshots and "who ran the deploy?" in chat.
 > [Docs →](https://docs.github.com/actions/using-workflows/manually-running-a-workflow)
 
@@ -214,6 +214,6 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
 
 ## ➡️ What carries forward
 
-L2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet`, adds a `snet-web` subnet to this spoke, and routes **this** subnet's traffic through the firewall too — which is what finally gives the test VM its internet access.
+L1.2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet`, adds a `snet-web` subnet to this spoke, and routes **this** subnet's traffic through the firewall too — which is what finally gives the test VM its internet access.
 
-**Leave L1 deployed** → **[continue to L2](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L2-Web-Tier-and-Firewall)**.
+**Leave L1.1 deployed** → **[continue to L1.2](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion)**.

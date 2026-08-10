@@ -9,8 +9,8 @@
 > [!IMPORTANT]
 > **This chapter changes nothing, deliberately.** Every redundancy upgrade in
 > this estate belongs to the template that owns the resource — the container
-> app replica count is in `labs/L3-containers`, the load balancer zones in
-> `labs/L2-web-tier`. Fixing them from here would break the ownership rule the
+> app replica count is in `curriculum/L1.3-multi-service-application`, the load balancer zones in
+> `curriculum/L1.2-architecture-expansion`. Fixing them from here would break the ownership rule the
 > whole curriculum runs on. So L6.1 **measures**, and each fix arrives as a
 > reviewed pull request against the right file.
 
@@ -24,7 +24,7 @@ flowchart LR
   F2["one firewall instance<br/>unless zones are set"]
   F3["SQL Basic<br/>CANNOT be zone-redundant"]
   F4["one container replica<br/>per region"]
-  FIX(["fixes live in labs/<br/>not here"])
+  FIX(["fixes live in the Level 1<br/>chapter templates, not here"])
 
   ARG --> WB
   WB --> F1
@@ -54,7 +54,7 @@ cost **nothing extra** on the same SKU; a second container replica is $0.054/hr.
 The fourth is not: the Basic-tier SQL database **cannot** be made zone-redundant
 at any price, and leaving Basic costs about +$0.25/hr.
 
-The dotted lines all point away from this chapter, at `labs/`. That is the
+The dotted lines all point away from this chapter, at the Level 1 chapter templates. That is the
 point. A redundancy grade produced by the monitoring team and a redundancy fix
 made by the team that owns the workload are different activities, and conflating
 them is how templates end up fighting each other.
@@ -148,7 +148,7 @@ Load your values first: `./scripts/Load-LabSettings.ps1`. Then in
 > Make the load balancer in this environment zone-redundant by editing `curriculum/L6.1-high-availability/main.bicep`.
 
 There is no load balancer in this template to edit. The right change is in
-`labs/L2-web-tier/main.bicep`, which owns it — ask Copilot to make it there
+`curriculum/L1.2-architecture-expansion/main.bicep`, which owns it — ask Copilot to make it there
 instead, and notice that the fix is a one-line `zones` property and costs
 nothing. The hard part was never the Bicep; it was knowing which file.
 

@@ -35,7 +35,7 @@ The editor is your home base for the whole workshop.
 | Source control (stage/commit/push) | Branch icon in the left rail, or `Ctrl+Shift+G` |
 | Accept recommended extensions | Pop-up on first open, or Extensions view → **Recommended** |
 
-**Try it:** open the terminal (`` Ctrl+` ``), run `az bicep version`, then open `labs/L1-hub-spoke/main.bicep` and hover over `br/public:avm/res/network/virtual-network:0.9.0`. The Bicep extension shows the module's parameters inline.
+**Try it:** open the terminal (`` Ctrl+` ``), run `az bicep version`, then open `curriculum/L1.1-core-deployment/main.bicep` and hover over `br/public:avm/res/network/virtual-network:0.9.0`. The Bicep extension shows the module's parameters inline.
 
 Docs: https://code.visualstudio.com/docs
 
@@ -74,7 +74,7 @@ Three things to recognise:
 **Try it — compile without deploying:**
 
 ```powershell
-az bicep build --file labs/L1-hub-spoke/main.bicep --stdout | Select-Object -First 20
+az bicep build --file curriculum/L1.1-core-deployment/main.bicep --stdout | Select-Object -First 20
 ```
 
 If it prints JSON, it compiled. That ARM JSON is what Azure actually receives — you write Bicep, Azure gets JSON.
@@ -95,15 +95,15 @@ Copilot **agent mode** is the star of the workshop. Unlike plain autocomplete, a
 
 **How to write good prompts:**
 
-- **Name the file:** *"In `labs/L1-hub-spoke/main.bicep`, add a subnet…"* — pointing at a specific file focuses Copilot.
+- **Name the file:** *"In `curriculum/L1.1-core-deployment/main.bicep`, add a subnet…"* — pointing at a specific file focuses Copilot.
 - **Ask it to verify itself:** *"…then run `az bicep build` on the file and fix any errors."*
 - **Review every diff.** Agent mode proposes changes; you decide. Accept, tweak, or reject. Never merge without reading.
 
 **Try it (safe — fully reversible):**
 
-> In `labs/L1-hub-spoke/main.bicep`, add a second subnet named `snet-data` with address prefix `10.1.2.0/24` to the spoke VNet, then run `az bicep build` to verify it compiles.
+> In `curriculum/L1.1-core-deployment/main.bicep`, add a second subnet named `snet-data` with address prefix `10.1.2.0/24` to the spoke VNet, then run `az bicep build` to verify it compiles.
 
-Read the diff it proposes. Then discard it — Source Control → discard changes. L1 works fine without this change.
+Read the diff it proposes. Then discard it — Source Control → discard changes. L1.1 works fine without this change.
 
 > [!TIP]
 > **Copilot etiquette for IaC:** if it suggests raw ARM resources or old API versions, say: *"Use the pinned AVM module versions already present in this repo."* Consistency matters.
@@ -116,7 +116,7 @@ Docs: https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode
 
 You can open the repo, read Bicep, compile a template, and drive Copilot. That is everything the labs assume.
 
-→ Head to the [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) to finish setup, then [L1 — Hub & Spoke](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke).
+→ Head to the [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) to finish setup, then [L1.1 — Core Deployment](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment).
 
 For install links and deeper CLI reference, see [Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References).
 

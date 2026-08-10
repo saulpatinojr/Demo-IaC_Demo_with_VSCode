@@ -1,7 +1,7 @@
 name: "Curriculum L2 - Operations & Monitoring"
 
 # Manual only, like every other deploy in this repo. Prerequisite: Level 1
-# deployed with the same prefix (that is labs/L1-hub-spoke .. labs/L4-global,
+# deployed with the same prefix (that is curriculum/L1.1-core-deployment .. curriculum/L1.4-production-platform,
 # which the redesign calls L1.1 .. L1.4).
 #
 # One workflow per LEVEL with a chapter dropdown, rather than one workflow per
@@ -47,7 +47,7 @@ env:
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
   CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
-  # Read by L2.3. Same variable the L3 lab already uses, so a class that set it
+  # Read by L2.3. Same variable the L1.3 lab already uses, so a class that set it
   # once does not set it again.
   ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
   ALERT_EMAIL_SECONDARY: ${{ vars.ALERT_EMAIL_SECONDARY }}

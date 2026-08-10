@@ -108,7 +108,7 @@ if ($ResourceGroup) {
     } else {
         # Private DNS virtual-network links are CHILD resources: `az resource
         # list` never returns them, and a zone refuses to delete while a link
-        # survives. Without this the L3 privatelink zones outlive every pass.
+        # survives. Without this the L1.3 privatelink zones outlive every pass.
         $zones = @(az network private-dns zone list --resource-group $ResourceGroup --query '[].name' -o tsv 2>$null | Where-Object { $_ })
         foreach ($zone in $zones) {
             $links = @(az network private-dns link vnet list --resource-group $ResourceGroup --zone-name $zone --query '[].name' -o tsv 2>$null | Where-Object { $_ })

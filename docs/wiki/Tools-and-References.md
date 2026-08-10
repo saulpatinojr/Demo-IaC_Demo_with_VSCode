@@ -47,7 +47,7 @@
 ### GitHub CLI (`gh`)
 - Install: `winget install GitHub.cli` · [cli.github.com](https://cli.github.com/)
 - Sign in: `gh auth login`
-- Used for: secrets (`gh secret set`), variables (`gh variable set`), running workflows (`gh workflow run "Deploy L1 - Hub & Spoke"`), monitoring runs (`gh run watch`)
+- Used for: secrets (`gh secret set`), variables (`gh variable set`), running workflows (`gh workflow run "Curriculum L1.1 - Core Deployment"`), monitoring runs (`gh run watch`)
 
 ### PowerShell 7 (`pwsh`)
 - Install: `winget install Microsoft.PowerShell`
@@ -133,7 +133,7 @@ gh variable delete TEST_BODY_DASH --repo OWNER/REPO
 </details>
 
 ### `Cleanup-Labs.ps1`
-- Deletes every resource inside your lab resource group — all four labs share one group, so this clears L1–L4 in one run. The group itself is kept.
+- Deletes every resource inside your lab resource group — all four labs share one group, so this clears L1.1–L1.4 in one run. The group itself is kept.
 - Always preview first: `./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP -WhatIf`
 - Leave `-ResourceGroup` off and it falls back to the `AZURE_RESOURCE_GROUP` environment variable.
 - Add `-RemoveOidc` to also delete the Entra app registration and its role assignment.
@@ -161,8 +161,8 @@ These scripts require the **Az PowerShell module** (`Install-Module Az -Scope Cu
 
 ### `Set-LabPolicy.ps1`
 - Assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:
-  - **Allowed locations** — restricts deployments to `eastus2` and `westus2` (L4's failover region)
-  - **Allowed resource types** — whitelist of ~38 types used by L1–L4 labs
+  - **Allowed locations** — restricts deployments to `eastus2` and `westus2` (L1.4's failover region)
+  - **Allowed resource types** — whitelist of ~38 types used by L1.1–L1.4 labs
   - **Inherit tag × 4** — `Owner`, `Event`, `Date`, `Instructor` propagate automatically from RG to all child resources
 - Run after `New-LabEnvironment.ps1`.
 - Always preview first: `./scripts/admin/Set-LabPolicy.ps1 -WhatIf`

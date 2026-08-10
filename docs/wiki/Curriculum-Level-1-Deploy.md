@@ -11,7 +11,7 @@ end: *this environment stays up, and you are going to run it.*
 |---|---|
 | **Builds on** | Nothing — this is the entry point |
 | **Chapters** | L1.1 · L1.2 · L1.3 · L1.4 |
-| **Existing assets reused** | `labs/L1-hub-spoke` · `labs/L2-web-tier` · `labs/L3-containers` · `labs/L4-global` · `deploy-l1..l4.yml` |
+| **Existing assets reused** | `curriculum/L1.1-core-deployment` · `curriculum/L1.2-architecture-expansion` · `curriculum/L1.3-multi-service-application` · `curriculum/L1.4-production-platform` · `curriculum-l1-*.yml` |
 | **Running cost at end of level** | **~$1.84/hr** (~$0.43/hr if L1.2's firewall is torn down) |
 
 > [!NOTE]
@@ -198,11 +198,11 @@ level is measured as an increment on top of this.
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Reusing what is already reviewed**
 >
-> **What this level does:** it adds no new templates. `labs/L1-hub-spoke`
-> through `labs/L4-global` are already version-pinned to Azure Verified Modules,
+> **What this level does:** it adds no new templates. `curriculum/L1.1-core-deployment`
+> through `curriculum/L1.4-production-platform` are already version-pinned to Azure Verified Modules,
 > already linted by `bicepconfig.json`, and already deployed by four workflows
 > that authenticate with OIDC and no stored secret.
-> **Find it:** the `labs/` folder and `.github/workflows/deploy-l1..l4.yml`.
+> **Find it:** the `curriculum/` folder and `.github/workflows/curriculum-l1-*.yml`.
 > **Beyond the lab:** a curriculum change that requires rewriting the code is a
 > curriculum change nobody finishes. Re-framing beats re-authoring.
 > [Docs →](https://docs.github.com/actions/using-workflows/about-workflows)

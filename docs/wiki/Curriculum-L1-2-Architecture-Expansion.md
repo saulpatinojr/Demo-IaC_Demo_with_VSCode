@@ -1,16 +1,16 @@
-# L2 — Web Tier & Azure Firewall 🟡
+# L1.2 — Architecture Expansion 🟡
 
-**Goal:** add a real web tier to L1's network — three nginx VMs behind an **internal** load balancer — and put **Azure Firewall** in charge of all traffic in and out. That includes L1's test VM: L2 routes its subnet through the firewall too, which is what finally gives it internet access.
+**Goal:** add a real web tier to L1.1's network — three nginx VMs behind an **internal** load balancer — and put **Azure Firewall** in charge of all traffic in and out. That includes L1.1's test VM: L1.2 routes its subnet through the firewall too, which is what finally gives it internet access.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Lab 2 of 4 · everyone | ~20 min, 10 of it the firewall | L1 deployed, same prefix | 🟡 ~$1.65/hr running total |
+| Lab 2 of 4 · everyone | ~20 min, 10 of it the firewall | L1.1 deployed, same prefix | 🟡 ~$1.65/hr running total |
 
 > [!IMPORTANT]
-> **L1 must already be deployed with the same prefix.** L2 writes a new subnet into L1's spoke VNet, and puts the firewall in the `AzureFirewallSubnet` that L1 reserved.
+> **L1.1 must already be deployed with the same prefix.** L1.2 writes a new subnet into L1.1's spoke VNet, and puts the firewall in the `AzureFirewallSubnet` that L1.1 reserved.
 
 > [!WARNING]
-> **This is the expensive lab.** Azure Firewall Standard is **$1.25/hr on its own** — more than everything else in all four labs combined — taking the running total from ~$0.24/hr to **~$1.65/hr**. It bills while deployed even when idle, so don't leave L2 up overnight.
+> **This is the expensive lab.** Azure Firewall Standard is **$1.25/hr on its own** — more than everything else in all four labs combined — taking the running total from ~$0.24/hr to **~$1.65/hr**. It bills while deployed even when idle, so don't leave L1.2 up overnight.
 
 ## What you're building
 
@@ -28,8 +28,8 @@ flowchart LR
       ILB["lbi-iacdemo-web<br/>internal load balancer<br/>frontend 10.1.1.100"]
       W["vm-iacdemo-web0 / web1 / web2<br/>nginx"]
     end
-    subgraph WL["snet-workload 10.1.0.0/24 · + route table, new in L2"]
-      VM["vm-iacdemo-test<br/>from L1"]
+    subgraph WL["snet-workload 10.1.0.0/24 · + route table, new in L1.2"]
+      VM["vm-iacdemo-test<br/>from L1.1"]
     end
   end
 
@@ -38,7 +38,7 @@ flowchart LR
   FW -->|"DNAT :80 to 10.1.1.100"| ILB
   ILB -->|"round robin"| W
   W -. "0.0.0.0/0 via 10.0.1.4" .-> FW
-  VM -. "0.0.0.0/0 via 10.0.1.4<br/>this is how L1's VM finally gets out" .-> FW
+  VM -. "0.0.0.0/0 via 10.0.1.4<br/>this is how L1.1's VM finally gets out" .-> FW
   FW ==>|"allowed: TCP 80/443 from 10.1.0.0/16<br/>everything else, including ICMP: denied"| NET
 
   classDef net fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
@@ -63,9 +63,9 @@ silently. Inbound via DNAT and outbound via the route table keeps both
 directions on the firewall.
 
 Outbound, both dashed lines are route tables sending `0.0.0.0/0` to the
-firewall's private address `10.0.1.4`. The web subnet has one, and **L2 also
-attaches the same route table to L1's `snet-workload`** — which is what finally
-gives the L1 test VM internet access. The firewall allows TCP 80 and 443 from
+firewall's private address `10.0.1.4`. The web subnet has one, and **L1.2 also
+attaches the same route table to L1.1's `snet-workload`** — which is what finally
+gives the L1.1 test VM internet access. The firewall allows TCP 80 and 443 from
 `10.1.0.0/16` and denies everything else, so ICMP fails while HTTPS works.
 
 Azure Firewall Standard costs **$1.25/hr on its own**, which is why the running
@@ -73,7 +73,7 @@ total jumps from about $0.24/hr to about $1.65/hr at this lab.
 
 </details>
 
-**Source:** [`labs/L2-web-tier/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/L2-web-tier/main.bicep) · [`labs/modules/subnet.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/labs/modules/subnet.bicep)
+**Source:** [`curriculum/L1.2-architecture-expansion/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L1.2-architecture-expansion/main.bicep) · [`curriculum/modules/subnet.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/modules/subnet.bicep)
 
 > [!NOTE]
 > **Why an internal load balancer?** A *public* LB in front of the VMs, while a route table forces egress through the firewall, causes asymmetric routing — return traffic leaves by a different path than it arrived, and connections die silently with no error to read. The correct hub-and-spoke pattern is the one used here: inbound through a firewall **DNAT rule** to an internal LB, outbound through the firewall via the route table. Both directions stay on the firewall.
@@ -98,11 +98,11 @@ All three deploy the **same** template and give the **same** result.
 
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1) — nothing to re-type.
+**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
 
 ```powershell
-az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L2-web-tier/main.bicepparam
-az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters labs/L2-web-tier/main.bicepparam
+az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.2-architecture-expansion/main.bicepparam
+az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.2-architecture-expansion/main.bicepparam
 ```
 
 **You should see:** about ten minutes of work — the firewall is the slow part — ending with `"provisioningState": "Succeeded"` and a `testUrl` output holding the firewall's public IP.
@@ -116,9 +116,9 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
+**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
 
-On GitHub: **Actions → "Deploy L2 - Web Tier & Firewall" → Run workflow** (or `gh workflow run deploy-l2.yml`).
+On GitHub: **Actions → "Curriculum L1.2 - Architecture Expansion" → Run workflow** (or `gh workflow run curriculum-l1-2-architecture-expansion.yml`).
 
 **You should see:** **Lint → What-if → Deploy** run in order, then a final step printing your test URL.
 
@@ -134,7 +134,7 @@ Copilot runs the deploy **locally**, so load your values once first (same file a
 
 Open **Copilot Chat → Agent mode**:
 
-> Deploy `labs/L2-web-tier/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
+> Deploy `curriculum/L1.2-architecture-expansion/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) with `az deployment group create`.
 
 **Want to harden it first?** Ask:
 
@@ -167,7 +167,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
    **You should see:** an IP address from the `curl` — the **firewall's** public IP, not the VM's, because the firewall SNATs outbound traffic — followed by `ICMP-BLOCKED`. HTTPS matches the allow rule; ping matches nothing, and the default is deny.
 
-3. **L1's VM can now reach the internet** — the same command that timed out at the end of L1:
+3. **L1.1's VM can now reach the internet** — the same command that timed out at the end of L1.1:
 
    ```powershell
    az vm run-command invoke -g $env:AZURE_RESOURCE_GROUP -n "vm-$env:AZURE_PREFIX-test" `
@@ -175,7 +175,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
      --scripts "curl -s -m 5 https://ifconfig.me"
    ```
 
-   **You should see:** an IP address instead of a timeout — and the *same* IP as test 2, matching `$FW_IP` from test 1. L2 attached the web tier's route table to L1's `snet-workload`, so that VM's traffic now leaves through the firewall. This is the L1 → L2 payoff.
+   **You should see:** an IP address instead of a timeout — and the *same* IP as test 2, matching `$FW_IP` from test 1. L1.2 attached the web tier's route table to L1.1's `snet-workload`, so that VM's traffic now leaves through the firewall. This is the L1.1 → L1.2 payoff.
 
 4. **The NSG permits firewall-to-web traffic** — ask Azure to trace the flow rather than guessing:
 
@@ -190,8 +190,8 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Concurrency groups**
 >
-> **You just used it:** the L2 workflow declares `concurrency: { group: deploy-l2 }`, so two people can't deploy into the same resource group at once — the second run queues instead of colliding mid-deployment.
-> **Find it:** [`.github/workflows/deploy-l2.yml`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/.github/workflows/deploy-l2.yml), and a queued run shows as *Pending* in the **Actions** tab.
+> **You just used it:** the L1.2 workflow declares `concurrency: { group: curriculum-l1-2 }`, so two people can't deploy into the same resource group at once — the second run queues instead of colliding mid-deployment.
+> **Find it:** [`.github/workflows/curriculum-l1-2-architecture-expansion.yml`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/.github/workflows/curriculum-l1-2-architecture-expansion.yml), and a queued run shows as *Pending* in the **Actions** tab.
 > **Beyond the lab:** this is the cheapest deployment lock you will ever configure — no state file, no advisory lock, about three lines of YAML.
 > [Docs →](https://docs.github.com/actions/using-jobs/using-concurrency)
 
@@ -201,9 +201,9 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
 ## ➡️ What carries forward
 
-L3 does **not** build on this lab. It creates its own spoke, peers it straight to L1's hub, and never routes through the firewall — so L2 is not a prerequisite for anything that follows. What carries forward is the **hub**, and the pattern you have just seen: put something in front of your workloads and make all traffic go through it.
+L1.3 does **not** build on this lab. It creates its own spoke, peers it straight to L1.1's hub, and never routes through the firewall — so L1.2 is not a prerequisite for anything that follows. What carries forward is the **hub**, and the pattern you have just seen: put something in front of your workloads and make all traffic go through it.
 
-**[Continue to L3](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L3-Containers-and-Data)** — or, if cost is a concern, tear L2 down first. L3 will be fine without it.
+**[Continue to L1.3](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application)** — or, if cost is a concern, tear L1.2 down first. L1.3 will be fine without it.
 
 > [!CAUTION]
-> **Don't delete only the firewall.** Both spoke subnets now route `0.0.0.0/0` at its private IP, so removing it on its own black-holes all their outbound traffic — the web tier and L1's test VM go dark while still billing. Tear down **all of L2**, route table included, or run the full teardown. See [Cost & cleanup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/README.md) in the README.
+> **Don't delete only the firewall.** Both spoke subnets now route `0.0.0.0/0` at its private IP, so removing it on its own black-holes all their outbound traffic — the web tier and L1.1's test VM go dark while still billing. Tear down **all of L1.2**, route table included, or run the full teardown. See [Cost & cleanup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/README.md) in the README.

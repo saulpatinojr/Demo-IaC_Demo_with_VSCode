@@ -7,7 +7,7 @@
     script assigns six Azure Policy assignments:
 
         1. Allowed locations        -- deployments must target the lab regions
-        2. Allowed resource types   -- only the resource types used by L1-L4
+        2. Allowed resource types   -- only the resource types used by L1.1-L1.4
         3. Inherit tag: Owner       -- resources inherit Owner from their RG
         4. Inherit tag: Event       -- resources inherit Event from their RG
         5. Inherit tag: Date        -- resources inherit Date from their RG
@@ -39,11 +39,11 @@
 .PARAMETER Location
     The allowed Azure regions. Default: eastus2, westus2.
 
-    BOTH are required. L1-L3 deploy to the primary region (eastus2), but L4
+    BOTH are required. L1.1-L1.3 deploy to the primary region (eastus2), but L1.4
     deploys its failover stack to a secondary region -- westus2, the default of
-    the secondaryLocation parameter in labs/L4-global/main.bicep. Restricting
-    this to eastus2 alone makes L4 undeployable. If you change the lab regions,
-    change them here and in the L4 template together.
+    the secondaryLocation parameter in curriculum/L1.4-production-platform/main.bicep. Restricting
+    this to eastus2 alone makes L1.4 undeployable. If you change the lab regions,
+    change them here and in the L1.4 template together.
 
 .PARAMETER WhatIf
     Print every planned assignment without making any changes.
@@ -104,7 +104,7 @@ $SubscriptionId = $SubIds[0]
 Write-Ok "SubscriptionId from CSV: $SubscriptionId"
 
 # ---------------------------------------------------------------------------- #
-#  Allowed resource types -- all L1-L4 lab resources                            #
+#  Allowed resource types -- all L1.1-L1.4 lab resources                            #
 # ---------------------------------------------------------------------------- #
 # The "Allowed resource types" policy is a DENY policy that evaluates child
 # resources as well as top-level ones, so every child type an AVM module
@@ -116,9 +116,9 @@ Write-Ok "SubscriptionId from CSV: $SubscriptionId"
 #   * Bumping an AVM module version can introduce new child types. If students
 #     start hitting policy denials after a template change, re-derive this list
 #     rather than guessing:
-#         az deployment group what-if -g <rg> -f labs/L1-hub-spoke/main.bicep
+#         az deployment group what-if -g <rg> -f curriculum/L1.1-core-deployment/main.bicep
 $AllowedResourceTypes = @(
-    # Networking -- L1 (hub/spoke, Bastion, peering)
+    # Networking -- L1.1 (hub/spoke, Bastion, peering)
     'Microsoft.Network/virtualNetworks'
     'Microsoft.Network/virtualNetworks/subnets'
     'Microsoft.Network/virtualNetworks/virtualNetworkPeerings'
@@ -127,7 +127,7 @@ $AllowedResourceTypes = @(
     'Microsoft.Network/publicIPAddresses'
     'Microsoft.Network/bastionHosts'
 
-    # Networking -- L2 (Firewall, route tables, LB)
+    # Networking -- L1.2 (Firewall, route tables, LB)
     'Microsoft.Network/azureFirewalls'
     'Microsoft.Network/firewallPolicies'
     'Microsoft.Network/firewallPolicies/ruleCollectionGroups'
@@ -137,7 +137,7 @@ $AllowedResourceTypes = @(
     'Microsoft.Network/loadBalancers/inboundNatRules'
     'Microsoft.Network/publicIPPrefixes'
 
-    # Networking -- L3 (private endpoints, DNS)
+    # Networking -- L1.3 (private endpoints, DNS)
     'Microsoft.Network/privateDnsZones'
     'Microsoft.Network/privateDnsZones/virtualNetworkLinks'
     'Microsoft.Network/privateDnsZones/A'
@@ -145,23 +145,23 @@ $AllowedResourceTypes = @(
     'Microsoft.Network/privateEndpoints'
     'Microsoft.Network/privateEndpoints/privateDnsZoneGroups'
 
-    # Networking -- L4 (Front Door Standard; routes hang off the AFD endpoint)
+    # Networking -- L1.4 (Front Door Standard; routes hang off the AFD endpoint)
     'Microsoft.Cdn/profiles'
     'Microsoft.Cdn/profiles/afdEndpoints'
     'Microsoft.Cdn/profiles/afdEndpoints/routes'
     'Microsoft.Cdn/profiles/originGroups'
     'Microsoft.Cdn/profiles/originGroups/origins'
 
-    # Compute -- L1 / L2 VMs
+    # Compute -- L1.1 / L1.2 VMs
     'Microsoft.Compute/virtualMachines'
     'Microsoft.Compute/virtualMachines/extensions'
     'Microsoft.Compute/disks'
 
-    # Containers -- L3
+    # Containers -- L1.3
     'Microsoft.App/managedEnvironments'
     'Microsoft.App/containerApps'
 
-    # Data -- L3/L4 (AVM's sql/server module always writes these child settings)
+    # Data -- L1.3/L1.4 (AVM's sql/server module always writes these child settings)
     'Microsoft.Sql/servers'
     'Microsoft.Sql/servers/databases'
     'Microsoft.Sql/servers/failoverGroups'
@@ -177,7 +177,7 @@ $AllowedResourceTypes = @(
     # Identity
     'Microsoft.ManagedIdentity/userAssignedIdentities'
 
-    # Monitoring -- L3
+    # Monitoring -- L1.3
     'Microsoft.OperationalInsights/workspaces'
     'Microsoft.Insights/components'
     'Microsoft.Insights/metricAlerts'

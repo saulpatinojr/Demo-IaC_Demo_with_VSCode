@@ -46,15 +46,15 @@
 
 | Symptom | Cause and fix |
 |---------|--------------|
-| **L1**: VM deploy fails on password | Must be 12+ characters with 3 of 4 character classes (uppercase, lowercase, digit, symbol) and must not contain the username. Re-run `Setup-Oidc.ps1` to regenerate. |
-| **L2**: `curl http://<fw-ip>` times out | Firewall provisioning takes ~10 minutes *after* the workflow reports success. Also confirm the DNAT rule exists: `az network firewall nat-rule collection list -g <rg> -f afw-<prefix>-hub`. |
-| **L2**: Web VMs unhealthy in the load balancer | `cloud-init` needs outbound HTTP (port 80) to install nginx. If the egress rule was tightened to HTTPS-only *before* first deploy, `apt-get` failed silently. Redeploy or loosen the rule first. |
-| **L2**: Everything broke after adding a public LB | Asymmetric routing — inbound via public LB, return path via firewall. Use the DNAT + internal LB pattern already in the template. See the design note in the [L2 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L2-Web-Tier-and-Firewall). |
-| **L3**: Connecting to SQL from your laptop fails | That is correct and expected — public access is disabled. SQL is only reachable from inside the VNet via private endpoint. |
-| **L3**: Container cannot reach SQL by name | The private DNS zone is linked to spoke2 only. To link another VNet: `az network private-dns link vnet create -g <rg> -z "privatelink.database.windows.net" -n <link-name> -v <vnet-id> -e false`. |
-| **L3**: SQL or Key Vault name already taken | These names are globally unique. The template appends a `uniqueString` suffix per subscription+prefix — collisions mean someone else used the same prefix. Change `-Prefix`. |
-| **L4**: Front Door returns 502 or 404 at first | Origin propagation takes up to ~10 minutes after creation. Check origin health: Portal → Front Door → Origin groups → health status. |
-| **L4**: Failover group creation fails | `SQL_ADMIN_PASSWORD` must match L3's exactly, and L3 must be fully deployed (database `sqldb-<prefix>-app` must exist on the primary server). |
+| **L1.1**: VM deploy fails on password | Must be 12+ characters with 3 of 4 character classes (uppercase, lowercase, digit, symbol) and must not contain the username. Re-run `Setup-Oidc.ps1` to regenerate. |
+| **L1.2**: `curl http://<fw-ip>` times out | Firewall provisioning takes ~10 minutes *after* the workflow reports success. Also confirm the DNAT rule exists: `az network firewall nat-rule collection list -g <rg> -f afw-<prefix>-hub`. |
+| **L1.2**: Web VMs unhealthy in the load balancer | `cloud-init` needs outbound HTTP (port 80) to install nginx. If the egress rule was tightened to HTTPS-only *before* first deploy, `apt-get` failed silently. Redeploy or loosen the rule first. |
+| **L1.2**: Everything broke after adding a public LB | Asymmetric routing — inbound via public LB, return path via firewall. Use the DNAT + internal LB pattern already in the template. See the design note in the [L1.2 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion). |
+| **L1.3**: Connecting to SQL from your laptop fails | That is correct and expected — public access is disabled. SQL is only reachable from inside the VNet via private endpoint. |
+| **L1.3**: Container cannot reach SQL by name | The private DNS zone is linked to spoke2 only. To link another VNet: `az network private-dns link vnet create -g <rg> -z "privatelink.database.windows.net" -n <link-name> -v <vnet-id> -e false`. |
+| **L1.3**: SQL or Key Vault name already taken | These names are globally unique. The template appends a `uniqueString` suffix per subscription+prefix — collisions mean someone else used the same prefix. Change `-Prefix`. |
+| **L1.4**: Front Door returns 502 or 404 at first | Origin propagation takes up to ~10 minutes after creation. Check origin health: Portal → Front Door → Origin groups → health status. |
+| **L1.4**: Failover group creation fails | `SQL_ADMIN_PASSWORD` must match L1.3's exactly, and L1.3 must be fully deployed (database `sqldb-<prefix>-app` must exist on the primary server). |
 | Quota / SKU not available in region | `az vm list-skus -l eastus2 --size Standard_B2s -o table`. If unavailable, pick a different region and use it consistently for ALL labs via the `-Location` flag in `Setup-Oidc.ps1`. |
 
 ---

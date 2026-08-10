@@ -1,6 +1,6 @@
-name: "Deploy L2 - Web Tier & Firewall"
+name: "Curriculum L1.4 - Production-Ready Platform"
 
-# Manual only. Prerequisite: L1 deployed with the same prefix.
+# Manual only. Prerequisite: L1.3 deployed with the same prefix (passwords must match).
 on:
   workflow_dispatch:
 
@@ -9,11 +9,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-l2
+  group: curriculum-l1-4
   cancel-in-progress: false
 
 env:
-  VM_ADMIN_PASSWORD: ${{ secrets.VM_ADMIN_PASSWORD }}
+  SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
   AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
@@ -31,7 +31,7 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP VM_ADMIN_PASSWORD; do
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP SQL_ADMIN_PASSWORD; do
             if [ -z "${!v}" ]; then
               echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
               missing=1
@@ -48,27 +48,27 @@ jobs:
 
       - name: Lint (compile + linter)
         run: |
-          az bicep build --file labs/L2-web-tier/main.bicep --stdout > /dev/null
+          az bicep build --file curriculum/L1.4-production-platform/main.bicep --stdout > /dev/null
           # Also compile the parameter file — build alone never reads it, so a
           # bad param name or a missing env var would slip through to deploy.
-          az bicep build-params --file labs/L2-web-tier/main.bicepparam --stdout > /dev/null
+          az bicep build-params --file curriculum/L1.4-production-platform/main.bicepparam --stdout > /dev/null
 
       - name: What-if (preview changes)
         run: |
           az deployment group what-if \
-            --name l2-whatif-${{ github.run_number }} \
+            --name l1-4-whatif-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters labs/L2-web-tier/main.bicepparam
+            --parameters curriculum/L1.4-production-platform/main.bicepparam
 
       - name: Deploy
         run: |
           az deployment group create \
-            --name l2-deploy-${{ github.run_number }} \
+            --name l1-4-deploy-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters labs/L2-web-tier/main.bicepparam
+            --parameters curriculum/L1.4-production-platform/main.bicepparam
 
-      - name: Show test URL
+      - name: Show Front Door endpoint
         run: |
-          az deployment group show --name l2-deploy-${{ github.run_number }} \
+          az deployment group show --name l1-4-deploy-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --query properties.outputs.testUrl.value -o tsv
+            --query properties.outputs.frontDoorEndpoint.value -o tsv

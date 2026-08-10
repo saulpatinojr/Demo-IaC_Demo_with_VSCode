@@ -267,19 +267,19 @@ foreach ($p in $pages) {
 if ($bareCurl -eq 0) { Write-Ok 'no bare curl in powershell fences' }
 
 # ---- 10. Cost figures agree with the README -------------------------------
-# The same four numbers appear in README.md, _Sidebar.md and the lab pages.
+# The same four numbers appear in README.md, _Sidebar.md and the chapter pages.
 # Without this check they drift, and a stale price is worse than no price.
 Write-Step 'Cost figures'
 function Get-Costs([string] $path) {
-    # Reads only table rows that name a lab, so prose figures elsewhere (the
-    # "budget ~$2.00 for a demo hour" line) can't be mistaken for lab costs.
+    # Reads only table rows that name a chapter, so prose figures elsewhere (the
+    # "budget ~$2.00 for a demo hour" line) can't be mistaken for chapter costs.
     # Formatting may differ between files -- README uses ~$1.65, the sidebar
     # ~$1.65/hr -- so only the number is compared.
     $map = [ordered]@{}
     foreach ($line in Get-Content $path) {
         if ($line -notmatch '^\s*\|') { continue }
-        if ($line -match '\bL([1-4])\b' ) {
-            $lab = "L$($Matches[1])"
+        if ($line -match '\bL1\.([1-4])\b' ) {
+            $lab = "L1.$($Matches[1])"
             if ($line -match '~\$(\d+\.\d{2})') { $map[$lab] = $Matches[1] }
         }
     }
@@ -295,19 +295,19 @@ if (-not (Test-Path $readme)) {
 } else {
     $readmeCosts = Get-Costs $readme
     $sideCosts   = Get-Costs $sidebar
-    if     ($readmeCosts.Count -eq 0) { Add-Problem 'README.md has no per-lab cost rows (| L1 … ~$0.24 |)' $false }
-    elseif ($sideCosts.Count   -eq 0) { Add-Problem '_Sidebar.md has no per-lab cost rows' $false }
+    if     ($readmeCosts.Count -eq 0) { Add-Problem 'README.md has no per-chapter cost rows (| L1.1 … ~$0.24 |)' $false }
+    elseif ($sideCosts.Count   -eq 0) { Add-Problem '_Sidebar.md has no per-chapter cost rows' $false }
     else {
         $drift = @()
-        foreach ($lab in @('L1','L2','L3','L4')) {
+        foreach ($lab in @('L1.1','L1.2','L1.3','L1.4')) {
             $r = $readmeCosts[$lab]; $s = $sideCosts[$lab]
             if (-not $r -or -not $s) { $drift += "$lab missing (README=$r sidebar=$s)" }
             elseif ($r -ne $s)       { $drift += "$lab README=`$$r sidebar=`$$s" }
         }
         if ($drift) { Add-Problem "cost figures drifted -- $($drift -join '; ')" $false }
         else {
-            $shown = @('L1','L2','L3','L4') | ForEach-Object { "$_=`$$($readmeCosts[$_])" }
-            Write-Ok "per-lab costs agree across README and _Sidebar ($($shown -join ' '))"
+            $shown = @('L1.1','L1.2','L1.3','L1.4') | ForEach-Object { "$_=`$$($readmeCosts[$_])" }
+            Write-Ok "per-chapter costs agree across README and _Sidebar ($($shown -join ' '))"
         }
     }
 }

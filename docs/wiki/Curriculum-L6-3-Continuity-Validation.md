@@ -137,7 +137,7 @@ Load your values first: `./scripts/Load-LabSettings.ps1`. Then in
 
 **Then have it write the runbook you will actually use:**
 
-> Read `curriculum/L6.2-disaster-recovery/main.bicep` and `labs/L4-global/main.bicep`, then write a regional failover runbook for this environment in the correct order — data, then app, then traffic — with the exact az commands and a rollback step for each.
+> Read `curriculum/L6.2-disaster-recovery/main.bicep` and `curriculum/L1.4-production-platform/main.bicep`, then write a regional failover runbook for this environment in the correct order — data, then app, then traffic — with the exact az commands and a rollback step for each.
 
 Then have somebody who did not write it execute it. Every ambiguity they hit at
 their desk is one they would have hit at 03:00 with an incident bridge

@@ -18,7 +18,7 @@ Copy-paste prompts that work against this repo, grouped by what you want to do. 
 
 Swap the path for whichever lab you are on.
 
-> Deploy `labs/L1-hub-spoke/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) using `labs/L1-hub-spoke/main.bicepparam`. Run `az bicep build` first, then `what-if`, then `create`.
+> Deploy `curriculum/L1.1-core-deployment/main.bicep` to my lab resource group (`$env:AZURE_RESOURCE_GROUP`) using `curriculum/L1.1-core-deployment/main.bicepparam`. Run `az bicep build` first, then `what-if`, then `create`.
 
 **What it should do:** compile, show you the what-if diff, and wait. **If it errors:** paste the error back verbatim — that is the loop, and it is usually one round.
 
@@ -30,10 +30,10 @@ The exercise built into each lab page:
 
 | Lab | Prompt |
 |---|---|
-| **L1** | > Add a `snet-data` subnet `10.1.2.0/24` to the spoke VNet in `labs/L1-hub-spoke/main.bicep`, run `az bicep build` to check it, then deploy. |
-| **L2** | > Limit the firewall's outbound rule in `labs/L2-web-tier/main.bicep` to port 443 only — remove 80 — run `az bicep build`, then deploy. |
-| **L3** | > In `labs/L3-containers/main.bicep`, raise `maxReplicas` to 5 and add an env var `GREETING=Hello L3` to the container, run `az bicep build`, then deploy. |
-| **L4** | > Switch the Front Door origin group in `labs/L4-global/main.bicep` to weighted round-robin across both regions instead of priority failover, run `az bicep build`, then deploy. |
+| **L1.1** | > Add a `snet-data` subnet `10.1.2.0/24` to the spoke VNet in `curriculum/L1.1-core-deployment/main.bicep`, run `az bicep build` to check it, then deploy. |
+| **L1.2** | > Limit the firewall's outbound rule in `curriculum/L1.2-architecture-expansion/main.bicep` to port 443 only — remove 80 — run `az bicep build`, then deploy. |
+| **L1.3** | > In `curriculum/L1.3-multi-service-application/main.bicep`, raise `maxReplicas` to 5 and add an env var `GREETING=Hello L1.3` to the container, run `az bicep build`, then deploy. |
+| **L1.4** | > Switch the Front Door origin group in `curriculum/L1.4-production-platform/main.bicep` to weighted round-robin across both regions instead of priority failover, run `az bicep build`, then deploy. |
 
 ---
 
@@ -41,17 +41,17 @@ The exercise built into each lab page:
 
 Reading is where agent mode is most under-used.
 
-> Explain `labs/L2-web-tier/main.bicep` to me as if I know Azure but not Bicep. Focus on how inbound traffic reaches a web VM, and why the load balancer is internal rather than public.
+> Explain `curriculum/L1.2-architecture-expansion/main.bicep` to me as if I know Azure but not Bicep. Focus on how inbound traffic reaches a web VM, and why the load balancer is internal rather than public.
 
-> Trace every resource in `labs/L3-containers/main.bicep` that has `publicNetworkAccess` set to `Disabled`, and tell me exactly how the container app still reaches each one.
+> Trace every resource in `curriculum/L1.3-multi-service-application/main.bicep` that has `publicNetworkAccess` set to `Disabled`, and tell me exactly how the container app still reaches each one.
 
-> Compare `labs/L1-hub-spoke/main.bicep` and `labs/L3-containers/main.bicep`. Which VNet does each one create, and which of them peer to what?
+> Compare `curriculum/L1.1-core-deployment/main.bicep` and `curriculum/L1.3-multi-service-application/main.bicep`. Which VNet does each one create, and which of them peer to what?
 
 ---
 
 ## Diagnose a failure
 
-> This deployment failed with the error below. Read the relevant template in `labs/`, tell me the specific cause, and propose the smallest fix. Do not change anything yet.
+> This deployment failed with the error below. Read the relevant template in `curriculum/`, tell me the specific cause, and propose the smallest fix. Do not change anything yet.
 >
 > ```
 > <paste the full error, including the correlation ID>
@@ -63,9 +63,9 @@ Reading is where agent mode is most under-used.
 
 ## Harden it
 
-> Review `labs/L2-web-tier/main.bicep` against the Azure Well-Architected Framework's Security pillar. List what it does well and what it does not, ranked by risk. Do not change anything — just the review.
+> Review `curriculum/L1.2-architecture-expansion/main.bicep` against the Azure Well-Architected Framework's Security pillar. List what it does well and what it does not, ranked by risk. Do not change anything — just the review.
 
-> The NSG in `labs/L2-web-tier/main.bicep` allows inbound 80 from `10.0.0.0/8`. Narrow it to only the firewall subnet, explain why that is safe, run `az bicep build`, then show me the `what-if`.
+> The NSG in `curriculum/L1.2-architecture-expansion/main.bicep` allows inbound 80 from `10.0.0.0/8`. Narrow it to only the firewall subnet, explain why that is safe, run `az bicep build`, then show me the `what-if`.
 
 ---
 
@@ -73,9 +73,9 @@ Reading is where agent mode is most under-used.
 
 This is the most realistic exercise in the workshop, because you are fixing a design rather than following steps.
 
-> In `labs/L4-global/main.bicep`, the DR server `sql-<prefix>-<suffix>-dr` sets `publicNetworkAccess: 'Disabled'` but has no private endpoint, and the secondary Container Apps environment has no VNet integration — so after a failover nothing can reach the promoted database. Add a VNet in `westus2` with a private-endpoint subnet, a private DNS zone linked to it, and a private endpoint on the DR server. Use Azure Verified Modules and keep versions pinned. Run `az bicep build`, then `what-if`. Do not deploy.
+> In `curriculum/L1.4-production-platform/main.bicep`, the DR server `sql-<prefix>-<suffix>-dr` sets `publicNetworkAccess: 'Disabled'` but has no private endpoint, and the secondary Container Apps environment has no VNet integration — so after a failover nothing can reach the promoted database. Add a VNet in `westus2` with a private-endpoint subnet, a private DNS zone linked to it, and a private endpoint on the DR server. Use Azure Verified Modules and keep versions pinned. Run `az bicep build`, then `what-if`. Do not deploy.
 
-See the [Well-Architected scorecard](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale) on the L4 page for why this gap matters.
+See the [Well-Architected scorecard](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform) on the L1.4 page for why this gap matters.
 
 ---
 
@@ -83,7 +83,7 @@ See the [Well-Architected scorecard](https://github.com/saulpatinojr/Demo-IaC_De
 
 Four things separate a prompt that works from one that wanders:
 
-1. **Name the file.** `labs/L2-web-tier/main.bicep`, not "the firewall template". Agent mode will find it either way, but naming it stops the guessing.
+1. **Name the file.** `curriculum/L1.2-architecture-expansion/main.bicep`, not "the firewall template". Agent mode will find it either way, but naming it stops the guessing.
 2. **Say where to stop.** "Run `what-if`, do not deploy" is a different task from "deploy". Be explicit, especially when it costs money.
 3. **Ask for the check.** Adding "run `az bicep build`" makes Copilot verify its own work before handing it back, and it fixes most of its own mistakes that way.
 4. **Paste errors whole.** Truncating an Azure error usually removes the part that identifies the cause.

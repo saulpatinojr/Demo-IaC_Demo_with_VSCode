@@ -59,8 +59,8 @@ This script creates **one resource group per Student row in your CSV**, named `r
 > **The `rg-techdemo-` prefix is load-bearing.** `Set-LabPolicy.ps1` finds groups to protect by that prefix (its `-ResourceGroupPrefix` default), and `New-LabEnvironment.ps1` and `Setup-OidcAll.ps1` both build the same name. A group created under any other name — including by hand, using the per-participant steps in section 3 below — gets **no policy guardrails at all**, silently: nothing errors, the deployment just isn't constrained. Keep the prefix, or pass a matching `-ResourceGroupPrefix` to `Set-LabPolicy.ps1`.
 
 This assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:
-- **Allowed locations** — only `eastus2` and `westus2` deployments are permitted (L4 deploys its failover stack to `westus2`)
-- **Allowed resource types** — only the ~38 resource types used by L1–L4 are permitted
+- **Allowed locations** — only `eastus2` and `westus2` deployments are permitted (L1.4 deploys its failover stack to `westus2`)
+- **Allowed resource types** — only the ~38 resource types used by L1.1–L1.4 are permitted
 - **Inherit tag × 4** — `Owner`, `Event`, `Date`, `Instructor` automatically propagate from the RG to every resource deployed inside it
 
 > [!NOTE]
@@ -258,7 +258,7 @@ REGION:       eastus2
 
 All resource names in this lab are derived from `AZURE_PREFIX`. Choosing **unique prefixes** prevents naming conflicts in the shared subscription.
 
-| Example prefix | Entra app name | Hub VNet | SQL server (L3) |
+| Example prefix | Entra app name | Hub VNet | SQL server (L1.3) |
 |---------------|---------------|----------|-----------------|
 | `alice` | `iac-demo-alice` | `vnet-alice-hub` | `sql-alice-<hash>` |
 | `bob` | `iac-demo-bob` | `vnet-bob-hub` | `sql-bob-<hash>` |
@@ -280,12 +280,12 @@ Suggested convention: first name or initials, e.g. `alice`, `jsmith`, `team1`.
 
 | Lab | Key billable resources | Approx. hourly cost |
 |-----|----------------------|---------------------|
-| L1 | 1× Bastion Basic, 1× B2s VM | ~$0.25/hr |
-| L2 | + Azure Firewall Standard | +$1.25/hr |
-| L3 | + Container Apps, SQL Basic, Key Vault | +$0.10/hr |
-| L4 | + Front Door Standard, 1× secondary Container App | +$0.05/hr |
+| L1.1 | 1× Bastion Basic, 1× B2s VM | ~$0.25/hr |
+| L1.2 | + Azure Firewall Standard | +$1.25/hr |
+| L1.3 | + Container Apps, SQL Basic, Key Vault | +$0.10/hr |
+| L1.4 | + Front Door Standard, 1× secondary Container App | +$0.05/hr |
 
-**Azure Firewall and Bastion are the cost drivers.** For a 4-hour lab with 20 participants all at L2: ~20 × $1.50 × 4 = **~$120**.
+**Azure Firewall and Bastion are the cost drivers.** For a 4-hour lab with 20 participants all at L1.2: ~20 × $1.50 × 4 = **~$120**.
 
 ### Quota to check before the lab
 
@@ -304,9 +304,9 @@ az containerapp env list -o table
 
 Check the output to confirm the selected region has available capacity.
 
-Each student at L2 uses: ~4 B2s cores, 1 Firewall, 1 Bastion, 1 PIP.
-Each student at L3 uses: 1 Container Apps environment, 1 SQL server, 1 Key Vault.
-Each student at L4 uses: 1 additional Container Apps environment + 1 SQL server in `westus2` + 1 Front Door.
+Each student at L1.2 uses: ~4 B2s cores, 1 Firewall, 1 Bastion, 1 PIP.
+Each student at L1.3 uses: 1 Container Apps environment, 1 SQL server, 1 Key Vault.
+Each student at L1.4 uses: 1 additional Container Apps environment + 1 SQL server in `westus2` + 1 Front Door.
 
 ### Cleanup after the lab
 

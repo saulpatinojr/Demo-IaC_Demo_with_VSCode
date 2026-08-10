@@ -17,13 +17,13 @@ compiles clean under Bicep 0.46.1 with no linter warnings. Nothing has been
 deployed against a live subscription.
 
 Nothing here changes the four labs that exist today. The existing
-[L1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L1-Hub-and-Spoke)–[L4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/L4-Global-Scale)
+[L1.1](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment)–[L1.4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform)
 pages, their Bicep and their workflows are untouched and still deployable. The
 redesign *re-frames* them as the first level of a longer path.
 
 ## The problem this fixes
 
-Today's four labs are four ways to **deploy**. A learner finishes L4 knowing how
+Today's four labs are four ways to **deploy**. A learner finishes L1.4 knowing how
 to stand infrastructure up, and nothing about what happens for the rest of that
 infrastructure's life. Real Azure environments spend a few hours being deployed
 and then years being watched, hardened, backed up, investigated and recovered.
@@ -54,10 +54,10 @@ neither depends on the other, so a class can run either one, both, or neither.
 
 ```
 Level 1 · Azure Foundation & Deployment          (the environment everything else uses)
-  L1.1  Core Deployment                          ← today's L1 — Hub & Spoke
-  L1.2  Architecture Expansion                   ← today's L2 — Web Tier & Firewall
-  L1.3  Multi-Service Application Architecture   ← today's L3 — Containers & Data
-  L1.4  Production-Ready Platform Deployment     ← today's L4 — Global Scale
+  L1.1  Core Deployment                          ← formerly L1 — Hub & Spoke
+  L1.2  Architecture Expansion                   ← formerly L2 — Web Tier & Firewall
+  L1.3  Multi-Service Application Architecture   ← formerly L3 — Containers & Data
+  L1.4  Production-Ready Platform Deployment     ← formerly L4 — Global Scale
 
 Level 2 · Operations, Monitoring & Observability (instrument what Level 1 built)
   L2.1  Monitoring Fundamentals

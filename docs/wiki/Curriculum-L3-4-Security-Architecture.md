@@ -24,7 +24,7 @@ flowchart LR
   R1["rate limit<br/>100 req/min per IP"]
   R2["block empty User-Agent"]
   R3["geo-block<br/>off by default"]
-  FD["fde-iacdemo<br/>Front Door Standard<br/>owned by labs/L4-global"]
+  FD["fde-iacdemo<br/>Front Door Standard<br/>owned by curriculum/L1.4-production-platform"]
   PREM["managed rule sets<br/>OWASP + bot protection<br/>needs Premium: +$0.40/hr"]
 
   R1 --> WAF
@@ -52,7 +52,7 @@ users.
 
 Two dotted lines mark the two things this chapter refuses to do for you. The
 policy is **not attached** to L1.4's Front Door, because that profile belongs to
-`labs/L4-global` and attaching from here would make two templates owners of one
+`curriculum/L1.4-production-platform` and attaching from here would make two templates owners of one
 resource — the same rule that kept L2.3 out of L1.3's action group. And managed
 rule sets, the OWASP core ruleset and bot protection, are a **tier** decision
 rather than a rule change: they require Front Door Premium.
@@ -153,7 +153,7 @@ Load your values first: `./scripts/Load-LabSettings.ps1`. Then in
 
 **Then have the argument the chapter is for:**
 
-> Attach this WAF policy to the Front Door endpoint created by `labs/L4-global/main.bicep`, from within `curriculum/L3.4-security-architecture/main.bicep`.
+> Attach this WAF policy to the Front Door endpoint created by `curriculum/L1.4-production-platform/main.bicep`, from within `curriculum/L3.4-security-architecture/main.bicep`.
 
 Copilot can do it. **Don't.** Work out what happens the next time somebody runs
 the L1.4 workflow — the security policy association is not in that template, so
