@@ -1,8 +1,18 @@
 # L3.4 — Enterprise Security Architecture 🟡
 
+**📍 [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)** · Chapter 4 of 4 &nbsp;·&nbsp; Previous: [L3.3 — Security Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-3-Security-Operations) &nbsp;·&nbsp; Next: [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)
+
+---
+
 **Goal:** design the target state and put a price on it. A web application
 firewall policy with real custom rules — deployed, reviewable, costed, and
 **deliberately not attached to anything**.
+
+**The IaC lesson:** IaC lets you review an architecture before you buy it — the
+WAF's rules, mode, tier and price are all text in a pull request, arguable
+before a single request is inspected or a single dollar spent.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
@@ -10,13 +20,18 @@ firewall policy with real custom rules — deployed, reviewable, costed, and
 
 > [!IMPORTANT]
 > **An unattached WAF policy inspects no traffic and bills no request meter.**
-> That is the design: you can read, review and cost this architecture without
-> paying for it. Attaching it is a manual step with the bill written next to it,
-> and turning on managed rules means **Front Door Premium at $330/month against
-> Standard's $35** — about **+$0.40/hr**, roughly a quarter of the entire
-> curriculum's running cost, for one feature.
+> Attaching it is a manual step with the bill written next to it — managed
+> rules need **Front Door Premium at $330/month against Standard's $35**.
+
+<br>
 
 ## What you're building
+
+One WAF policy carrying three custom rules, running in Detection mode, attached
+to nothing. The two dotted lines are the actual lesson: attaching the policy to
+L1.4's Front Door is a deliberate manual step because that profile belongs to a
+different template, and the managed rule sets are a tier upgrade — a pricing
+decision, not a rule change.
 
 ```mermaid
 flowchart LR
@@ -61,16 +76,34 @@ rather than a rule change: they require Front Door Premium.
 
 **Source:** [`curriculum/L3.4-security-architecture/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.4-security-architecture/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.4-security-architecture/main.bicepparam)
 
-> [!TIP]
-> **Detection, not Prevention, by default.** A WAF rule that looks obviously
-> correct will block something you did not expect — a health probe, a webhook, a
-> mobile client with an unusual header. Run in Detection, read what *would* have
-> been blocked, then switch. The cost of getting this backwards on a
-> revenue-bearing endpoint is not measured in dollars per hour.
+<br>
+
+<details><summary><b>🔍 Going deeper — what attaching this would really cost</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+An unattached WAF policy inspects no traffic and bills no request meter. That
+is the design: you can read, review and cost this architecture without paying
+for it. Attaching it is a manual step with the bill written next to it, and
+turning on managed rules means **Front Door Premium at $330/month against
+Standard's $35** — about **+$0.40/hr**, roughly a quarter of the entire
+curriculum's running cost, for one feature.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — Detection, not Prevention, by default</b></summary>
+
+<br>
+
+A WAF rule that looks obviously correct will block something you did not
+expect — a health probe, a webhook, a mobile client with an unusual header.
+Run in Detection, read what *would* have been blocked, then switch. The cost
+of getting this backwards on a revenue-bearing endpoint is not measured in
+dollars per hour.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -93,7 +126,11 @@ rather than a rule change: they require Front Door Premium.
 
 <sub><a href="https://learn.microsoft.com/azure/web-application-firewall/afds/afds-overview">For more info</a> — Azure WAF on Front Door, and the tiers that gate managed rules</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -210,6 +247,8 @@ and it is the one this chapter is really teaching.
    will be the free ones — and being able to prove that is what separates a
    security review from a shopping list.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · A design you can review before you buy**
 >
 > **You just used it:** this chapter's entire output is a pull request. The rules,
@@ -227,12 +266,18 @@ and it is the one this chapter is really teaching.
 
 ## ➡️ What carries forward
 
-Level 3 is complete. The estate is assessed, protected, exporting alerts, and
-carries a costed design for the layer it does not yet have.
+Level 3 is complete — the estate is assessed, protected, exporting alerts, and
+carries a costed design for the layer it does not yet have. Level 4 protects it
+against loss rather than attack. Level 5 puts Microsoft Sentinel on the
+workspace L3.3 just started filling.
 
-**Level 4** protects it against loss rather than attack. **Level 5** puts
-Microsoft Sentinel on the workspace L3.3 just started filling — and that is
-where the permissions box changes shape, because Sentinel's Microsoft Entra ID
-connector needs a directory role, not an Azure one.
+<br>
 
-**Leave it deployed** → **[back to Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)**.
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Level 3 done — protect the estate against loss | **[Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)** |
+| Want the big picture of this level | [Level 3 · Secure overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -1,6 +1,18 @@
 # L4.4 — Enterprise Data Protection Strategy 🟣
 
-**Goal:** turn per-resource backup into a policy with a defensible price — a long-retention policy that tiers its own tail into archive, and the arithmetic that justifies every year of it.
+**📍 [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)** · Chapter 4 of 4 &nbsp;·&nbsp; Previous: [L4.3 — Operational Backup Management](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-3-Backup-Operations) &nbsp;·&nbsp; Next: [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)
+
+---
+
+**Goal:** turn per-resource backup into a policy with a defensible price. The
+new long-retention policy tiers its own tail into archive, and the arithmetic
+justifies every year of it.
+
+**The IaC lesson:** a retention policy is a financial commitment expressed as
+parameters — with the rates written as comments beside them, one code review
+checks the arithmetic and the implementation in the same diff.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
@@ -8,12 +20,17 @@
 
 > [!WARNING]
 > **Level 4 is the only level whose cost keeps rising with nothing changed.**
-> Retained recovery points accumulate. A 7-year yearly policy signed off today
-> is a bill that grows every January for seven years, and it is the most
-> commonly mis-forecast line in a real Azure invoice. Price it here, on a lab
-> database, before you agree to it on a real one.
+> Retained recovery points accumulate — a 7-year yearly policy is a bill that
+> grows every January. Price it here, on a lab database, before agreeing to it.
+
+<br>
 
 ## What you're building
+
+A second backup policy lands beside the daily one L4.1 created — the same
+additive, never-edit-what-another-template-owns pattern L2.1 used. It carries
+the compliance retention shape, plus the tiering rule that keeps that shape
+affordable by moving the long tail into the archive tier.
 
 ```mermaid
 flowchart LR
@@ -60,17 +77,22 @@ create one.
 
 **Source:** [`curriculum/L4.4-data-protection-strategy/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.4-data-protection-strategy/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.4-data-protection-strategy/main.bicepparam)
 
-> [!IMPORTANT]
-> **Immutability is not set here, and that is deliberate.** Vault immutability
-> belongs to L4.1, and its `Locked` state cannot be undone **by anyone,
-> including Microsoft support**. That is the entire point of it — an attacker
-> with full admin rights still cannot shorten your retention. It is also exactly
-> why no template should set it as a convenience. Decide it consciously, in
-> L4.1, with someone else reading the pull request.
+<br>
+
+<details><summary><b>🔍 Going deeper — immutability, and why this template does not set it</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+Immutability is not set here, and that is deliberate. Vault immutability
+belongs to L4.1, and its `Locked` state cannot be undone **by anyone,
+including Microsoft support**. That is the entire point of it — an attacker
+with full admin rights still cannot shorten your retention. It is also exactly
+why no template should set it as a convenience. Decide it consciously, in
+L4.1, with someone else reading the pull request.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -93,7 +115,11 @@ create one.
 
 <sub><a href="https://learn.microsoft.com/azure/backup/backup-azure-immutable-vault-concept">For more info</a> — Immutable vaults, and what Locked really means</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -203,6 +229,8 @@ before you quote them to anyone.
    and RTO per tier. That document, not the deployment, is the output of
    Level 4 — and the numbers in it are defensible because you measured them.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · The cost model and the code in one review**
 >
 > **You just used it:** retention, redundancy and tiering are all parameters in
@@ -222,9 +250,17 @@ before you quote them to anyone.
 ## ➡️ What carries forward
 
 Level 4 is complete: the estate is protected, monitored, rehearsed and costed.
-
 **Level 5** puts Microsoft Sentinel on the workspace L3.3 started filling — and
 needs a Microsoft Entra ID role for the first time. **Level 6** protects against
 losing a region rather than losing data.
 
-**Leave it deployed** → **[back to Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — put Sentinel on the workspace | **[Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)** |
+| Not interested in Sentinel? Level 6 only needs Levels 1–4 — skip straight to resilience | [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

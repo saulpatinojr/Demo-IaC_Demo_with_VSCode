@@ -1,18 +1,35 @@
 # L5.3 — SOC Operations & Automation 🟠
 
-**Goal:** operate the SIEM — automate the repetitive parts of response, and close the level by measuring what the whole thing costs.
+**📍 [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)** · Chapter 3 of 3 &nbsp;·&nbsp; Previous: [L5.2 — Detection & Investigation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-2-Detection-Investigation) &nbsp;·&nbsp; Next: [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)
+
+---
+
+**Goal:** operate the SIEM — automate the repetitive parts of response, and
+close the level by measuring what the whole thing costs.
+
+**The IaC lesson:** response automation is code too — the automation rules and
+the playbook's triage questions live in this repository, so the SOC's routine
+improves through pull requests instead of drifting between analysts.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 3 of Level 5 · everyone | ~20 min | **L5.2** | 🟠 ~$0.01/hr added · ~$2.11/hr in the trial, ~$2.45/hr after |
 
 > [!IMPORTANT]
-> **Automation rules run before a human sees the incident.** That is what makes
-> them powerful and what makes a bad one dangerous. The auto-close rule in this
-> template is **off by default** — argue about it in class before enabling it,
-> because an auto-closed incident is one nobody looked at.
+> **Automation rules run before a human sees the incident.** The auto-close
+> rule in this template is **off by default** — an auto-closed incident is one
+> nobody looked at, so argue about it in class before enabling it.
+
+<br>
 
 ## What you're building
+
+Two automation rules and one playbook stand between a new incident and the
+analyst. The safe rule tags and prioritises; the risky one auto-closes and
+ships disabled. The playbook enriches incidents over a plain HTTP trigger with
+no API connections, so it deploys and runs without anyone's consent screen.
 
 ```mermaid
 flowchart LR
@@ -55,16 +72,21 @@ rather than remembered differently by each analyst.
 
 **Source:** [`curriculum/L5.3-soc-operations/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.3-soc-operations/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.3-soc-operations/main.bicepparam)
 
-> [!NOTE]
-> **The largest cost in a SOC does not appear on the Azure bill.** Analyst time
-> is. Automation rules, playbook triggers, workbooks and incident management are
-> all free in Sentinel; what you are optimising with them is the expensive
-> resource that Azure Cost Management cannot see. Say that explicitly when
-> presenting this level, or the automation looks like a rounding error.
+<br>
+
+<details><summary><b>🔍 Going deeper — the cost Azure Cost Management cannot see</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+The largest cost in a SOC does not appear on the Azure bill. Analyst time is.
+Automation rules, playbook triggers, workbooks and incident management are all
+free in Sentinel; what you are optimising with them is the expensive resource
+that Azure Cost Management cannot see. Say that explicitly when presenting
+this level, or the automation looks like a rounding error.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -87,7 +109,11 @@ rather than remembered differently by each analyst.
 
 <sub><a href="https://learn.microsoft.com/azure/sentinel/automate-responses-with-playbooks">For more info</a> — Sentinel playbooks, and the permissions that let one actually run</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -195,6 +221,8 @@ surprising.
    demoted at least one table**, and be able to say what it saved. A SIEM that
    only ever grows is a budget problem waiting to be somebody else's emergency.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · The response routine, written down once**
 >
 > **You just used it:** the three triage questions in the playbook are in the
@@ -212,10 +240,18 @@ surprising.
 
 ## ➡️ What carries forward
 
-Level 5 is a terminal track. Pair it with
-**[Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** in either order.
+Level 5 is a terminal track — pair it with
+**[Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)**
+in either order. When the class ends, tear down deliberately: disabling
+Sentinel does not delete the workspace, and retained data keeps billing.
 
-When the class ends, tear down deliberately: disabling Sentinel does not delete
-the workspace, and retained data keeps billing.
+<br>
 
-**Leave it deployed** → **[back to Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)**.
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Level 5 complete — take the other terminal track | **[Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** |
+| Want the big picture of this level | [Level 5 · Detect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

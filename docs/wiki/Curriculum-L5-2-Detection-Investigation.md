@@ -1,19 +1,38 @@
 # L5.2 — Detection & Investigation 🟠
 
-**Goal:** write detections that fire on this environment’s real behaviour, then investigate what they produce. Detection logic is free — you pay for the data, not the queries.
+**📍 [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)** · Chapter 2 of 3 &nbsp;·&nbsp; Previous: [L5.1 — Sentinel Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-1-Sentinel-Foundation) &nbsp;·&nbsp; Next: [L5.3 — SOC Operations & Automation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-3-SOC-Operations)
+
+---
+
+**Goal:** write detections that fire on this environment’s real behaviour, then
+investigate what they produce. Detection logic is free — you pay for the data,
+not the queries.
+
+**The IaC lesson:** a detection is a reviewable text artifact — each analytics
+rule’s query, threshold, severity and entity mapping is Bicep a colleague can
+argue with in a pull request before it ever pages anyone.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 2 of Level 5 · everyone | ~20 min | **L5.1** | 🟢 **$0.00/hr in the trial** · +$0.03/hr after it |
 
 > [!IMPORTANT]
-> **One of these rules is only possible because of a decision made in L2.1.**
-> It joins `SecurityAlert` to `SQLSecurityAuditEvents` — security data to
-> operations data. Neither table alone is an incident; the join is the
-> detection. That join exists because every level wrote into the *same*
-> workspace instead of standing up its own.
+> **One of these rules is only possible because of a decision made in L2.1** —
+> it joins security data to operations data, and that join exists because every
+> level wrote into the *same* workspace instead of standing up its own.
+
+<br>
 
 ## What you're building
+
+Three analytics rules, written as Bicep — two deploy, one is deliberately
+withheld. Rule 1 joins Defender alerts to failed SQL logins; Rule 2 watches
+the firewall's Basic-plan table for outbound destinations it has never seen;
+Rule 3 needs sign-in logs nobody here has permission to connect. Both deployed
+rules map entities, so their incidents can be investigated rather than just
+counted.
 
 ```mermaid
 flowchart LR
@@ -68,17 +87,34 @@ address touched.
 
 **Source:** [`curriculum/L5.2-detection-investigation/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.2-detection-investigation/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L5.2-detection-investigation/main.bicepparam)
 
-> [!NOTE]
-> **Rule 2 proves something about Basic tables.** L2.4 taught that alert rules
-> cannot read them — that is true of Log Analytics *scheduled query* alerts.
-> Sentinel analytics rules over a Basic table work when the query is a simple
-> filter and aggregation, which this one is. The distinction is fiddly, real,
-> and exactly the kind of thing that gets a detection quietly disabled six
-> months later. Test the rule, do not assume the plan.
+<br>
+
+<details><summary><b>🔍 Going deeper — the join that one workspace buys you</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+Rule 1 joins `SecurityAlert` to `SQLSecurityAuditEvents` — security data to
+operations data. Neither table alone is an incident; the join is the
+detection. That join exists because every level wrote into the *same*
+workspace instead of standing up its own, which is the decision L2.1 made and
+the entire redesign has been protecting since.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — analytics rules over Basic tables</b></summary>
+
+<br>
+
+Rule 2 proves something about Basic tables. L2.4 taught that alert rules
+cannot read them — that is true of Log Analytics *scheduled query* alerts.
+Sentinel analytics rules over a Basic table work when the query is a simple
+filter and aggregation, which this one is. The distinction is fiddly, real,
+and exactly the kind of thing that gets a detection quietly disabled six
+months later. Test the rule, do not assume the plan.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -101,7 +137,11 @@ address touched.
 
 <sub><a href="https://learn.microsoft.com/azure/sentinel/roles">For more info</a> — Sentinel Contributor, Responder and Reader</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -209,6 +249,8 @@ everything through it.
    starts from a hypothesis rather than a rule, and recognising your own
    footprints is the first step to recognising someone else's.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Detections reviewed before they page anyone**
 >
 > **You just used it:** these rules are Bicep — the query, the threshold, the
@@ -230,4 +272,13 @@ everything through it.
 L5.3 automates the triage these incidents need, and closes the level with a
 cost review that turns off a connector you have proved you do not need.
 
-**Leave it deployed** → **[back to Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — automate the triage | **[L5.3 — SOC Operations & Automation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-3-SOC-Operations)** |
+| Want the big picture of this level first | [Level 5 · Detect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

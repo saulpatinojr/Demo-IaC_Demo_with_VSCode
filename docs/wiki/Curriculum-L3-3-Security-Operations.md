@@ -1,22 +1,37 @@
 # L3.3 — Security Operations 🟡
 
+**📍 [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)** · Chapter 3 of 4 &nbsp;·&nbsp; Previous: [L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection) &nbsp;·&nbsp; Next: [L3.4 — Enterprise Security Architecture](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-4-Security-Architecture)
+
+---
+
 **Goal:** get the alerts L3.2 can now raise out of the portal and into the
-places people actually work — continuous export into the Level 2 workspace, and
+places people actually work. Continuous export into the Level 2 workspace, and
 a playbook that runs on every alert without a human watching.
+
+**The IaC lesson:** automation is code too — the Logic App playbook is declared
+in Bicep, so the response workflow is reviewable, diffable and redeployable
+instead of a pile of boxes dragged together in the portal.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 3 of Level 3 · everyone | ~25 min | **L3.2**, plus L2.1 and L2.3 | 🟡 ~$0.03/hr added · ~$1.98/hr running total |
 
 > [!IMPORTANT]
-> This is the chapter where `SecurityAlert` stops being empty. L3.1's workbook
-> had to query Azure Resource Graph precisely because nothing was exporting yet.
-> From here on, security findings are queryable next to the firewall logs that
-> might explain them — and **Level 5 inherits a workspace that already has
-> them**, at no extra ingestion cost, because `SecurityAlert` is a free Sentinel
-> data source.
+> **This is the chapter where `SecurityAlert` stops being empty.** From here on,
+> security findings are queryable next to the firewall logs that might explain
+> them.
+
+<br>
 
 ## What you're building
+
+One continuous-export automation with two destinations. Every alert Defender
+raises flows both into the Level 2 workspace — where it lands next to the logs
+that might explain it — and into a Logic App playbook that triages it without
+anyone watching. The export is scoped to this resource group on purpose, and
+the dotted line shows why the work pays off again in Level 5.
 
 ```mermaid
 flowchart LR
@@ -58,19 +73,36 @@ with no additional analysis charge.
 
 **Source:** [`curriculum/L3.3-security-operations/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.3-security-operations/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.3-security-operations/main.bicepparam)
 
-> [!NOTE]
-> **Why the playbook has no Teams or email action.** A Logic App that posts to
-> Teams, sends mail or opens a ticket needs an **API connection**, and an API
-> connection needs an interactive OAuth consent that no deployment can perform
-> for you. Shipped that way, this chapter would deploy green and fail on first
-> run — the worst possible lesson. This playbook is HTTP-triggered and
-> self-contained: it parses the alert and returns a triage summary, so the
-> wiring is real and works the first time. Adding a connector afterwards is a
-> deliberate, consented step, and the permissions box below says who can grant it.
+<br>
+
+<details><summary><b>🔍 Going deeper — why the playbook has no Teams or email action</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+A Logic App that posts to Teams, sends mail or opens a ticket needs an **API
+connection**, and an API connection needs an interactive OAuth consent that no
+deployment can perform for you. Shipped that way, this chapter would deploy
+green and fail on first run — the worst possible lesson. This playbook is
+HTTP-triggered and self-contained: it parses the alert and returns a triage
+summary, so the wiring is real and works the first time. Adding a connector
+afterwards is a deliberate, consented step, and the permissions block below
+says who can grant it.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — why exporting now pays off in Level 5</b></summary>
+
+<br>
+
+L3.1's workbook had to query Azure Resource Graph precisely because nothing was
+exporting yet. From this chapter on, security findings are queryable next to
+the firewall logs that might explain them — and **Level 5 inherits a workspace
+that already has them**, at no extra ingestion cost, because `SecurityAlert` is
+a free Sentinel data source.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -93,7 +125,11 @@ with no additional analysis charge.
 
 <sub><a href="https://learn.microsoft.com/azure/defender-for-cloud/permissions">For more info</a> — Defender for Cloud permissions, and who may consent to a connector</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -202,6 +238,8 @@ that deploys.
    $0.69/day — and every gigabyte of it becomes free again in Level 5, because
    Sentinel does not charge analysis on `SecurityAlert`.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Playbooks belong in the repository**
 >
 > **You just used it:** the Logic App definition is Bicep, so the response
@@ -223,4 +261,13 @@ L3.4 stops responding and starts designing: a web application firewall policy
 with real rules, priced and reviewable, and deliberately not attached to
 anything.
 
-**Leave it deployed** → **[back to Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — design the target state and price it | **[L3.4 — Enterprise Security Architecture](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-4-Security-Architecture)** |
+| Want the big picture of this level first | [Level 3 · Secure overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

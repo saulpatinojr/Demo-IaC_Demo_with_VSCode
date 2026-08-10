@@ -1,18 +1,35 @@
 # L4.3 — Operational Backup Management 🟣
 
-**Goal:** make backup an operational service rather than a configuration — monitored, alerted on, rehearsed, and protected against its own operators.
+**📍 [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)** · Chapter 3 of 4 &nbsp;·&nbsp; Previous: [L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection) &nbsp;·&nbsp; Next: [L4.4 — Enterprise Data Protection Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-4-Data-Protection-Strategy)
+
+---
+
+**Goal:** make backup an operational service rather than a configuration —
+monitored, alerted on, rehearsed, and protected against its own operators.
+
+**The IaC lesson:** an alert rule in a template is a reviewable sentence — the
+"no successful backup in 36 hours" query lives in code, where someone can ask
+whether 36 is the right number before it ships.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 3 of Level 4 · everyone | ~20 min | **L4.1** and **L4.2**, plus L2.1 and L2.3 | 🟢 ~$0.01/hr added · ~$2.09/hr running total |
 
 > [!IMPORTANT]
-> **Two alerts, not one, and the second is the important one.** A job that
-> *fails* raises an alert. A job that was never scheduled raises **nothing at
-> all** — and that is the failure mode that actually loses data. This chapter
-> deploys a rule that fires on silence: no successful backup in 36 hours.
+> **Two alerts, not one — and the second is the important one.** A failed job
+> raises an alert. A job that was never scheduled raises nothing at all, and
+> that silence is the failure mode that actually loses data.
+
+<br>
 
 ## What you're building
+
+The vault starts reporting into the Log Analytics workspace Level 2 built, and
+two alert rules watch what arrives — one for jobs that fail, and one for the
+far more dangerous case of jobs that silently stop existing. A Resource Guard
+is available but off by default, and the reason why is half the lesson.
 
 ```mermaid
 flowchart LR
@@ -61,17 +78,22 @@ accidents rather than attackers.
 
 **Source:** [`curriculum/L4.3-backup-operations/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.3-backup-operations/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L4.3-backup-operations/main.bicepparam)
 
-> [!NOTE]
-> **Multi-user authorization is deployed far enough to be understood, and no
-> further.** Real MUA puts the Resource Guard in a *different subscription*
-> under *different administrators*, so the person who can delete the backups
-> cannot also disable the thing stopping them. A guard next to the vault, owned
-> by the same people, is theatre. The template will create one if you ask, and
-> its output says exactly why that is not the same as having MUA.
+<br>
+
+<details><summary><b>🔍 Going deeper — multi-user authorization, and why the guard belongs elsewhere</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+Multi-user authorization is deployed far enough to be understood, and no
+further. Real MUA puts the Resource Guard in a *different subscription* under
+*different administrators*, so the person who can delete the backups cannot
+also disable the thing stopping them. A guard next to the vault, owned by the
+same people, is theatre. The template will create one if you ask, and its
+output says exactly why that is not the same as having MUA.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -94,7 +116,11 @@ accidents rather than attackers.
 
 <sub><a href="https://learn.microsoft.com/azure/backup/multi-user-authorization">For more info</a> — Multi-user authorization, and why the guard belongs elsewhere</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -205,6 +231,8 @@ exactly the judgement this rule needs. Put it back to 36 afterwards.
    VMs and their recovery points? For plain Contributor the answer is yes, and
    that is what MUA exists to change.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Alerting on absence, in code**
 >
 > **You just used it:** the "no successful backup in 36 hours" rule is a query
@@ -227,4 +255,13 @@ L4.4 turns per-resource backup into a strategy with a price: a long-retention
 policy that tiers its own tail into archive, and the arithmetic that justifies
 it.
 
-**Leave it deployed** → **[back to Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — turn backup into a costed strategy | **[L4.4 — Enterprise Data Protection Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-4-Data-Protection-Strategy)** |
+| Want the big picture of this level first | [Level 4 · Protect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

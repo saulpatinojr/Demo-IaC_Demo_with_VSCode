@@ -1,7 +1,18 @@
 # L3.1 — Security Foundation 🟡
 
+**📍 [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L2.4 — Enterprise Monitoring Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-4-Monitoring-Strategy) &nbsp;·&nbsp; Next: [L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection)
+
+---
+
 **Goal:** find out where this environment actually stands, using only free
 capability, before spending anything. You deploy one workbook and buy nothing.
+
+**The IaC lesson:** every Azure resource type deploys at a specific scope —
+this template targets a resource group, so a subscription-scoped resource like
+`Microsoft.Security/pricings` is out of its reach no matter how correct the
+code looks.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
@@ -9,14 +20,18 @@ capability, before spending anything. You deploy one workbook and buy nothing.
 
 > [!IMPORTANT]
 > **Defender plans are not enabled here, and you cannot enable them.**
-> `Microsoft.Security/pricings` is a **subscription**-scoped resource, and this
-> lab grants you Contributor on **one resource group**. Turning plans on is an
-> instructor job — `scripts/admin/Enable-DefenderPlans.ps1`, run once per lab
-> subscription. That is not a gap in the lab; it is the same separation of
-> duties every real organisation has, and L3.2 is built around what you *can*
-> configure yourself.
+> `Microsoft.Security/pricings` is subscription-scoped and your Contributor
+> role stops at the resource group — enabling plans is an instructor job.
+
+<br>
 
 ## What you're building
+
+One workbook, and nothing else. It reads three things — the secure score, the
+assessments behind it, and which Defender plans are switched on — all from
+Azure Resource Graph, which is free and already collecting. The dotted line
+marks the one thing you can read but not change: the plan state lives at
+subscription scope, above your permissions.
 
 ```mermaid
 flowchart LR
@@ -57,19 +72,36 @@ Resource Graph and workbooks all cost nothing on any subscription.
 
 **Source:** [`curriculum/L3.1-security-foundation/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.1-security-foundation/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L3.1-security-foundation/main.bicepparam) · [`scripts/admin/Enable-DefenderPlans.ps1`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/scripts/admin/Enable-DefenderPlans.ps1)
 
-> [!NOTE]
-> **Why Resource Graph and not the workspace?** L2.2's workbook queried Log
-> Analytics, and the obvious move here is to do the same against
-> `SecurityRecommendation` and `SecurityAlert`. Those tables are **empty** until
-> L3.3 turns on continuous export — a workspace-driven workbook in this chapter
-> would render five blank tiles. Secure score and assessments live in Resource
-> Graph's `securityresources` table from the moment foundational CSPM is on,
-> which is by default. Knowing which store holds which security data is worth
-> more than the workbook itself.
+<br>
+
+<details><summary><b>🔍 Going deeper — why Resource Graph, not the workspace</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+L2.2's workbook queried Log Analytics, and the obvious move here is to do the
+same against `SecurityRecommendation` and `SecurityAlert`. Those tables are
+**empty** until L3.3 turns on continuous export — a workspace-driven workbook
+in this chapter would render five blank tiles. Secure score and assessments
+live in Resource Graph's `securityresources` table from the moment foundational
+CSPM is on, which is by default. Knowing which store holds which security data
+is worth more than the workbook itself.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — who can enable Defender plans, and why not you</b></summary>
+
+<br>
+
+`Microsoft.Security/pricings` is a **subscription**-scoped resource, and this
+lab grants you Contributor on **one resource group**. Turning plans on is an
+instructor job — `scripts/admin/Enable-DefenderPlans.ps1`, run once per lab
+subscription. That is not a gap in the lab; it is the same separation of
+duties every real organisation has, and L3.2 is built around what you *can*
+configure yourself.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -92,7 +124,11 @@ Resource Graph and workbooks all cost nothing on any subscription.
 
 <sub><a href="https://learn.microsoft.com/azure/defender-for-cloud/permissions">For more info</a> — Microsoft Defender for Cloud roles and permissions</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -195,6 +231,8 @@ catching it is a Level 3 skill.
    needs a paid plan, and which template in this repository owns the resource it
    lands on. A finding you cannot trace to a file is a finding nobody will fix.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Least privilege in the pipeline, too**
 >
 > **You just hit it:** the OIDC identity this repo creates holds Contributor on
@@ -219,4 +257,13 @@ settings on the SQL server, and just-in-time access on the VMs — and prices ea
 one before enabling it. The recommendations you ranked here are the list it
 works from.
 
-**Leave it deployed** → **[back to Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — turn on the protection you can | **[L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection)** |
+| Want the big picture of this level first | [Level 3 · Secure overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -1,19 +1,38 @@
 # L6.2 — Disaster Recovery Implementation 🔴
 
-**Goal:** build a real regional recovery capability for the tier you cannot simply redeploy — and match every other tier to the mechanism that actually fits it.
+**📍 [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** · Chapter 2 of 3 &nbsp;·&nbsp; Previous: [L6.1 — High Availability & Redundancy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-1-High-Availability) &nbsp;·&nbsp; Next: [L6.3 — Business Continuity & Validation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-3-Continuity-Validation)
+
+---
+
+**Goal:** build a real regional recovery capability for the tier you cannot
+simply redeploy — the stateful one. Every other tier gets matched to the
+mechanism that actually fits it.
+
+**The IaC lesson:** knowing what does *not* belong in a template — replication
+policy and fabrics are declarative metadata that live in Bicep, while enabling
+replication is a long-running, billed operation that deserves to be a command
+somebody types.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 2 of Level 6 · everyone | ~20 min | **L4.1** (the vault) and **L6.1** | 🟢 **$0.00/hr as deployed** · $25/VM/month once you enable replication |
 
 > [!IMPORTANT]
-> **This template lays the groundwork but does not enable replication.** That is
-> not a shortcut. Enabling replication is a long-running, stateful operation
-> that seeds an initial copy over hours and does not converge inside a
-> deployment — and it starts a **$25/VM/month** meter the moment it succeeds.
-> That deserves to be a command somebody types, not a side effect of a redeploy.
+> **This template lays the groundwork but does not enable replication.**
+> Replication seeds an initial copy over hours and starts a **$25/VM/month**
+> meter the moment it succeeds — that step stays a deliberate manual command.
+
+<br>
 
 ## What you're building
+
+Four tiers, four different recovery mechanisms — and only the stateful VMs
+need a new product. The template deploys a Site Recovery replication policy
+and a fabric in each region; SQL and the traffic layer reuse what L1.4 already
+built, and the stateless container app's plan is redeploy-from-git. The one
+paid step — enabling replication — is left deliberately manual.
 
 ```mermaid
 flowchart LR
@@ -63,15 +82,32 @@ The red box is the manual step, and the meter.
 
 **Source:** [`curriculum/L6.2-disaster-recovery/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.2-disaster-recovery/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L6.2-disaster-recovery/main.bicepparam)
 
-> [!NOTE]
-> **Recovery plan order is not a detail.** Data before app, app before traffic.
-> Failing traffic over to a region whose database has not finished failing over
-> produces a working site serving wrong answers — which is worse than an outage,
-> because nobody notices. Write the sequence down before the drill in L6.3.
+<br>
+
+<details><summary><b>🔍 Going deeper — why replication is not in the template</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+Leaving replication out is not a shortcut. Enabling replication is a
+long-running, stateful operation that seeds an initial copy over hours and does
+not converge inside a deployment — and it starts a **$25/VM/month** meter the
+moment it succeeds. That deserves to be a command somebody types, not a side
+effect of a redeploy.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — recovery plan order is not a detail</b></summary>
+
+<br>
+
+Data before app, app before traffic. Failing traffic over to a region whose
+database has not finished failing over produces a working site serving wrong
+answers — which is worse than an outage, because nobody notices. Write the
+sequence down before the drill in L6.3.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
@@ -94,7 +130,11 @@ The red box is the manual step, and the meter.
 
 <sub><a href="https://learn.microsoft.com/azure/site-recovery/azure-to-azure-tutorial-enable-replication">For more info</a> — Enabling Azure-to-Azure replication, and what it costs</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -202,6 +242,8 @@ template, and knowing which is a senior skill.
    tiers are $0. Write the number down — L6.3 asks whether the RTO it buys is
    the one the business asked for.
 
+<br>
+
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Redeploy from source as a recovery path**
 >
 > **You already have it:** every template in `curriculum/` pins its AVM module
@@ -223,4 +265,13 @@ L6.3 proves all of it. RTO and RPO derived from a requirement, drills that
 produce numbers, and an SLO alert that fires when the promise is not being
 kept.
 
-**Leave it deployed** → **[back to Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — prove the recovery works | **[L6.3 — Business Continuity & Validation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-3-Continuity-Validation)** |
+| Want the big picture of this level first | [Level 6 · Recover overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

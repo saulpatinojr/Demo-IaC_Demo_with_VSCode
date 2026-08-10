@@ -1,5 +1,9 @@
 # Level 3 — Security & Microsoft Defender for Cloud 🟡
 
+**📍 [Curriculum overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign)** · Level 3 of 6 &nbsp;·&nbsp; Previous: [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) &nbsp;·&nbsp; Next: [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)
+
+---
+
 **Theme: Secure.** Assess, harden and defend the environment that Levels 1 and 2
 built and instrumented — without deploying a single new workload to attack.
 
@@ -254,4 +258,12 @@ Level 4 protects the same resources against loss rather than attack, and reuses
 Level 3's governance model to enforce backup as policy. Level 5 inherits every
 Defender alert produced here as a **free** Sentinel connector.
 
-**Leave Levels 1–3 in place** → **[continue to Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)**.
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Start the first chapter | **[L3.1 — Security Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-1-Security-Foundation)** |
+| Level 3 done — move to the next level | [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
+| Back to the previous level | [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
+| What does the whole curriculum cost? | [Cost model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model) |
