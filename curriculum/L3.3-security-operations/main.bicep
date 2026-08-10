@@ -121,20 +121,30 @@ resource playbook 'Microsoft.Logic/workflows@2019-05-01' = {
 // listCallbackUrl is how the automation learns the playbook's trigger URL.
 // Hardcoding it would break the moment the workflow is redeployed.
 // ---------------------------------------------------------------------------
+// One rule SET per severity, not one rule listing them. In
+// Microsoft.Security/automations the rules inside a set are AND-ed and separate
+// sets are OR-ed -- so a single rule can only ever match one severity, and
+// pinning it to severityList[0] silently exported High and nothing else no
+// matter what minimumAlertSeverity said.
+// A for-expression has to be the entire value of a variable -- Bicep will not
+// accept one nested inside an object literal -- so the sets are built here and
+// referenced below.
+var alertRuleSets = [
+  for severity in severityList: {
+    rules: [
+      {
+        propertyJPath: 'Severity'
+        propertyType: 'String'
+        expectedValue: severity
+        operator: 'Equals'
+      }
+    ]
+  }
+]
+
 var alertSource = {
   eventSource: 'Alerts'
-  ruleSets: [
-    {
-      rules: [
-        {
-          propertyJPath: 'Severity'
-          propertyType: 'String'
-          expectedValue: severityList[0]
-          operator: 'Contains'
-        }
-      ]
-    }
-  ]
+  ruleSets: alertRuleSets
 }
 
 var recommendationSource = {

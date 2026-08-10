@@ -185,9 +185,13 @@ template, and knowing which is a senior skill.
 3. **Test the mechanisms you already had.** The SQL failover group from L1.4 is
    a DR capability nobody called DR:
 
+   The group name ends in a `uniqueString` suffix you cannot type, so look it up
+   rather than guessing:
+
    ```powershell
-   az sql failover-group show -g $env:AZURE_RESOURCE_GROUP -s $SQL -n "fog-$env:AZURE_PREFIX" `
-     --query "{role:replicationRole, grace:readWriteEndpoint.failoverWithDataLossGracePeriodMinutes}" -o table
+   $FOG = az sql failover-group list -g $env:AZURE_RESOURCE_GROUP -s $SQL --query "[0].name" -o tsv
+   az sql failover-group show -g $env:AZURE_RESOURCE_GROUP -s $SQL -n $FOG `
+     --query "{name:name, role:replicationRole, grace:readWriteEndpoint.failoverWithDataLossGracePeriodMinutes}" -o table
    ```
 
    **You should see:** the primary role and the grace period. That grace period

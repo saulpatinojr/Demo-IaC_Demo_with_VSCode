@@ -67,7 +67,7 @@ var workbookContent = {
       type: 3
       content: {
         version: 'KqlItem/1.0'
-        query: replace('{RG}', resourceGroup().name, zoneAuditQuery)
+        query: replace(zoneAuditQuery, '{RG}', resourceGroup().name)
         size: 0
         title: 'Every resource, graded by zone posture'
         queryType: 1
@@ -85,7 +85,7 @@ var workbookContent = {
       type: 3
       content: {
         version: 'KqlItem/1.0'
-        query: replace('{RG}', resourceGroup().name, singlePointsQuery)
+        query: replace(singlePointsQuery, '{RG}', resourceGroup().name)
         size: 0
         title: 'Known single points of failure'
         queryType: 1

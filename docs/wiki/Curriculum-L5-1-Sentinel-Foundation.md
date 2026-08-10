@@ -51,8 +51,11 @@ reconnected.
 The green boxes are free. Azure Activity has been flowing since L2.1;
 `SecurityAlert` and `SecurityIncident` arrive from the L3.3 export and carry no
 Sentinel analysis charge at all. The template also demotes `AZFWNetworkRule` to
-the Basic plan, because a table nothing detects on stops being merely verbose
-once Sentinel is charging analysis on it.
+the **Basic** plan ($0.50/GB against Analytics' $2.76, and no Sentinel analysis
+charge on Basic-tier data), because a table nothing detects on stops being
+merely verbose once Sentinel is charging $4.76/GB analysis on top. Auxiliary is
+cheaper still at $0.05/GB but is not offered for a standard Azure resource-log
+table like this one.
 
 The red boxes are the wall. Microsoft Entra ID sign-in and audit logs are paid
 data **and** need a Global Administrator or Security Administrator to connect

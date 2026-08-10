@@ -172,8 +172,13 @@ listening. A runbook only its author can follow is not a runbook.
    anger for the first time:
 
    ```powershell
-   az sql failover-group set-primary -g $env:AZURE_RESOURCE_GROUP -s "$SQL-dr" -n "fog-$env:AZURE_PREFIX"
+   $FOG = az sql failover-group list -g $env:AZURE_RESOURCE_GROUP -s $SQL --query "[0].name" -o tsv
+   az sql failover-group set-primary -g $env:AZURE_RESOURCE_GROUP -s "$SQL-dr" -n $FOG
    ```
+
+   The name carries a `uniqueString` suffix, so it is looked up rather than
+   typed — the same reason L1.3's Key Vault and SQL server names are never
+   hardcoded anywhere in this curriculum.
 
    **You should see:** the listener endpoint follow the new primary, and the app
    keep working without a connection-string change — which is the entire point

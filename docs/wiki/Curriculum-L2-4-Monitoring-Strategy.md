@@ -200,7 +200,9 @@ is the actual skill this chapter is teaching.
    ```
 
    **You should see:** `Basic`, retention 30 (fixed — Basic ignores what you
-   ask for), total 180.
+   ask for), total 180. The template sets `Basic` outright rather than through a
+   conditional: the whole resource is already gated on the parameter, so a
+   second branch could never be reached.
 
 2. **Prove the trade-off is real** — try to query the Basic table the way an
    alert rule would:

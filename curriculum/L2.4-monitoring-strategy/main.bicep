@@ -78,7 +78,10 @@ resource firewallAppRuleTable 'Microsoft.OperationalInsights/workspaces/tables@2
   parent: workspace
   name: 'AZFWApplicationRule'
   properties: {
-    plan: useBasicPlanForFirewallLogs ? 'Basic' : 'Analytics'
+    // Not a ternary: the resource is already gated on
+    // useBasicPlanForFirewallLogs, so an 'Analytics' branch here would be
+    // unreachable and would imply a state this template can never produce.
+    plan: 'Basic'
     totalRetentionInDays: totalRetentionDays
   }
 }
