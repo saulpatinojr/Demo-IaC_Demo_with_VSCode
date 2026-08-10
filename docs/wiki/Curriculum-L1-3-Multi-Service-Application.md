@@ -1,5 +1,9 @@
 # L1.3 — Multi-Service Application Architecture 🟠
 
+**📍 [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy)** · Chapter 3 of 4 &nbsp;·&nbsp; Previous: [L1.2 — Architecture Expansion](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion) &nbsp;·&nbsp; Next: [L1.4 — Production-Ready Platform](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform)
+
+---
+
 **Goal:** modernize the app tier — Azure Container Apps instead of VMs, an Azure SQL backend, Key Vault and a managed identity for secrets, and Log Analytics / Application Insights monitoring with an email alert. This is where **private networking** arrives: SQL and Key Vault have public access **disabled** and are reachable only through private endpoints.
 
 | Who this is for | Time | You need first | Cost while it runs |
@@ -198,4 +202,12 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
 L1.4 treats everything you just built as the **primary region**. It adds a second-region copy of the app, joins your SQL database to a failover group, and puts Azure Front Door in front of both — then asks whether the result would actually survive an outage.
 
-**Leave L1.3 deployed** → **[continue to L1.4](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform)**.
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — a second region and a global front door | **[L1.4 — Production-Ready Platform](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform)** |
+| Want the big picture of Level 1 | [Level 1 · Deploy overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -1,5 +1,9 @@
 # L1.2 — Architecture Expansion 🟡
 
+**📍 [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy)** · Chapter 2 of 4 &nbsp;·&nbsp; Previous: [L1.1 — Core Deployment](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment) &nbsp;·&nbsp; Next: [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application)
+
+---
+
 **Goal:** add a real web tier to L1.1's network — three nginx VMs behind an **internal** load balancer — and put **Azure Firewall** in charge of all traffic in and out. That includes L1.1's test VM: L1.2 routes its subnet through the firewall too, which is what finally gives it internet access.
 
 | Who this is for | Time | You need first | Cost while it runs |
@@ -203,7 +207,15 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 
 L1.3 does **not** build on this lab. It creates its own spoke, peers it straight to L1.1's hub, and never routes through the firewall — so L1.2 is not a prerequisite for anything that follows. What carries forward is the **hub**, and the pattern you have just seen: put something in front of your workloads and make all traffic go through it.
 
-**[Continue to L1.3](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application)** — or, if cost is a concern, tear L1.2 down first. L1.3 will be fine without it.
 
 > [!CAUTION]
 > **Don't delete only the firewall.** Both spoke subnets now route `0.0.0.0/0` at its private IP, so removing it on its own black-holes all their outbound traffic — the web tier and L1.1's test VM go dark while still billing. Tear down **all of L1.2**, route table included, or run the full teardown. See [Cost & cleanup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/README.md) in the README.
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — containers, SQL and private networking | **[L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application)** |
+| Save ~$1.41/hr first: tear this chapter down (L1.3 doesn't use it) | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Want the big picture of Level 1 | [Level 1 · Deploy overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

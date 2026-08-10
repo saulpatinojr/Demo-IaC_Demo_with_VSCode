@@ -1,5 +1,9 @@
 # Level 2 — Operations, Monitoring & Observability 🔵
 
+**📍 [Curriculum overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign)** · Level 2 of 6 &nbsp;·&nbsp; Previous: [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) &nbsp;·&nbsp; Next: [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)
+
+---
+
 **Theme: Monitor.** Turn the environment Level 1 deployed into one you can
 actually operate — and learn that in Azure Monitor, *what you collect* is what
 you pay for.
@@ -246,4 +250,12 @@ findings to **this workspace**. The alert routing built in L2.3 becomes the
 delivery path for security alerts, and the table-plan discipline from L2.4 is
 what keeps Level 5's Sentinel bill sane.
 
-**Leave Levels 1–2 in place** → **[continue to Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)**.
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Start the first chapter | **[L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals)** |
+| Level 2 done — move to the next level | [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
+| Back to the previous level | [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) |
+| What does the whole curriculum cost? | [Cost model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model) |

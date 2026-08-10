@@ -1,62 +1,56 @@
 # L2.3 — Proactive Operations 🔵
 
-**Goal:** stop having to look. Metric alerts on the VMs, the database and the
-firewall; log alerts on the data L2.1 collects; a Service Health alert for the
-failures that are Azure's fault; and an alert processing rule so the nightly
-maintenance window does not page anyone.
+**📍 [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)** · Chapter 3 of 4 &nbsp;·&nbsp; Previous: [L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility) &nbsp;·&nbsp; Next: [L2.4 — Enterprise Monitoring Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-4-Monitoring-Strategy)
+
+---
+
+**Goal:** stop having to look. Six alert rules watch the estate — CPU, database,
+firewall, dead VMs, error spikes and Azure itself — and mail one inbox when
+something needs a human.
+
+**The IaC lesson:** alert rules are resources. Thresholds, evaluation windows
+and inboxes all live in the template — reviewed, versioned and identical for
+every classroom — not in portal clicks nobody can audit.
+
+<br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
 | Chapter 3 of Level 2 · everyone | ~20 min | **L2.1** and **L2.2** | 🔵 ~$0.01/hr added · ~$1.93/hr running total |
 
 > [!IMPORTANT]
-> This chapter creates its **own** action group, `ag-<prefix>-oncall`. It does
-> not edit `ag-<prefix>-ops`, the one L1.3 created — two templates owning one
-> resource means whichever deployed last wins, and the next L1.3 redeploy would
-> silently revert your work. Adding a resource is cheap. Sharing ownership is
-> not.
+> This chapter creates its **own** action group. It does not edit the one L1.3
+> created — two templates owning one resource means whichever deployed last
+> wins. Adding a resource is cheap; sharing ownership is not.
+
+<br>
 
 ## What you're building
 
+Three kinds of signal feed six rules, and every rule notifies the same action
+group. A processing rule silences the lot during the nightly maintenance
+window.
+
 ```mermaid
 flowchart LR
-  subgraph SIGNALS["Signals"]
-    MET["platform metrics<br/>free, no ingestion"]
-    LOGS["log data from L2.1"]
-    SVC["Azure Service Health"]
-  end
-
-  subgraph RULES["Rules"]
-    R1["VM CPU > 80%<br/>one rule, all VMs"]
-    R2["SQL DTU anomaly<br/>dynamic threshold"]
-    R3["Firewall SNAT > 80%"]
-    R4["A VM stopped reporting<br/>log alert"]
-    R5["Syslog errors spiking<br/>log alert"]
-    R6["Service Health<br/>free"]
-  end
-
+  MET["platform metrics<br/>free, already there"]
+  LOGS["log data<br/>from L2.1"]
+  SVC["Azure Service Health"]
+  RULES["6 alert rules<br/>3 metric · 2 log · 1 service health"]
   AG["ag-iacdemo-oncall<br/>primary + secondary inbox"]
   APR["processing rule<br/>02:00–03:00 UTC<br/>suppress everything"]
 
-  MET --> R1
-  MET --> R2
-  MET --> R3
-  LOGS --> R4
-  LOGS --> R5
-  SVC --> R6
-  R1 --> AG
-  R2 --> AG
-  R3 --> AG
-  R4 --> AG
-  R5 --> AG
-  R6 --> AG
-  APR -.->|"removes action groups<br/>during the window"| AG
+  MET --> RULES
+  LOGS --> RULES
+  SVC --> RULES
+  RULES --> AG
+  APR -.->|"mutes during<br/>the window"| AG
 
   classDef sig fill:#eef4ff,stroke:#4472c4,color:#1a1a1a
   classDef rule fill:#fff9e6,stroke:#c9a227,color:#1a1a1a
   classDef act fill:#eefaf0,stroke:#3a9d5d,color:#1a1a1a
   class MET,LOGS,SVC sig
-  class R1,R2,R3,R4,R5,R6 rule
+  class RULES rule
   class AG,APR act
 ```
 
@@ -64,48 +58,51 @@ flowchart LR
 
 Three signal sources feed six rules, which all notify one action group.
 
-**Platform metrics** — free, already collected, no ingestion charge — drive
-three metric alerts: CPU above 80% across every VM as a single multi-resource
-rule, a dynamic-threshold rule on SQL DTU consumption, and SNAT port
-utilisation on the firewall.
+**Platform metrics** — free, already collected — drive three metric alerts:
+CPU above 80% across every VM as one multi-resource rule, a dynamic-threshold
+rule on SQL DTU, and SNAT port utilisation on the firewall.
 
 **Log data from L2.1** drives two scheduled query rules. These catch what
 metrics structurally cannot: a VM that stopped reporting emits no metric to
 threshold, so only a query over `Heartbeat` can notice its absence.
 
 **Service Health** drives a free activity-log alert — the only rule here that
-fires for something you cannot fix, which is exactly why you want it before you
-spend an hour debugging your own template.
+fires for something you cannot fix, which is exactly why you want it before
+you spend an hour debugging your own template.
 
-Everything notifies `ag-iacdemo-oncall`, which has a primary and an optional
-secondary inbox. The dotted line is the alert processing rule: between 02:00 and
-03:00 UTC it strips the action groups off every alert in the resource group, so
-maintenance does not page anyone.
+Everything notifies `ag-iacdemo-oncall`. The dotted line is the alert
+processing rule: between 02:00 and 03:00 UTC it strips the action groups off
+every alert in the resource group, so maintenance does not page anyone.
 
 </details>
 
 **Source:** [`curriculum/L2.3-proactive-operations/main.bicep`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.3-proactive-operations/main.bicep) · [`main.bicepparam`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/curriculum/L2.3-proactive-operations/main.bicepparam)
 
-> [!NOTE]
-> **Where is autoscale?** The learning objective is real, but this estate has
-> nowhere honest to put it. Azure Monitor autoscale targets virtual machine
-> scale sets and App Service plans; the only elastic thing here is the container
-> app, and its scale rules live inside `curriculum/L1.3-multi-service-application/main.bicep` — the
-> template that owns it. Adding them from this chapter would recreate exactly
-> the shared-ownership problem the callout above warns about. Read the scale
-> block in L1.3's template instead, and change it there.
+<br>
+
+<details><summary><b>🔍 Going deeper — where is autoscale?</b></summary>
 
 <br>
 
-## <img src="icon-azure-rbac.svg" width="26" align="top">&nbsp; Azure Up to date
+The learning objective is real, but this estate has nowhere honest to put it.
+Azure Monitor autoscale targets virtual machine scale sets and App Service
+plans; the only elastic thing here is the container app, and its scale rules
+live inside `curriculum/L1.3-multi-service-application/main.bicep` — the
+template that owns it. Adding them from this chapter would recreate exactly
+the shared-ownership problem the callout above warns about. Read the scale
+block in L1.3's template instead, and change it there.
+
+</details>
+
+<details><summary><b>🔍 Going deeper — the permissions this needs</b></summary>
 
 <table>
 <tr>
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
-<b>Azure RBAC — the minimum this chapter needs</b><br><br>
+<b>Azure RBAC</b><br><br>
 <b>Contributor</b>, or <b>Monitoring Contributor</b> on the lab resource group.<br>
-<sub>Why: alert rules, action groups and alert processing rules are all <code>Microsoft.Insights</code> and <code>Microsoft.AlertsManagement</code> resources. The Service Health alert is scoped to the <b>subscription</b> and needs read access there — with resource-group-only rights it will fail, which is the first place this lab's permission ceiling shows up.</sub>
+<sub>Why: alert rules, action groups and processing rules are all ordinary resources. The Service Health alert is scoped to the <b>subscription</b> and needs read access there — with resource-group-only rights it will fail, which is the first place this lab's permission ceiling shows up.</sub>
 </td>
 </tr>
 <tr>
@@ -113,14 +110,18 @@ maintenance does not page anyone.
 <td valign="top">
 <b>Microsoft Entra ID roles</b><br><br>
 <b>None.</b><br>
-<sub>Email receivers are plain addresses, not directory objects. Notifying a Microsoft Entra ID <i>group</i> instead would need someone who can read that group in the directory.</sub>
+<sub>Email receivers are plain addresses, not directory objects.</sub>
 </td>
 </tr>
 </table>
 
 <sub><a href="https://learn.microsoft.com/azure/azure-monitor/roles-permissions-security">For more info</a> — Azure Monitor roles, permissions and security</sub>
 
+</details>
+
 <br>
+
+---
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -162,8 +163,8 @@ $env:ALERT_EMAIL_SECONDARY = "someone.else@example.com"
 L2.3 - Proactive Operations**.
 
 The addresses come from repository variables `ALERT_EMAIL` and
-`ALERT_EMAIL_SECONDARY` — the first is the same one the L1.3 lab already uses, so
-a class that set it once does not set it again.
+`ALERT_EMAIL_SECONDARY` — the first is the same one the L1.3 lab already uses,
+so a class that set it once does not set it again.
 
 <br>
 
@@ -205,10 +206,9 @@ $0.50 a month. Every one of those is a judgement, not a lookup.
    sudo apt-get install -y stress-ng && stress-ng --cpu 2 --timeout 900s
    ```
 
-   **You should see:** the CPU rule move to *Fired* within about 15 minutes, and
-   mail at your alert address. The rule averages over 15 minutes on purpose — a
-   one-minute spike is not an incident, and paging on one is how alert fatigue
-   starts.
+   **You should see:** the CPU rule move to *Fired* within about 15 minutes,
+   and mail at your alert address. The rule averages over 15 minutes on
+   purpose — a one-minute spike is not an incident.
 
 3. **Prove the log alert catches what metrics cannot** — stop a VM entirely:
 
@@ -231,11 +231,11 @@ $0.50 a month. Every one of those is a judgement, not a lookup.
    UTC. Worth saying out loud: during that hour, genuine alerts are swallowed
    too. Suppression is a governance decision, not a convenience.
 
-5. **What it costs:** metric alerts bill $0.10 per monitored metric per month —
-   a multi-resource rule over four VMs is four monitored metrics, not one rule.
-   Log alerts are $0.50 each at 15-minute evaluation and $1.50 at five. The set
-   above is about **$2.30/month**. Service Health and the processing rule are
-   free.
+5. **What it costs:** metric alerts bill $0.10 per monitored metric per month;
+   log alerts are $0.50 each at 15-minute evaluation. The set above is about
+   **$2.30/month**. Service Health and the processing rule are free.
+
+<br>
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Repository variables as the notification path**
 >
@@ -256,9 +256,17 @@ $0.50 a month. Every one of those is a judgement, not a lookup.
 
 ## ➡️ What carries forward
 
-L2.4 asks the governing question: which of these rules would you keep if you ran
-a hundred of these environments, what would you collect to feed them, and what
-would you stop collecting? It is the first chapter in the curriculum designed to
-*reduce* the bill.
+L2.4 asks the governing question: which of these rules would you keep if you
+ran a hundred of these environments, and what would you stop collecting? It is
+the first chapter in the curriculum designed to *reduce* the bill.
 
-**Leave it deployed** → **[back to Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)**.
+<br>
+
+## 🧭 Where next?
+
+| Your situation | Go to |
+|---|---|
+| Ready to keep going — make the bill smaller | **[L2.4 — Enterprise Monitoring Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-4-Monitoring-Strategy)** |
+| Want the big picture of this level | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
+| Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
+| Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
