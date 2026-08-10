@@ -77,10 +77,11 @@ everything else in all four labs combined.
 > **Want to spend less?** Because L3 only needs L1, you can tear L2 down before starting L3 and keep going. L2's firewall and web tier are about **$1.41/hr** of the running totals above — so an L4 stack with L2 already removed costs roughly **$0.43/hr** instead of $1.84/hr. See [Cost & cleanup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/README.md) in the README.
 
 > [!NOTE]
-> **In review:** a proposed redesign takes these four labs and makes them the
-> first level of a six-level path that follows an environment's operational
-> lifecycle — deploy, monitor, secure, protect, detect, recover. Eighteen
-> chapters, each with its own template and walkthrough. Nothing above changes.
+> **There is more after L4.** These four labs are **Level 1** of a six-level path
+> that follows an environment's operational lifecycle — deploy, monitor, secure,
+> protect, detect, recover. Eighteen chapters, each with its own template and
+> walkthrough, all operating on the environment you build above. Nothing on this
+> page changes; Levels 2-6 pick up where L4 stops.
 > [Curriculum Redesign →](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Redesign)
 
 ---

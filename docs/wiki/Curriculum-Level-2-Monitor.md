@@ -13,9 +13,8 @@ you pay for.
 | **Running cost at end of level** | **~$1.93/hr** (~$1.91/hr after L2.4's tiering work) |
 
 > [!NOTE]
-> **Build status:** L2.1 is built — template, workflow and walkthrough. L2.2–L2.4
-> are still outline only. Chapters gain a **Built** line above their objective as
-> the code lands.
+> **Build status:** Level 2 is fully built — four templates, one workflow, four
+> walkthroughs.
 
 ## Where this level sits
 

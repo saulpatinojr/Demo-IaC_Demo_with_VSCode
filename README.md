@@ -19,7 +19,7 @@ The demo is four **cumulative lab stages**. Each stage builds on the infrastruct
 > - New to GitHub itself (repos, Actions, secrets vs. variables)? **[GitHub Essentials](../../wiki/GitHub-Essentials)**.
 > - Want to get comfortable with VS Code, Bicep, and Copilot first? **[Getting Comfortable with the Tools](../../wiki/Getting-Comfortable-with-the-Tools)**.
 >
-> 🧭 **In review:** a proposed redesign keeps these four labs as *Level 1* of a six-level path that follows an Azure environment's operational lifecycle — deploy, monitor, secure, protect, detect, recover. Eighteen chapters with templates and workflows, none of which change anything above: **[Curriculum Redesign](../../wiki/Curriculum-Redesign)**.
+> 🧭 **There is more after L4.** These four labs are *Level 1* of a six-level path that follows an Azure environment's operational lifecycle — deploy, monitor, secure, protect, detect, recover. Eighteen chapters with templates and workflows live in [`curriculum/`](curriculum/), none of which change anything above: **[Curriculum Redesign](../../wiki/Curriculum-Redesign)**.
 
 ---
 
