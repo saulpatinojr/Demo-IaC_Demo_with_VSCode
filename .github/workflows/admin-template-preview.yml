@@ -1,0 +1,93 @@
+name: "Admin template preview"
+
+# Read-only preview of the instructor templates in scripts/admin/: compile
+# them, then run the subscription-scope what-ifs the wrapper scripts' -WhatIf
+# would run. Nothing here deploys.
+#
+# Runs automatically on any pull request touching scripts/admin/, and on
+# demand from the Actions tab. The pull_request trigger matters for identity:
+# the lab's federated credentials cover the main branch and pull requests,
+# so a preview from a PR authenticates while one from a feature-branch push
+# would not.
+#
+# Expectation-setting: the lab service principal holds Contributor on the
+# student resource group, not the subscription. The compile step always
+# works; the what-if steps show exactly as much as that identity is allowed
+# to see, and an AuthorizationFailed there is a correct demonstration of the
+# permission walls the curriculum teaches (L2.4). The instructor's own
+# Security Admin / Owner account sees the full preview by running the
+# wrapper scripts with -WhatIf locally.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/admin/**'
+      - '.github/workflows/admin-template-preview.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: admin-template-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Compile all admin templates
+        run: |
+          for f in scripts/admin/defender-plans.bicep scripts/admin/lab-policy.bicep scripts/admin/lab-policy-rg.bicep; do
+            echo "::group::az bicep build $f"
+            az bicep build --file "$f" --stdout > /dev/null
+            echo "compiles clean"
+            echo "::endgroup::"
+          done
+
+      - name: What-if -- Defender plans
+        id: defender
+        continue-on-error: true
+        run: |
+          az deployment sub what-if \
+            --location eastus2 \
+            --name lab-defender-plans-preview \
+            --template-file scripts/admin/defender-plans.bicep \
+            --parameters serversPlan=P1 includeStorage=false enabled=true
+
+      - name: What-if -- lab policy guardrails
+        id: policy
+        continue-on-error: true
+        run: |
+          RGS=$(az group list --query "[?starts_with(name, 'rg-techdemo-')].name" -o json)
+          echo "matching resource groups: $RGS"
+          az deployment sub what-if \
+            --location eastus2 \
+            --name lab-policy-preview \
+            --template-file scripts/admin/lab-policy.bicep \
+            --parameters resourceGroupNames="$RGS"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Admin template preview"
+            echo "| Check | Result |"
+            echo "|-------|--------|"
+            echo "| Compile (3 templates) | success |"
+            echo "| What-if: Defender plans | ${{ steps.defender.outcome }} |"
+            echo "| What-if: lab policy | ${{ steps.policy.outcome }} |"
+            echo ""
+            echo "A failed what-if with AuthorizationFailed means the lab service"
+            echo "principal lacks subscription-scope rights -- expected; run the"
+            echo "wrapper scripts with -WhatIf under an instructor account for the"
+            echo "full preview."
+          } >> "$GITHUB_STEP_SUMMARY"
