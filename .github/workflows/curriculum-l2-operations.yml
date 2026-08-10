@@ -78,13 +78,15 @@ jobs:
       # above and a case below.
       - name: Resolve chapter to a template path
         id: chapter
+        env:
+          CHAPTER: ${{ inputs.chapter }}
         run: |
-          case "${{ inputs.chapter }}" in
+          case "$CHAPTER" in
             "L2.1 - Monitoring Fundamentals") dir="curriculum/L2.1-monitoring-fundamentals" ;;
             "L2.2 - Operational Visibility")  dir="curriculum/L2.2-operational-visibility" ;;
             "L2.3 - Proactive Operations")    dir="curriculum/L2.3-proactive-operations" ;;
             "L2.4 - Enterprise Monitoring Strategy") dir="curriculum/L2.4-monitoring-strategy" ;;
-            *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
+            *) echo "::error::Unknown chapter '$CHAPTER'"; exit 1 ;;
           esac
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
           echo "slug=$(echo "$dir" | sed 's|curriculum/||; s|[^a-zA-Z0-9]|-|g')" >> "$GITHUB_OUTPUT"
@@ -98,37 +100,49 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Lint (compile + linter)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
         run: |
-          az bicep build --file ${{ steps.chapter.outputs.dir }}/main.bicep --stdout > /dev/null
+          az bicep build --file $CHAPTER_DIR/main.bicep --stdout > /dev/null
           # Also compile the parameter file — build alone never reads it, so a
           # bad param name or a missing env var would slip through to deploy.
-          az bicep build-params --file ${{ steps.chapter.outputs.dir }}/main.bicepparam --stdout > /dev/null
+          az bicep build-params --file $CHAPTER_DIR/main.bicepparam --stdout > /dev/null
 
       - name: What-if (preview changes)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
         run: |
           az deployment group what-if \
-            --name ${{ steps.chapter.outputs.slug }}-whatif-${{ github.run_number }} \
+            --name $CHAPTER_SLUG-whatif-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+            --parameters $CHAPTER_DIR/main.bicepparam
 
       - name: Deploy
         if: ${{ !inputs.dry_run }}
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
         run: |
           az deployment group create \
-            --name ${{ steps.chapter.outputs.slug }}-deploy-${{ github.run_number }} \
+            --name $CHAPTER_SLUG-deploy-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+            --parameters $CHAPTER_DIR/main.bicepparam
 
       - name: Summary
         if: ${{ !inputs.dry_run }}
+        env:
+          CHAPTER: ${{ inputs.chapter }}
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
         run: |
           {
-            echo "## ${{ inputs.chapter }}"
+            echo "## $CHAPTER"
             echo ""
-            echo "Deployed from \`${{ steps.chapter.outputs.dir }}\`."
+            echo "Deployed from \`$CHAPTER_DIR\`."
             echo ""
             az deployment group show \
-              --name ${{ steps.chapter.outputs.slug }}-deploy-${{ github.run_number }} \
+              --name $CHAPTER_SLUG-deploy-${{ github.run_number }} \
               --resource-group $AZURE_RESOURCE_GROUP \
               --query properties.outputs -o json
           } >> "$GITHUB_STEP_SUMMARY"

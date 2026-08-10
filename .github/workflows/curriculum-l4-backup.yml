@@ -89,13 +89,15 @@ jobs:
 
       - name: Resolve chapter to a template path
         id: chapter
+        env:
+          CHAPTER: ${{ inputs.chapter }}
         run: |
-          case "${{ inputs.chapter }}" in
+          case "$CHAPTER" in
             "L4.1 - Backup Fundamentals") dir="curriculum/L4.1-backup-fundamentals" ;;
             "L4.2 - PaaS Protection") dir="curriculum/L4.2-paas-protection" ;;
             "L4.3 - Operational Backup Management") dir="curriculum/L4.3-backup-operations" ;;
             "L4.4 - Enterprise Data Protection Strategy") dir="curriculum/L4.4-data-protection-strategy" ;;
-            *) echo "::error::Unknown chapter '${{ inputs.chapter }}'"; exit 1 ;;
+            *) echo "::error::Unknown chapter '$CHAPTER'"; exit 1 ;;
           esac
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
           echo "slug=$(echo "$dir" | sed 's|curriculum/||; s|[^a-zA-Z0-9]|-|g')" >> "$GITHUB_OUTPUT"
@@ -109,35 +111,46 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Lint (compile + linter)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
         run: |
-          az bicep build --file ${{ steps.chapter.outputs.dir }}/main.bicep --stdout > /dev/null
-          az bicep build-params --file ${{ steps.chapter.outputs.dir }}/main.bicepparam --stdout > /dev/null
+          az bicep build --file $CHAPTER_DIR/main.bicep --stdout > /dev/null
+          az bicep build-params --file $CHAPTER_DIR/main.bicepparam --stdout > /dev/null
 
       - name: What-if (preview changes)
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
         run: |
           az deployment group what-if \
-            --name ${{ steps.chapter.outputs.slug }}-whatif-${{ github.run_number }} \
+            --name $CHAPTER_SLUG-whatif-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+            --parameters $CHAPTER_DIR/main.bicepparam
 
       - name: Deploy
         if: ${{ !inputs.dry_run }}
+        env:
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
+          CHAPTER_SLUG: ${{ steps.chapter.outputs.slug }}
         run: |
           az deployment group create \
-            --name ${{ steps.chapter.outputs.slug }}-deploy-${{ github.run_number }} \
+            --name $CHAPTER_SLUG-deploy-${{ github.run_number }} \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --parameters ${{ steps.chapter.outputs.dir }}/main.bicepparam
+            --parameters $CHAPTER_DIR/main.bicepparam
 
       # Redundancy is the one setting nobody can fix later, so surface what the
       # vault actually ended up with rather than what was requested.
       - name: Report vault redundancy and protected items
         if: ${{ !inputs.dry_run }}
         continue-on-error: true
+        env:
+          CHAPTER: ${{ inputs.chapter }}
+          CHAPTER_DIR: ${{ steps.chapter.outputs.dir }}
         run: |
           {
-            echo "## ${{ inputs.chapter }}"
+            echo "## $CHAPTER"
             echo ""
-            echo "Deployed from \`${{ steps.chapter.outputs.dir }}\`."
+            echo "Deployed from \`$CHAPTER_DIR\`."
             echo ""
             echo "### Vault state"
             echo ""
