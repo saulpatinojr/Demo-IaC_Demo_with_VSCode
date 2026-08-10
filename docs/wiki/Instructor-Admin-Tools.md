@@ -45,12 +45,12 @@ The scripts auto-detect the instructor from the `Type = Instructor` row. They re
 ## 🔧 Prerequisites
 
 > [!IMPORTANT]
-> Install the Az PowerShell module once before running any of these scripts:
+> Install both Azure tools once before running these scripts:
 > ```powershell
 > Install-Module Az -Scope CurrentUser -Force
-> Connect-AzAccount   # signs in to Azure (Az PowerShell)
-> az login            # signs in to Azure (Az CLI -- needed by Setup-OidcAll)
-> gh auth login       # signs in to GitHub (needed by Setup-OidcAll)
+> Connect-AzAccount   # Az PowerShell (New-LabEnvironment)
+> az login            # Azure CLI (Setup-OidcAll, and the Bicep deployments behind Set-LabPolicy and Enable-DefenderPlans)
+> gh auth login       # GitHub CLI (Setup-OidcAll)
 > ```
 
 ### Azure permissions needed

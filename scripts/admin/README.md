@@ -9,12 +9,12 @@ This folder contains three PowerShell scripts that the **instructor** runs once 
 ### You need
 
 - **PowerShell 7** -- run `pwsh --version` to confirm
-- **Az PowerShell module** -- run once:
+- **Az PowerShell module** -- needed by `New-LabEnvironment.ps1` only; run once:
   ```powershell
   Install-Module Az -Scope CurrentUser -Force
   Connect-AzAccount
   ```
-- **Azure CLI** signed in: `az login`
+- **Azure CLI** signed in: `az login` -- `Set-LabPolicy.ps1` and `Enable-DefenderPlans.ps1` deploy their Bicep templates through it
 - **GitHub CLI** signed in: `gh auth login`
 - **lab-user-data.csv** placed in this folder (copy from `lab-user-data.csv.example` and fill in real values)
 

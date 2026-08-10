@@ -9,10 +9,11 @@ This page covers everything you need to do **before** participants arrive, plus 
 Two scripts in `scripts/admin/` handle all bulk provisioning. Run them in order before participants arrive.
 
 > [!IMPORTANT]
-> Both scripts require the **Az PowerShell module**. Install it once:
+> `New-LabEnvironment.ps1` requires the **Az PowerShell module**; `Set-LabPolicy.ps1` deploys its policy guardrails as a **Bicep template** through the Azure CLI. Install both once:
 > ```powershell
 > Install-Module Az -Scope CurrentUser -Force
-> Connect-AzAccount
+> Connect-AzAccount   # Az PowerShell (New-LabEnvironment)
+> az login            # Azure CLI (Set-LabPolicy's Bicep deployment)
 > ```
 > The account must have **Owner or User Access Administrator** on the subscription to create role assignments.
 
