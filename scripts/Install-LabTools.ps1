@@ -61,7 +61,11 @@
 
 .NOTES
     Requires: Windows 10/11 with winget, local Administrator rights.
-    Run from PowerShell 5 or PowerShell 7 -- the script works in both.
+    Run from PowerShell 5 or PowerShell 7. Started from PowerShell 5 on a
+    machine without PowerShell 7, the script installs ONLY PowerShell 7 and
+    asks for one restart (step 1 of 2); on the re-run it detects PowerShell 7,
+    switches to it automatically, and continues with everything else
+    (step 2 of 2). Started from PowerShell 7, it runs straight through.
 #>
 [CmdletBinding()]
 param(
@@ -155,6 +159,53 @@ if (-not (Is-Installed 'winget')) {
 $wingetVer = (winget --version) -replace '[^0-9.]',''
 Write-Ok "winget $wingetVer available"
 
+# -- Stage 0: PowerShell 7 gate ------------------------------------------------
+# Everything after this line runs under PowerShell 7. On a fresh machine this
+# script starts in Windows PowerShell 5.1 (the only shell there is), so:
+#   - pwsh not installed yet  -> install ONLY PowerShell 7, tell the user to
+#     re-run the checklist block in a new window, and stop.
+#   - pwsh installed already  -> hand this same script to pwsh and continue
+#     there, whichever shell the user happened to open for the re-run.
+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+
+    # This 5.1 session's PATH predates any install done moments ago, so check
+    # the default install location as well as the PATH.
+    $pwshCmd = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+    $pwshDefault = Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe'
+    if (-not $pwshCmd -and (Test-Path $pwshDefault)) { $pwshCmd = $pwshDefault }
+
+    if ($pwshCmd) {
+        Write-Step "PowerShell 7"
+        Write-Ok "PowerShell 7 detected -- continuing the setup there"
+        $forward = @()
+        if ($GitName)   { $forward += @('-GitName',  $GitName)  }
+        if ($GitEmail)  { $forward += @('-GitEmail', $GitEmail) }
+        if ($SkipLogin) { $forward += '-SkipLogin' }
+        & $pwshCmd -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath @forward
+        exit $LASTEXITCODE
+    }
+
+    Write-Banner "Step 1 of 2 -- Install PowerShell 7"
+    Winget-Install 'Microsoft.PowerShell' 'PowerShell 7 (pwsh)'
+
+    if (-not (Test-Path $pwshDefault)) {
+        Write-Fail "PowerShell 7 did not install cleanly. Re-run this script to try again."
+        exit 1
+    }
+
+    Write-Banner "PowerShell 7 is installed -- one restart needed"
+    Write-Host "   Close this window, then:" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "     1. Open a NEW PowerShell window (Run as Administrator)" -ForegroundColor White
+    Write-Host "     2. Run the same block from Section C of the checklist again" -ForegroundColor White
+    Write-Host ""
+    Write-Host "   The script will detect PowerShell 7, switch to it automatically," -ForegroundColor DarkGray
+    Write-Host "   skip this step, and continue with the rest of the setup (step 2 of 2)." -ForegroundColor DarkGray
+    Write-Host ""
+    exit 0
+}
+
 # -- Software installs ---------------------------------------------------------
 
 Write-Banner "Installing Software"
@@ -164,7 +215,6 @@ Winget-Install 'GitHub.GitHubDesktop'     'GitHub Desktop'
 Winget-Install 'Microsoft.VisualStudioCode' 'Visual Studio Code'
 Winget-Install 'Microsoft.AzureCLI'       'Azure CLI (az)'
 Winget-Install 'GitHub.cli'               'GitHub CLI (gh)'
-Winget-Install 'Microsoft.PowerShell'     'PowerShell 7 (pwsh)'
 Winget-Install 'Microsoft.WindowsTerminal' 'Windows Terminal'
 
 # Refresh PATH so all newly installed tools are reachable in this session

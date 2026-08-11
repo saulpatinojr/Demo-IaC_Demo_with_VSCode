@@ -77,6 +77,9 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 ./Install-LabTools.ps1
 ```
 
+> [!NOTE]
+> **On a brand-new machine this script runs in two stages.** Stage 1 installs PowerShell 7 and asks you to close the window — that is expected, not an error. Open a **new** PowerShell window (Run as Administrator), run this same block again, and the script detects PowerShell 7, switches to it, and installs everything else (stage 2). If PowerShell 7 was already present, there is only one stage.
+
 If PowerShell shows an execution-policy error, the second line fixes only the current shell session. This one-shot path installs tools, configures Git, and prepares sign-in. **Skip to Section D if you use this script.**
 
 When the script reaches **Configuring Git**, enter values like these when prompted:
