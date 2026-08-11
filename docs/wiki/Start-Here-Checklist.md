@@ -49,9 +49,8 @@ If `gh` is not installed yet, use this bootstrap path first.
 Copy/paste these lines one at a time:
 
 ```powershell
-cd ([Environment]::GetFolderPath('Desktop'))
-mkdir Demo-IaC-Bootstrap -Force | Out-Null
-cd .\Demo-IaC-Bootstrap
+mkdir "$env:PUBLIC\Demo-IaC-Bootstrap" -Force | Out-Null
+cd "$env:PUBLIC\Demo-IaC-Bootstrap"
 ```
 
 - [ ] Download only the installer script over HTTPS:
@@ -61,7 +60,7 @@ Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_
 ```
 
 - [ ] If your machine blocks script download in terminal, download the same file in a browser and save it as:
-  - `Demo-IaC-Bootstrap\Install-LabTools.ps1` **on your Desktop** (the same folder the previous step created)
+  - `C:\Users\Public\Demo-IaC-Bootstrap\Install-LabTools.ps1` (the same folder the previous step created -- Public is shared, so it works no matter which account is signed in)
 
 ---
 
@@ -72,7 +71,7 @@ Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_
 From **PowerShell 7 or PowerShell 5 (Run as Administrator)**, run the following:
 
 ```powershell
-cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC-Bootstrap')
+cd "$env:PUBLIC\Demo-IaC-Bootstrap"
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 ./Install-LabTools.ps1
 ```
