@@ -59,6 +59,13 @@ cd "$env:PUBLIC\Demo-IaC-Bootstrap"
 Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/main/scripts/Install-LabTools.ps1" -OutFile .\Install-LabTools.ps1
 ```
 
+> [!TIP]
+> **Certificate or TLS error on the download?** It is per-machine state, not your account (OneDrive-synced profiles do not roam certificate stores). Fix in this order:
+> 1. Check the clock -- `Get-Date`. A wrong date invalidates every certificate: `w32tm /resync /force`
+> 2. Force TLS 1.2 for this session, then retry the download:
+>    `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`
+> 3. Open `https://github.com` once in Edge -- Windows fetches missing root certificates on first use -- then retry.
+
 - [ ] If your machine blocks script download in terminal, download the same file in a browser and save it as:
   - `C:\Users\Public\Demo-IaC-Bootstrap\Install-LabTools.ps1` (the same folder the previous step created -- Public is shared, so it works no matter which account is signed in)
 
@@ -75,6 +82,14 @@ cd "$env:PUBLIC\Demo-IaC-Bootstrap"
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 ./Install-LabTools.ps1
 ```
+
+> [!TIP]
+> **Certificate or TLS error from winget during the install?** Per-machine, not your profile. Check the clock (`Get-Date`, fix with `w32tm /resync /force`), then reset winget's source cache and re-run the script:
+> ```powershell
+> winget source reset --force
+> winget source update
+> ./Install-LabTools.ps1
+> ```
 
 > [!NOTE]
 > **On a brand-new machine this script runs in two stages.** Stage 1 installs PowerShell 7 and asks you to close the window — that is expected, not an error. Open a **new** PowerShell window (Run as Administrator), run this same block again, and the script detects PowerShell 7, switches to it, and installs everything else (stage 2). If PowerShell 7 was already present, there is only one stage.

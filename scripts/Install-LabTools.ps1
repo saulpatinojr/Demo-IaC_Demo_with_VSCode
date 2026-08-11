@@ -143,7 +143,11 @@ function Winget-Install($id, $name, $slowNote) {
     }
     winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
     if ($LASTEXITCODE -eq 0) { Write-Ok ("{0} installed ({1:mm\:ss} elapsed)" -f $name, $sw.Elapsed) }
-    else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
+    else {
+        Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)"
+        Write-Warn "If the error above mentions certificates or TLS: check the clock (w32tm /resync /force),"
+        Write-Warn "then run:  winget source reset --force ; winget source update  and re-run this script."
+    }
 }
 
 # -- Platform check ------------------------------------------------------------
