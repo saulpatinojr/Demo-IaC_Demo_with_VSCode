@@ -112,12 +112,17 @@ function Winget-Install($id, $name, $slowNote) {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     Write-Step ("[{0}/{1}] {2}  (started {3})" -f $script:InstallStep, $script:InstallTotal, $name, (Get-Date -Format 'HH:mm:ss'))
     if ($slowNote) { Write-Host "     $slowNote" -ForegroundColor DarkCyan }
-    $result = winget list --id $id --exact 2>$null
+    # --accept-source-agreements and --disable-interactivity matter HERE, on
+    # the list call, not just on install: the first winget command on a fresh
+    # machine prompts to accept the source agreement terms, and because this
+    # output is captured into a variable the prompt would be invisible -- the
+    # script reads as hung while winget waits forever for a Y nobody can see.
+    $result = winget list --id $id --exact --accept-source-agreements --disable-interactivity 2>$null
     if ($LASTEXITCODE -eq 0 -and ($result -match $id)) {
         Write-Skip "$name already installed"
         return
     }
-    winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements
+    winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
     if ($LASTEXITCODE -eq 0) { Write-Ok ("{0} installed ({1:mm\:ss} elapsed)" -f $name, $sw.Elapsed) }
     else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
 }
