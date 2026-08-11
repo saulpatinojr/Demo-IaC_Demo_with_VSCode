@@ -545,7 +545,7 @@ Write-Host ""
 Write-Host "  2. Download and run Connect-AzureAndGitHub.ps1 (auto fork + clone)" -ForegroundColor White
 Write-Host '     Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/main/scripts/Connect-AzureAndGitHub.ps1" -OutFile .\Connect-AzureAndGitHub.ps1' -ForegroundColor Cyan
 Write-Host "     .\Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
-Write-Host "     -> This creates your fork, clones it to Desktop, and adds upstream" -ForegroundColor White
+Write-Host "     -> This creates your fork; Section F of the checklist then clones it to C:\Users\Public" -ForegroundColor White
 Write-Host ""
 Write-Host "  3. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
 Write-Host '     ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"' -ForegroundColor Cyan

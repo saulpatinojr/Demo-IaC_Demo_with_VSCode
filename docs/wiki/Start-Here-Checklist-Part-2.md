@@ -42,9 +42,12 @@ When it finishes you will see:
 
 ---
 
-## 💻 F. Clone your fork to the Desktop
+## 💻 F. Clone your fork to C:\Users\Public
 
-You have two ways to clone. Both end with the same folder on your Desktop.
+You have two ways to clone. Both end with the same folder: `C:\Users\Public\Demo-IaC_Demo_with_VSCode`.
+
+> [!IMPORTANT]
+> **Why not the Desktop?** On these lab machines the Desktop is synced by OneDrive under a shared Microsoft account, so a git repo cloned there syncs its `.git` folder across every station — git operations race the sync client and clones cross-contaminate between lanes. `C:\Users\Public` is local to each machine and never syncs.
 
 <br>
 
@@ -58,7 +61,7 @@ You have two ways to clone. Both end with the same folder on your Desktop.
 Open a **new PowerShell 7** window and run (replace `<your-username>` with your GitHub username printed in Section E):
 
 ```powershell
-cd ([Environment]::GetFolderPath('Desktop'))
+cd $env:PUBLIC
 gh repo clone <your-username>/Demo-IaC_Demo_with_VSCode
 cd .\Demo-IaC_Demo_with_VSCode
 git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
@@ -97,14 +100,14 @@ You should see: `✓ Set <your-username>/Demo-IaC_Demo_with_VSCode as the defaul
 2. Click **File → Clone repository…**
 3. Select the **URL** tab
 4. Paste your fork URL: `https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode`
-5. Set **Local path** to your **Desktop** folder -- click **Choose...** and select Desktop rather than typing a path (on OneDrive-managed machines the real Desktop is inside OneDrive, not `C:\Users\<name>\Desktop`)
-   *(GitHub Desktop appends the repo name — your final folder will be `...\Desktop\Demo-IaC_Demo_with_VSCode`)*
+5. Set **Local path** to `C:\Users\Public` (type it in, or click **Choose...** and navigate to This PC > Windows (C:) > Users > Public)
+   *(GitHub Desktop appends the repo name — your final folder will be `C:\Users\Public\Demo-IaC_Demo_with_VSCode`)*
 6. Click **Clone**
 
 **Then add the upstream remote and set your fork as default** (run inside the cloned folder):
 
 ```powershell
-cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC_Demo_with_VSCode')
+cd "$env:PUBLIC\Demo-IaC_Demo_with_VSCode"
 git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
 git remote -v
 gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
@@ -117,7 +120,7 @@ gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
 - [ ] Folder `Demo-IaC_Demo_with_VSCode` exists on your Desktop
 - [ ] `git remote -v` shows both `origin` (your fork) and `upstream` (instructor's repo)
 - [ ] `gh repo set-default` confirmed your fork as the default repo
-- [ ] Open the cloned folder in VS Code: `code (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC_Demo_with_VSCode')` — accept the recommended extensions prompt.
+- [ ] Open the cloned folder in VS Code: `code "$env:PUBLIC\Demo-IaC_Demo_with_VSCode"` — accept the recommended extensions prompt.
 
 ---
 
@@ -125,7 +128,7 @@ gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
 
 > **Before running any command in this section**, move into the cloned repo folder:
 > ```powershell
-> cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC_Demo_with_VSCode')
+> cd "$env:PUBLIC\Demo-IaC_Demo_with_VSCode"
 > ```
 > If you see `fatal: not a git repository`, you skipped Section F — go back and clone your fork first.
 
@@ -223,7 +226,7 @@ gh variable list
 | `gh auth status` shows my GitHub username? | Part 1 — Section D |
 | `az account show` prints the correct subscription? | Part 1 — Section D |
 | Fork exists at `github.com/<me>/Demo-IaC_Demo_with_VSCode`? | Section E |
-| Local clone exists on Desktop? | Section F |
+| Local clone exists in C:\Users\Public? | Section F |
 | `git remote -v` shows both `origin` and `upstream`? | Section F |
 | `gh repo set-default` points to my fork (not the instructor's)? | Section F |
 | `gh secret list` shows `AZURE_RESOURCE_GROUP` and 5 others? | Section G |
