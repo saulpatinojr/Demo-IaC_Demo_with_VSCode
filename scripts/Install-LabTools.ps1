@@ -101,15 +101,24 @@ function Is-Installed($cmd) {
     $null -ne (Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
-function Winget-Install($id, $name) {
-    Write-Step "$name"
+# Progress counters -- every install line shows [step/total] plus a start
+# time, and slow installers carry a note, so a silent MSI that takes five
+# minutes reads as "working" instead of "stuck".
+$script:InstallStep  = 0
+$script:InstallTotal = 0
+
+function Winget-Install($id, $name, $slowNote) {
+    $script:InstallStep++
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    Write-Step ("[{0}/{1}] {2}  (started {3})" -f $script:InstallStep, $script:InstallTotal, $name, (Get-Date -Format 'HH:mm:ss'))
+    if ($slowNote) { Write-Host "     $slowNote" -ForegroundColor DarkCyan }
     $result = winget list --id $id --exact 2>$null
     if ($LASTEXITCODE -eq 0 -and ($result -match $id)) {
         Write-Skip "$name already installed"
         return
     }
     winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements
-    if ($LASTEXITCODE -eq 0) { Write-Ok "$name installed" }
+    if ($LASTEXITCODE -eq 0) { Write-Ok ("{0} installed ({1:mm\:ss} elapsed)" -f $name, $sw.Elapsed) }
     else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
 }
 
@@ -141,6 +150,18 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 
 Write-Banner "Lab Workstation Setup -- IaC with GitHub Copilot Workshop"
+
+# Every run is transcribed next to the script. When a step looks stuck, the
+# log shows the last line reached -- that is the diagnostic, no debugger
+# needed. Transcript output is written live, so the file is current even if
+# the window is closed mid-run.
+$script:LogPath = Join-Path $PSScriptRoot 'Install-LabTools.log'
+try {
+    Start-Transcript -Path $script:LogPath -Append | Out-Null
+    Write-Host "   Log: $script:LogPath" -ForegroundColor DarkGray
+} catch {
+    Write-Warn "Could not start transcript log ($($_.Exception.Message)) -- continuing without it"
+}
 
 if (-not $isAdmin) {
     Write-Warn "Not running as Administrator. Some installs may fail."
@@ -187,7 +208,8 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     }
 
     Write-Banner "Step 1 of 2 -- Install PowerShell 7"
-    Winget-Install 'Microsoft.PowerShell' 'PowerShell 7 (pwsh)'
+    $script:InstallStep = 0; $script:InstallTotal = 1
+    Winget-Install 'Microsoft.PowerShell' 'PowerShell 7 (pwsh)' 'About 1-2 minutes. The installer prints nothing while it runs -- not stuck.'
 
     if (-not (Test-Path $pwshDefault)) {
         Write-Fail "PowerShell 7 did not install cleanly. Re-run this script to try again."
@@ -198,7 +220,11 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     Write-Host "   Close this window, then:" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "     1. Open a NEW PowerShell window (Run as Administrator)" -ForegroundColor White
-    Write-Host "     2. Run the same block from Section C of the checklist again" -ForegroundColor White
+    Write-Host "     2. Paste these three lines again:" -ForegroundColor White
+    Write-Host ""
+    Write-Host '          cd "$env:PUBLIC\Demo-IaC-Bootstrap"' -ForegroundColor Cyan
+    Write-Host '          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force' -ForegroundColor Cyan
+    Write-Host '          ./Install-LabTools.ps1' -ForegroundColor Cyan
     Write-Host ""
     Write-Host "   The script will detect PowerShell 7, switch to it automatically," -ForegroundColor DarkGray
     Write-Host "   skip this step, and continue with the rest of the setup (step 2 of 2)." -ForegroundColor DarkGray
@@ -209,11 +235,12 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 # -- Software installs ---------------------------------------------------------
 
 Write-Banner "Installing Software"
+$script:InstallStep = 0; $script:InstallTotal = 6
 
 Winget-Install 'Git.Git'                  'Git for Windows'
 Winget-Install 'GitHub.GitHubDesktop'     'GitHub Desktop'
-Winget-Install 'Microsoft.VisualStudioCode' 'Visual Studio Code'
-Winget-Install 'Microsoft.AzureCLI'       'Azure CLI (az)'
+Winget-Install 'Microsoft.VisualStudioCode' 'Visual Studio Code' 'About 1-3 minutes with no output while the installer runs -- not stuck.'
+Winget-Install 'Microsoft.AzureCLI'       'Azure CLI (az)'      'The SLOWEST install: 3-8 minutes with no output at all while the MSI runs. It is working -- do not close the window.'
 Winget-Install 'GitHub.cli'               'GitHub CLI (gh)'
 Winget-Install 'Microsoft.WindowsTerminal' 'Windows Terminal'
 
@@ -521,3 +548,5 @@ Write-Host ""
 Write-Host "  4. Head to the workshop wiki to start Lab 1:" -ForegroundColor White
 Write-Host "     https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki" -ForegroundColor DarkCyan
 Write-Host ""
+
+try { Stop-Transcript | Out-Null } catch { }

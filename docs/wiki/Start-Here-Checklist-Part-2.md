@@ -11,7 +11,7 @@ Continue here after finishing [Start-Here Checklist](https://github.com/saulpati
 From **PowerShell** in your bootstrap folder, run:
 
 ```powershell
-cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC-Bootstrap')
+cd "$env:PUBLIC\Demo-IaC-Bootstrap"
 Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/main/scripts/Connect-AzureAndGitHub.ps1" -OutFile .\Connect-AzureAndGitHub.ps1
 ./Connect-AzureAndGitHub.ps1
 ```
@@ -38,7 +38,7 @@ When it finishes you will see:
 > [!NOTE]
 > **Already have a repo called `Demo-IaC_Demo_with_VSCode`?** The script checks that the repo in your account is genuinely a fork *of this workshop*, not just a name match. It **warns and keeps going** rather than stopping — but read the warning, because it means the URL it prints is the wrong repo. Rename or delete that repo and re-run; otherwise every later step (`gh repo set-default`, the OIDC credential, the deploy workflows) points at a repo with none of the lab's workflows in it.
 
-> If your environment blocks script downloads in the terminal, download `Connect-AzureAndGitHub.ps1` in a browser, save it to the `Demo-IaC-Bootstrap` folder on your Desktop, then run it.
+> If your environment blocks script downloads in the terminal, download `Connect-AzureAndGitHub.ps1` in a browser, save it to `C:\Users\Public\Demo-IaC-Bootstrap\`, then run it.
 
 ---
 
