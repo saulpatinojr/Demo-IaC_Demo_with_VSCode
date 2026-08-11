@@ -101,6 +101,25 @@ function Is-Installed($cmd) {
     $null -ne (Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
+# Locate pwsh.exe wherever it actually is. Two traps this must survive:
+#   - this session's PATH predates an install done seconds ago (Refresh-Path)
+#   - a 32-bit PowerShell host, where $env:ProgramFiles resolves to
+#     "Program Files (x86)" and hides a perfectly good 64-bit install.
+#     $env:ProgramW6432 points at the real Program Files from any host.
+function Find-Pwsh {
+    Refresh-Path
+    $candidates = @()
+    $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($cmd) { $candidates += $cmd.Source }
+    foreach ($root in @($env:ProgramW6432, $env:ProgramFiles, 'C:\Program Files')) {
+        if ($root) { $candidates += (Join-Path $root 'PowerShell\7\pwsh.exe') }
+    }
+    foreach ($c in $candidates) {
+        if ($c -and (Test-Path $c)) { return $c }
+    }
+    return $null
+}
+
 # Progress counters -- every install line shows [step/total] plus a start
 # time, and slow installers carry a note, so a silent MSI that takes five
 # minutes reads as "working" instead of "stuck".
@@ -195,11 +214,7 @@ Write-Ok "winget $wingetVer available"
 
 if ($PSVersionTable.PSVersion.Major -lt 7) {
 
-    # This 5.1 session's PATH predates any install done moments ago, so check
-    # the default install location as well as the PATH.
-    $pwshCmd = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-    $pwshDefault = Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe'
-    if (-not $pwshCmd -and (Test-Path $pwshDefault)) { $pwshCmd = $pwshDefault }
+    $pwshCmd = Find-Pwsh
 
     if ($pwshCmd) {
         Write-Step "PowerShell 7"
@@ -216,8 +231,10 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     $script:InstallStep = 0; $script:InstallTotal = 1
     Winget-Install 'Microsoft.PowerShell' 'PowerShell 7 (pwsh)' 'About 1-2 minutes. The installer prints nothing while it runs -- not stuck.'
 
-    if (-not (Test-Path $pwshDefault)) {
-        Write-Fail "PowerShell 7 did not install cleanly. Re-run this script to try again."
+    if (-not (Find-Pwsh)) {
+        Write-Fail "PowerShell 7 was not found after the install."
+        Write-Fail "Check the log for what winget reported: $script:LogPath"
+        Write-Fail "Then re-run this script to try again."
         exit 1
     }
 
