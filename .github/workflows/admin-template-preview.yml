@@ -80,7 +80,7 @@ jobs:
         run: |
           az deployment sub what-if \
             --location eastus2 \
-            --name lab-defender-plans-preview \
+            --name "lab-defender-plans-preview-${{ github.run_number }}" \
             --template-file scripts/admin/defender-plans.bicep \
             --parameters serversPlan=P1 includeStorage=false enabled=true
 
@@ -93,7 +93,7 @@ jobs:
           echo "matching resource groups: $RGS"
           az deployment sub what-if \
             --location eastus2 \
-            --name lab-policy-preview \
+            --name "lab-policy-preview-${{ github.run_number }}" \
             --template-file scripts/admin/lab-policy.bicep \
             --parameters resourceGroupNames="$RGS"
 
