@@ -101,6 +101,25 @@ function Is-Installed($cmd) {
     $null -ne (Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
+# Locate pwsh.exe wherever it actually is. Two traps this must survive:
+#   - this session's PATH predates an install done seconds ago (Refresh-Path)
+#   - a 32-bit PowerShell host, where $env:ProgramFiles resolves to
+#     "Program Files (x86)" and hides a perfectly good 64-bit install.
+#     $env:ProgramW6432 points at the real Program Files from any host.
+function Find-Pwsh {
+    Refresh-Path
+    $candidates = @()
+    $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($cmd) { $candidates += $cmd.Source }
+    foreach ($root in @($env:ProgramW6432, $env:ProgramFiles, 'C:\Program Files')) {
+        if ($root) { $candidates += (Join-Path $root 'PowerShell\7\pwsh.exe') }
+    }
+    foreach ($c in $candidates) {
+        if ($c -and (Test-Path $c)) { return $c }
+    }
+    return $null
+}
+
 # Progress counters -- every install line shows [step/total] plus a start
 # time, and slow installers carry a note, so a silent MSI that takes five
 # minutes reads as "working" instead of "stuck".
@@ -195,11 +214,7 @@ Write-Ok "winget $wingetVer available"
 
 if ($PSVersionTable.PSVersion.Major -lt 7) {
 
-    # This 5.1 session's PATH predates any install done moments ago, so check
-    # the default install location as well as the PATH.
-    $pwshCmd = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-    $pwshDefault = Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe'
-    if (-not $pwshCmd -and (Test-Path $pwshDefault)) { $pwshCmd = $pwshDefault }
+    $pwshCmd = Find-Pwsh
 
     if ($pwshCmd) {
         Write-Step "PowerShell 7"
@@ -216,23 +231,32 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     $script:InstallStep = 0; $script:InstallTotal = 1
     Winget-Install 'Microsoft.PowerShell' 'PowerShell 7 (pwsh)' 'About 1-2 minutes. The installer prints nothing while it runs -- not stuck.'
 
-    if (-not (Test-Path $pwshDefault)) {
-        Write-Fail "PowerShell 7 did not install cleanly. Re-run this script to try again."
+    if (-not (Find-Pwsh)) {
+        Write-Fail "PowerShell 7 was not found after the install."
+        Write-Fail "Check the log for what winget reported: $script:LogPath"
+        Write-Fail "Then re-run this script to try again."
         exit 1
     }
 
-    Write-Banner "PowerShell 7 is installed -- one restart needed"
-    Write-Host "   Close this window, then:" -ForegroundColor Yellow
+    Write-Ok "PowerShell 7 verified at $(Find-Pwsh)"
+
+    Write-Banner "SUCCESS -- Step 1 of 2 complete: PowerShell 7 is installed"
     Write-Host ""
-    Write-Host "     1. Open a NEW PowerShell window (Run as Administrator)" -ForegroundColor White
-    Write-Host "     2. Paste these three lines again:" -ForegroundColor White
+    Write-Host "   Nothing failed. The setup pauses here on purpose: the rest of the" -ForegroundColor Green
+    Write-Host "   tools install under PowerShell 7, which needs a fresh window." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "   To continue with step 2 of 2 (installs everything else):" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "     1. Close this window" -ForegroundColor White
+    Write-Host "     2. Open a NEW PowerShell window (Run as Administrator)" -ForegroundColor White
+    Write-Host "     3. Paste these three lines:" -ForegroundColor White
     Write-Host ""
     Write-Host '          cd "$env:PUBLIC\Demo-IaC-Bootstrap"' -ForegroundColor Cyan
     Write-Host '          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force' -ForegroundColor Cyan
     Write-Host '          ./Install-LabTools.ps1' -ForegroundColor Cyan
     Write-Host ""
     Write-Host "   The script will detect PowerShell 7, switch to it automatically," -ForegroundColor DarkGray
-    Write-Host "   skip this step, and continue with the rest of the setup (step 2 of 2)." -ForegroundColor DarkGray
+    Write-Host "   and continue with the remaining tools -- no re-download needed." -ForegroundColor DarkGray
     Write-Host ""
     exit 0
 }
@@ -527,7 +551,8 @@ if (-not $SkipLogin) {
 
 Write-Host ""
 if ($allGood) {
-    Write-Host "    All tools verified." -ForegroundColor Green
+    Write-Banner "SUCCESS -- Step 2 of 2 complete: workstation ready"
+    Write-Host "    All tools installed and verified. Finish with the Next Steps below." -ForegroundColor Green
 } else {
     Write-Host "  [!]   Some tools were not found on PATH." -ForegroundColor Yellow
     Write-Host "       Close this terminal, open a fresh PowerShell 7 window, and re-run:" -ForegroundColor Yellow
