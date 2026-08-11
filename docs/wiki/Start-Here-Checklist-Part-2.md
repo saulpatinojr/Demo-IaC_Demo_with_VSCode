@@ -11,7 +11,7 @@ Continue here after finishing [Start-Here Checklist](https://github.com/saulpati
 From **PowerShell** in your bootstrap folder, run:
 
 ```powershell
-cd $HOME\Desktop\Demo-IaC-Bootstrap
+cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC-Bootstrap')
 Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/main/scripts/Connect-AzureAndGitHub.ps1" -OutFile .\Connect-AzureAndGitHub.ps1
 ./Connect-AzureAndGitHub.ps1
 ```
@@ -38,7 +38,7 @@ When it finishes you will see:
 > [!NOTE]
 > **Already have a repo called `Demo-IaC_Demo_with_VSCode`?** The script checks that the repo in your account is genuinely a fork *of this workshop*, not just a name match. It **warns and keeps going** rather than stopping — but read the warning, because it means the URL it prints is the wrong repo. Rename or delete that repo and re-run; otherwise every later step (`gh repo set-default`, the OIDC credential, the deploy workflows) points at a repo with none of the lab's workflows in it.
 
-> If your environment blocks script downloads in the terminal, download `Connect-AzureAndGitHub.ps1` in a browser, save it to `$HOME\Desktop\Demo-IaC-Bootstrap\`, then run it.
+> If your environment blocks script downloads in the terminal, download `Connect-AzureAndGitHub.ps1` in a browser, save it to the `Demo-IaC-Bootstrap` folder on your Desktop, then run it.
 
 ---
 
@@ -58,7 +58,7 @@ You have two ways to clone. Both end with the same folder on your Desktop.
 Open a **new PowerShell 7** window and run (replace `<your-username>` with your GitHub username printed in Section E):
 
 ```powershell
-cd $HOME\Desktop
+cd ([Environment]::GetFolderPath('Desktop'))
 gh repo clone <your-username>/Demo-IaC_Demo_with_VSCode
 cd .\Demo-IaC_Demo_with_VSCode
 git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
@@ -97,14 +97,14 @@ You should see: `✓ Set <your-username>/Demo-IaC_Demo_with_VSCode as the defaul
 2. Click **File → Clone repository…**
 3. Select the **URL** tab
 4. Paste your fork URL: `https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode`
-5. Set **Local path** to: `C:\Users\<your-windows-username>\Desktop`
+5. Set **Local path** to your **Desktop** folder -- click **Choose...** and select Desktop rather than typing a path (on OneDrive-managed machines the real Desktop is inside OneDrive, not `C:\Users\<name>\Desktop`)
    *(GitHub Desktop appends the repo name — your final folder will be `...\Desktop\Demo-IaC_Demo_with_VSCode`)*
 6. Click **Clone**
 
 **Then add the upstream remote and set your fork as default** (run inside the cloned folder):
 
 ```powershell
-cd "$HOME\Desktop\Demo-IaC_Demo_with_VSCode"
+cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC_Demo_with_VSCode')
 git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
 git remote -v
 gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
@@ -117,7 +117,7 @@ gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
 - [ ] Folder `Demo-IaC_Demo_with_VSCode` exists on your Desktop
 - [ ] `git remote -v` shows both `origin` (your fork) and `upstream` (instructor's repo)
 - [ ] `gh repo set-default` confirmed your fork as the default repo
-- [ ] Open the cloned folder in VS Code: `code "$HOME\Desktop\Demo-IaC_Demo_with_VSCode"` — accept the recommended extensions prompt.
+- [ ] Open the cloned folder in VS Code: `code (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC_Demo_with_VSCode')` — accept the recommended extensions prompt.
 
 ---
 
@@ -125,7 +125,7 @@ gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
 
 > **Before running any command in this section**, move into the cloned repo folder:
 > ```powershell
-> cd "$HOME\Desktop\Demo-IaC_Demo_with_VSCode"
+> cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC_Demo_with_VSCode')
 > ```
 > If you see `fatal: not a git repository`, you skipped Section F — go back and clone your fork first.
 

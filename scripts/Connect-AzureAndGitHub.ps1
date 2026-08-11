@@ -51,7 +51,7 @@ Write-Host ""
 Require-Command 'gh'
 Require-Command 'git'
 
-# ── Azure CLI authentication ───────────────────────────────────────────────────
+# -- Azure CLI authentication ---------------------------------------------------
 
 Write-Step "Authenticating to Azure"
 $azureValidated = $true
@@ -79,7 +79,7 @@ if (Get-Command az -ErrorAction SilentlyContinue) {
     Write-Warn "Azure CLI not found. Install it from Section C and re-run."
 }
 
-# ── GitHub CLI authentication ──────────────────────────────────────────────────
+# -- GitHub CLI authentication --------------------------------------------------
 
 Write-Step "Authenticating to GitHub CLI"
 gh auth status 2>$null | Out-Null
@@ -94,7 +94,7 @@ if (-not $ghUser) {
 }
 Write-Ok "GitHub CLI authentication complete. (signed in as @$ghUser)"
 
-# ── Fork ───────────────────────────────────────────────────────────────────────
+# -- Fork -----------------------------------------------------------------------
 
 $upstreamOwner = ($UpstreamRepo -split '/', 2)[0]
 $repoName      = ($UpstreamRepo -split '/', 2)[1]
@@ -169,7 +169,7 @@ if ($ghUser -eq $upstreamOwner) {
 }
 Write-Info "Use that URL in Section F of the checklist when cloning your copy of the repo."
 
-# ── GitHub Copilot CLI extension ───────────────────────────────────────────────
+# -- GitHub Copilot CLI extension -----------------------------------------------
 
 Write-Step "Installing/verifying GitHub Copilot CLI"
 $extList = gh extension list 2>$null
@@ -185,7 +185,7 @@ if ($extList -match 'gh-copilot') {
 }
 Write-Ok "Authentication helper completed."
 
-# ── Summary ────────────────────────────────────────────────────────────────────
+# -- Summary --------------------------------------------------------------------
 
 if ($forkWarning) {
     Write-Host ""

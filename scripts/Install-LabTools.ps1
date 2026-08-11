@@ -28,11 +28,11 @@
         gh copilot  CLI extension (installed after gh auth login)
 
       SIGN-IN (interactive, opens browser)
-        gh auth login   — GitHub (+ installs gh copilot extension after)
-        az login        — Azure (then prompts to select the right subscription)
+        gh auth login   -- GitHub (+ installs gh copilot extension after)
+        az login        -- Azure (then prompts to select the right subscription)
 
-      NEXT STEPS REMINDER (printed at the end — require the GUI)
-        Open VS Code → Ctrl+Alt+I → sign in to Copilot Chat
+      NEXT STEPS REMINDER (printed at the end -- require the GUI)
+        Open VS Code -> Ctrl+Alt+I -> sign in to Copilot Chat
         Download + run Connect-AzureAndGitHub.ps1 (auto fork + clone)
         Run Setup-Oidc.ps1 from inside your cloned fork
 
@@ -50,7 +50,7 @@
 
 .EXAMPLE
     ./scripts/Install-LabTools.ps1
-    Fully guided — prompts for name + email, then opens browser for Azure + GitHub login.
+    Fully guided -- prompts for name + email, then opens browser for Azure + GitHub login.
 
 .EXAMPLE
     ./scripts/Install-LabTools.ps1 -GitName "Alice Smith" -GitEmail "alice@example.com"
@@ -61,7 +61,11 @@
 
 .NOTES
     Requires: Windows 10/11 with winget, local Administrator rights.
-    Run from PowerShell 5 or PowerShell 7 — the script works in both.
+    Run from PowerShell 5 or PowerShell 7. Started from PowerShell 5 on a
+    machine without PowerShell 7, the script installs ONLY PowerShell 7 and
+    asks for one restart (step 1 of 2); on the re-run it detects PowerShell 7,
+    switches to it automatically, and continues with everything else
+    (step 2 of 2). Started from PowerShell 7, it runs straight through.
 #>
 [CmdletBinding()]
 param(
@@ -73,20 +77,20 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Off
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# -- Helpers ------------------------------------------------------------------
 
 function Write-Banner($text) {
-    $line = '─' * ($text.Length + 4)
+    $line = '-' * ($text.Length + 4)
     Write-Host "`n$line" -ForegroundColor Cyan
     Write-Host "  $text" -ForegroundColor Cyan
     Write-Host "$line" -ForegroundColor Cyan
 }
 
-function Write-Step($msg)  { Write-Host "`n  ▶  $msg" -ForegroundColor White }
-function Write-Ok($msg)    { Write-Host "     ✅  $msg" -ForegroundColor Green }
-function Write-Skip($msg)  { Write-Host "     ⏭   $msg" -ForegroundColor DarkGray }
-function Write-Warn($msg)  { Write-Host "     ⚠️   $msg" -ForegroundColor Yellow }
-function Write-Fail($msg)  { Write-Host "     ❌  $msg" -ForegroundColor Red }
+function Write-Step($msg)  { Write-Host "`n  >  $msg" -ForegroundColor White }
+function Write-Ok($msg)    { Write-Host "     [ok]  $msg" -ForegroundColor Green }
+function Write-Skip($msg)  { Write-Host "     >>   $msg" -ForegroundColor DarkGray }
+function Write-Warn($msg)  { Write-Host "     [!]   $msg" -ForegroundColor Yellow }
+function Write-Fail($msg)  { Write-Host "     [x]  $msg" -ForegroundColor Red }
 
 function Refresh-Path {
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
@@ -109,7 +113,7 @@ function Winget-Install($id, $name) {
     else                      { Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)" }
 }
 
-# ── Platform check ────────────────────────────────────────────────────────────
+# -- Platform check ------------------------------------------------------------
 # This has to come first. The admin check below calls WindowsIdentity, which
 # throws "Windows Principal functionality is not supported on this platform" on
 # macOS and Linux -- so without this guard the first thing a Mac user sees is a
@@ -131,21 +135,21 @@ if ($IsWindows -eq $false) {
     exit 1
 }
 
-# ── Admin check ───────────────────────────────────────────────────────────────
+# -- Admin check ---------------------------------------------------------------
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Write-Banner "Lab Workstation Setup — IaC with GitHub Copilot Workshop"
+Write-Banner "Lab Workstation Setup -- IaC with GitHub Copilot Workshop"
 
 if (-not $isAdmin) {
     Write-Warn "Not running as Administrator. Some installs may fail."
-    Write-Warn "Right-click PowerShell → 'Run as administrator' and re-run this script."
+    Write-Warn "Right-click PowerShell -> 'Run as administrator' and re-run this script."
     $cont = Read-Host "  Continue anyway? [y/N]"
     if ($cont -notmatch '^[Yy]') { exit 1 }
 }
 
-# ── winget availability check ─────────────────────────────────────────────────
+# -- winget availability check -------------------------------------------------
 
 Write-Step "Checking winget"
 if (-not (Is-Installed 'winget')) {
@@ -155,7 +159,54 @@ if (-not (Is-Installed 'winget')) {
 $wingetVer = (winget --version) -replace '[^0-9.]',''
 Write-Ok "winget $wingetVer available"
 
-# ── Software installs ─────────────────────────────────────────────────────────
+# -- Stage 0: PowerShell 7 gate ------------------------------------------------
+# Everything after this line runs under PowerShell 7. On a fresh machine this
+# script starts in Windows PowerShell 5.1 (the only shell there is), so:
+#   - pwsh not installed yet  -> install ONLY PowerShell 7, tell the user to
+#     re-run the checklist block in a new window, and stop.
+#   - pwsh installed already  -> hand this same script to pwsh and continue
+#     there, whichever shell the user happened to open for the re-run.
+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+
+    # This 5.1 session's PATH predates any install done moments ago, so check
+    # the default install location as well as the PATH.
+    $pwshCmd = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+    $pwshDefault = Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe'
+    if (-not $pwshCmd -and (Test-Path $pwshDefault)) { $pwshCmd = $pwshDefault }
+
+    if ($pwshCmd) {
+        Write-Step "PowerShell 7"
+        Write-Ok "PowerShell 7 detected -- continuing the setup there"
+        $forward = @()
+        if ($GitName)   { $forward += @('-GitName',  $GitName)  }
+        if ($GitEmail)  { $forward += @('-GitEmail', $GitEmail) }
+        if ($SkipLogin) { $forward += '-SkipLogin' }
+        & $pwshCmd -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath @forward
+        exit $LASTEXITCODE
+    }
+
+    Write-Banner "Step 1 of 2 -- Install PowerShell 7"
+    Winget-Install 'Microsoft.PowerShell' 'PowerShell 7 (pwsh)'
+
+    if (-not (Test-Path $pwshDefault)) {
+        Write-Fail "PowerShell 7 did not install cleanly. Re-run this script to try again."
+        exit 1
+    }
+
+    Write-Banner "PowerShell 7 is installed -- one restart needed"
+    Write-Host "   Close this window, then:" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "     1. Open a NEW PowerShell window (Run as Administrator)" -ForegroundColor White
+    Write-Host "     2. Run the same block from Section C of the checklist again" -ForegroundColor White
+    Write-Host ""
+    Write-Host "   The script will detect PowerShell 7, switch to it automatically," -ForegroundColor DarkGray
+    Write-Host "   skip this step, and continue with the rest of the setup (step 2 of 2)." -ForegroundColor DarkGray
+    Write-Host ""
+    exit 0
+}
+
+# -- Software installs ---------------------------------------------------------
 
 Write-Banner "Installing Software"
 
@@ -164,13 +215,12 @@ Winget-Install 'GitHub.GitHubDesktop'     'GitHub Desktop'
 Winget-Install 'Microsoft.VisualStudioCode' 'Visual Studio Code'
 Winget-Install 'Microsoft.AzureCLI'       'Azure CLI (az)'
 Winget-Install 'GitHub.cli'               'GitHub CLI (gh)'
-Winget-Install 'Microsoft.PowerShell'     'PowerShell 7 (pwsh)'
 Winget-Install 'Microsoft.WindowsTerminal' 'Windows Terminal'
 
 # Refresh PATH so all newly installed tools are reachable in this session
 Refresh-Path
 
-# ── Bicep CLI ─────────────────────────────────────────────────────────────────
+# -- Bicep CLI -----------------------------------------------------------------
 
 Write-Step "Bicep CLI (via az bicep install)"
 if (Is-Installed 'az') {
@@ -179,10 +229,10 @@ if (Is-Installed 'az') {
     if ($bicepVer) { Write-Ok "Bicep CLI $bicepVer" }
     else           { Write-Ok "Bicep CLI installed (run 'az bicep version' to verify)" }
 } else {
-    Write-Warn "az CLI not on PATH yet — run 'az bicep install' after reopening the terminal"
+    Write-Warn "az CLI not on PATH yet -- run 'az bicep install' after reopening the terminal"
 }
 
-# ── VS Code extensions ────────────────────────────────────────────────────────
+# -- VS Code extensions --------------------------------------------------------
 
 Write-Banner "Installing VS Code Extensions"
 
@@ -219,10 +269,10 @@ if ($codeCmd) {
         }
     }
 } else {
-    Write-Warn "Skipped VS Code extensions — re-run this script after reopening the terminal."
+    Write-Warn "Skipped VS Code extensions -- re-run this script after reopening the terminal."
 }
 
-# ── VS Code settings ──────────────────────────────────────────────────────────
+# -- VS Code settings ----------------------------------------------------------
 
 Write-Banner "Configuring VS Code Settings"
 
@@ -268,7 +318,7 @@ $existing | ConvertTo-Json -Depth 10 | Set-Content $settingsFile -Encoding utf8
 
 Write-Ok "VS Code settings written to $settingsFile"
 
-# ── Git configuration ─────────────────────────────────────────────────────────
+# -- Git configuration ---------------------------------------------------------
 
 Write-Banner "Configuring Git"
 
@@ -313,15 +363,15 @@ if (Is-Installed 'git') {
     Write-Ok "git config: user.email = $GitEmail"
     Write-Ok "git config: defaultBranch=main, autocrlf=input, editor=code, credential.helper=manager"
 } else {
-    Write-Warn "git not on PATH — reopen the terminal and re-run to configure git identity."
+    Write-Warn "git not on PATH -- reopen the terminal and re-run to configure git identity."
 }
 
-# ── Interactive logins ────────────────────────────────────────────────────────
+# -- Interactive logins --------------------------------------------------------
 
 if (-not $SkipLogin) {
     Write-Banner "Signing In"
 
-    # ── GitHub CLI ──
+    # -- GitHub CLI --
     Write-Step "GitHub CLI (gh auth login)"
     Write-Host "     A browser window will open. Sign in with your GitHub account." -ForegroundColor DarkCyan
     if (Is-Installed 'gh') {
@@ -331,13 +381,13 @@ if (-not $SkipLogin) {
         } else {
             gh auth login --web --git-protocol https
             if ($LASTEXITCODE -eq 0) { Write-Ok "GitHub CLI authenticated" }
-            else                     { Write-Warn "gh auth login did not complete — run 'gh auth login' manually" }
+            else                     { Write-Warn "gh auth login did not complete -- run 'gh auth login' manually" }
         }
     } else {
-        Write-Warn "gh not on PATH — reopen terminal and run: gh auth login"
+        Write-Warn "gh not on PATH -- reopen terminal and run: gh auth login"
     }
 
-    # ── GitHub Copilot CLI extension (requires gh auth) ──
+    # -- GitHub Copilot CLI extension (requires gh auth) --
     Write-Step "GitHub Copilot CLI extension (gh extension install github/gh-copilot)"
     if (Is-Installed 'gh') {
         $extList = gh extension list 2>$null
@@ -346,11 +396,11 @@ if (-not $SkipLogin) {
         } else {
             gh extension install github/gh-copilot 2>&1 | Out-Null
             if ($LASTEXITCODE -eq 0) { Write-Ok "gh copilot extension installed (try: gh copilot explain 'list files')" }
-            else                     { Write-Warn "Extension install failed — run manually: gh extension install github/gh-copilot" }
+            else                     { Write-Warn "Extension install failed -- run manually: gh extension install github/gh-copilot" }
         }
     }
 
-    # ── Azure CLI ──
+    # -- Azure CLI --
     Write-Step "Azure CLI (az login)"
     Write-Host "     A browser window will open. Sign in with your Azure account." -ForegroundColor DarkCyan
     if (Is-Installed 'az') {
@@ -359,25 +409,25 @@ if (-not $SkipLogin) {
         if ($LASTEXITCODE -eq 0) {
             $alreadyIn = $true
             $subName = az account show --query name -o tsv 2>$null
-            Write-Skip "Already signed in to Azure — subscription: $subName"
+            Write-Skip "Already signed in to Azure -- subscription: $subName"
         } else {
             az login
             if ($LASTEXITCODE -eq 0) {
                 $alreadyIn = $true
                 Write-Ok "Azure CLI authenticated"
             } else {
-                Write-Warn "az login did not complete — run 'az login' manually"
+                Write-Warn "az login did not complete -- run 'az login' manually"
             }
         }
 
-        # Subscription selection — show list if more than one is available
+        # Subscription selection -- show list if more than one is available
         if ($alreadyIn) {
             $subsJson = az account list --query "[].{Name:name,Id:id,Default:isDefault}" -o json 2>$null
             $subs = $subsJson | ConvertFrom-Json
             if ($subs.Count -gt 1) {
                 Write-Step "Select the target Azure subscription"
                 for ($i = 0; $i -lt $subs.Count; $i++) {
-                    $marker = if ($subs[$i].Default) { '  ◀ current default' } else { '' }
+                    $marker = if ($subs[$i].Default) { '  < current default' } else { '' }
                     $color  = if ($subs[$i].Default) { 'Green' } else { 'White' }
                     Write-Host ("     [{0}]  {1}`n          {2}{3}" -f ($i + 1), $subs[$i].Name, $subs[$i].Id, $marker) -ForegroundColor $color
                 }
@@ -388,7 +438,7 @@ if (-not $SkipLogin) {
                         az account set --subscription $subs[$idx].Id | Out-Null
                         Write-Ok "Active subscription: $($subs[$idx].Name)"
                     } else {
-                        Write-Warn "Invalid selection — keeping current default"
+                        Write-Warn "Invalid selection -- keeping current default"
                     }
                 } else {
                     Write-Skip "Keeping default: $(az account show --query name -o tsv 2>$null)"
@@ -398,11 +448,11 @@ if (-not $SkipLogin) {
             }
         }
     } else {
-        Write-Warn "az not on PATH — reopen terminal and run: az login"
+        Write-Warn "az not on PATH -- reopen terminal and run: az login"
     }
 }
 
-# ── Final verification ────────────────────────────────────────────────────────
+# -- Final verification --------------------------------------------------------
 
 Write-Banner "Verification"
 
@@ -433,37 +483,37 @@ if (-not $SkipLogin) {
     try {
         $ghUser = gh api user --jq .login 2>$null
         if ($ghUser) { Write-Ok "GitHub:  signed in as @$ghUser" }
-        else         { Write-Warn "GitHub:  not authenticated — run: gh auth login" }
-    } catch { Write-Warn "GitHub:  not authenticated — run: gh auth login" }
+        else         { Write-Warn "GitHub:  not authenticated -- run: gh auth login" }
+    } catch { Write-Warn "GitHub:  not authenticated -- run: gh auth login" }
 
     try {
         $azSub  = az account show --query name -o tsv 2>$null
-        if ($azSub) { Write-Ok "Azure:   signed in — subscription: $azSub" }
-        else        { Write-Warn "Azure:   not authenticated — run: az login" }
-    } catch { Write-Warn "Azure:   not authenticated — run: az login" }
+        if ($azSub) { Write-Ok "Azure:   signed in -- subscription: $azSub" }
+        else        { Write-Warn "Azure:   not authenticated -- run: az login" }
+    } catch { Write-Warn "Azure:   not authenticated -- run: az login" }
 }
 
 Write-Host ""
 if ($allGood) {
-    Write-Host "  🎉  All tools verified." -ForegroundColor Green
+    Write-Host "    All tools verified." -ForegroundColor Green
 } else {
-    Write-Host "  ⚠️   Some tools were not found on PATH." -ForegroundColor Yellow
+    Write-Host "  [!]   Some tools were not found on PATH." -ForegroundColor Yellow
     Write-Host "       Close this terminal, open a fresh PowerShell 7 window, and re-run:" -ForegroundColor Yellow
     Write-Host "       ./scripts/Install-LabTools.ps1 -SkipLogin" -ForegroundColor Cyan
 }
 
 Write-Banner "Next Steps"
-Write-Host "  Complete these manually — they require the GUI:" -ForegroundColor DarkCyan
+Write-Host "  Complete these manually -- they require the GUI:" -ForegroundColor DarkCyan
 Write-Host ""
 Write-Host "  1. Open VS Code" -ForegroundColor White
-Write-Host "     → Press  Ctrl+Alt+I  to open Copilot Chat" -ForegroundColor White
-Write-Host "     → Sign in with your GitHub account when prompted" -ForegroundColor White
-Write-Host "     → Confirm the Copilot icon appears in the sidebar" -ForegroundColor White
+Write-Host "     -> Press  Ctrl+Alt+I  to open Copilot Chat" -ForegroundColor White
+Write-Host "     -> Sign in with your GitHub account when prompted" -ForegroundColor White
+Write-Host "     -> Confirm the Copilot icon appears in the sidebar" -ForegroundColor White
 Write-Host ""
 Write-Host "  2. Download and run Connect-AzureAndGitHub.ps1 (auto fork + clone)" -ForegroundColor White
 Write-Host '     Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/main/scripts/Connect-AzureAndGitHub.ps1" -OutFile .\Connect-AzureAndGitHub.ps1' -ForegroundColor Cyan
 Write-Host "     .\Connect-AzureAndGitHub.ps1" -ForegroundColor Cyan
-Write-Host "     → This creates your fork, clones it to Desktop, and adds upstream" -ForegroundColor White
+Write-Host "     -> This creates your fork, clones it to Desktop, and adds upstream" -ForegroundColor White
 Write-Host ""
 Write-Host "  3. Run the OIDC setup (from inside the cloned repo):" -ForegroundColor White
 Write-Host '     ./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"' -ForegroundColor Cyan
