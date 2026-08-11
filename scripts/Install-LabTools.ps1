@@ -238,18 +238,25 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
         exit 1
     }
 
-    Write-Banner "PowerShell 7 is installed -- one restart needed"
-    Write-Host "   Close this window, then:" -ForegroundColor Yellow
+    Write-Ok "PowerShell 7 verified at $(Find-Pwsh)"
+
+    Write-Banner "SUCCESS -- Step 1 of 2 complete: PowerShell 7 is installed"
     Write-Host ""
-    Write-Host "     1. Open a NEW PowerShell window (Run as Administrator)" -ForegroundColor White
-    Write-Host "     2. Paste these three lines again:" -ForegroundColor White
+    Write-Host "   Nothing failed. The setup pauses here on purpose: the rest of the" -ForegroundColor Green
+    Write-Host "   tools install under PowerShell 7, which needs a fresh window." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "   To continue with step 2 of 2 (installs everything else):" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "     1. Close this window" -ForegroundColor White
+    Write-Host "     2. Open a NEW PowerShell window (Run as Administrator)" -ForegroundColor White
+    Write-Host "     3. Paste these three lines:" -ForegroundColor White
     Write-Host ""
     Write-Host '          cd "$env:PUBLIC\Demo-IaC-Bootstrap"' -ForegroundColor Cyan
     Write-Host '          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force' -ForegroundColor Cyan
     Write-Host '          ./Install-LabTools.ps1' -ForegroundColor Cyan
     Write-Host ""
     Write-Host "   The script will detect PowerShell 7, switch to it automatically," -ForegroundColor DarkGray
-    Write-Host "   skip this step, and continue with the rest of the setup (step 2 of 2)." -ForegroundColor DarkGray
+    Write-Host "   and continue with the remaining tools -- no re-download needed." -ForegroundColor DarkGray
     Write-Host ""
     exit 0
 }
@@ -544,7 +551,8 @@ if (-not $SkipLogin) {
 
 Write-Host ""
 if ($allGood) {
-    Write-Host "    All tools verified." -ForegroundColor Green
+    Write-Banner "SUCCESS -- Step 2 of 2 complete: workstation ready"
+    Write-Host "    All tools installed and verified. Finish with the Next Steps below." -ForegroundColor Green
 } else {
     Write-Host "  [!]   Some tools were not found on PATH." -ForegroundColor Yellow
     Write-Host "       Close this terminal, open a fresh PowerShell 7 window, and re-run:" -ForegroundColor Yellow
