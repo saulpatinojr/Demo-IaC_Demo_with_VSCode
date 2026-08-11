@@ -49,8 +49,8 @@ If `gh` is not installed yet, use this bootstrap path first.
 Copy/paste these lines one at a time:
 
 ```powershell
-cd $HOME\Desktop
-mkdir Demo-IaC-Bootstrap -ErrorAction SilentlyContinue
+cd ([Environment]::GetFolderPath('Desktop'))
+mkdir Demo-IaC-Bootstrap -Force | Out-Null
 cd .\Demo-IaC-Bootstrap
 ```
 
@@ -61,7 +61,7 @@ Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_
 ```
 
 - [ ] If your machine blocks script download in terminal, download the same file in a browser and save it as:
-  - `$HOME\Desktop\Demo-IaC-Bootstrap\Install-LabTools.ps1`
+  - `Demo-IaC-Bootstrap\Install-LabTools.ps1` **on your Desktop** (the same folder the previous step created)
 
 ---
 
@@ -72,12 +72,10 @@ Invoke-WebRequest "https://raw.githubusercontent.com/saulpatinojr/Demo-IaC_Demo_
 From **PowerShell 7 or PowerShell 5 (Run as Administrator)**, run the following:
 
 ```powershell
-cd $HOME\Desktop\Demo-IaC-Bootstrap
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+cd (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Demo-IaC-Bootstrap')
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 ./Install-LabTools.ps1
 ```
-
-When asked "Do you want to change the execution policy?" select "A" for Yes to All.
 
 If PowerShell shows an execution-policy error, the second line fixes only the current shell session. This one-shot path installs tools, configures Git, and prepares sign-in. **Skip to Section D if you use this script.**
 

@@ -226,8 +226,8 @@ foreach ($p in $pages) {
         #   -- "> ```powershell" -- was reported as an emoji callout.
         #   \p{So} alone misses every emoji above U+FFFF, because .NET regex
         #   works on UTF-16 units and sees a surrogate pair, not a symbol.
-        #   That silently exempted the ones most used here (💰 🎉 🚀 🧹),
-        #   catching only BMP characters like ⚠.
+        #   That silently exempted the ones most used here (   ),
+        #   catching only BMP characters like [!].
         # So: category So, or a high surrogate that starts an astral emoji.
         if ($l.Text -match '^>\s+(\p{So}|[\uD800-\uDBFF])') {
             Add-Problem "$($p.Name) line $($l.N): emoji blockquote -- use a GitHub alert instead" $false
@@ -295,7 +295,7 @@ if (-not (Test-Path $readme)) {
 } else {
     $readmeCosts = Get-Costs $readme
     $sideCosts   = Get-Costs $sidebar
-    if     ($readmeCosts.Count -eq 0) { Add-Problem 'README.md has no per-chapter cost rows (| L1.1 … ~$0.24 |)' $false }
+    if     ($readmeCosts.Count -eq 0) { Add-Problem 'README.md has no per-chapter cost rows (| L1.1 ... ~$0.24 |)' $false }
     elseif ($sideCosts.Count   -eq 0) { Add-Problem '_Sidebar.md has no per-chapter cost rows' $false }
     else {
         $drift = @()
