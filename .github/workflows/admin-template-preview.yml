@@ -1,0 +1,116 @@
+name: "Admin template preview"
+
+# Read-only preview of the instructor templates in scripts/admin/: compile
+# them, then run the subscription-scope what-ifs the wrapper scripts' -WhatIf
+# would run. Nothing here deploys.
+#
+# Runs automatically on any pull request touching scripts/admin/, and on
+# demand from the Actions tab. The pull_request trigger matters for identity:
+# the lab's federated credentials cover the main branch and pull requests,
+# so a preview from a PR authenticates while one from a feature-branch push
+# would not.
+#
+# Expectation-setting: the lab service principal holds Contributor on the
+# student resource group, not the subscription. The compile step always
+# works; the what-if steps show exactly as much as that identity is allowed
+# to see, and an AuthorizationFailed there is a correct demonstration of the
+# permission walls the curriculum teaches (L2.4). The instructor's own
+# Security Admin / Owner account sees the full preview by running the
+# wrapper scripts with -WhatIf locally.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/admin/**'
+      - '.github/workflows/admin-template-preview.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: admin-template-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Compile needs no Azure credentials, so it runs first and always: a
+      # repo without the OIDC secrets (a fresh fork before Setup-OidcAll.ps1)
+      # still gets template verification out of this workflow.
+      - name: Compile all admin templates
+        run: |
+          for f in scripts/admin/defender-plans.bicep scripts/admin/lab-policy.bicep scripts/admin/lab-policy-rg.bicep; do
+            echo "::group::az bicep build $f"
+            az bicep build --file "$f" --stdout > /dev/null
+            echo "compiles clean"
+            echo "::endgroup::"
+          done
+
+      - name: Check for Azure credentials
+        id: creds
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          if [ -n "$AZURE_CLIENT_ID" ] && [ -n "$AZURE_TENANT_ID" ] && [ -n "$AZURE_SUBSCRIPTION_ID" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "AZURE_* secrets not set -- skipping the what-if previews." \
+                 "Run Setup-OidcAll.ps1 (or set the secrets manually) to enable them."
+          fi
+
+      - name: Azure login (OIDC)
+        if: steps.creds.outputs.available == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if -- Defender plans
+        id: defender
+        if: steps.creds.outputs.available == 'true'
+        continue-on-error: true
+        run: |
+          az deployment sub what-if \
+            --location eastus2 \
+            --name "lab-defender-plans-preview-${{ github.run_number }}" \
+            --template-file scripts/admin/defender-plans.bicep \
+            --parameters serversPlan=P1 includeStorage=false enabled=true
+
+      - name: What-if -- lab policy guardrails
+        id: policy
+        if: steps.creds.outputs.available == 'true'
+        continue-on-error: true
+        run: |
+          RGS=$(az group list --query "[?starts_with(name, 'rg-techdemo-')].name" -o json)
+          echo "matching resource groups: $RGS"
+          az deployment sub what-if \
+            --location eastus2 \
+            --name "lab-policy-preview-${{ github.run_number }}" \
+            --template-file scripts/admin/lab-policy.bicep \
+            --parameters resourceGroupNames="$RGS"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Admin template preview"
+            echo "| Check | Result |"
+            echo "|-------|--------|"
+            echo "| Compile (3 templates) | success |"
+            echo "| What-if: Defender plans | ${{ steps.defender.outcome || 'skipped (no Azure secrets)' }} |"
+            echo "| What-if: lab policy | ${{ steps.policy.outcome || 'skipped (no Azure secrets)' }} |"
+            echo ""
+            echo "Skipped what-ifs mean the AZURE_* secrets are not set on this"
+            echo "repo -- run Setup-OidcAll.ps1 to configure OIDC. A failed"
+            echo "what-if with AuthorizationFailed means the lab service principal"
+            echo "lacks subscription-scope rights -- expected; run the wrapper"
+            echo "scripts with -WhatIf under an instructor account for the full"
+            echo "preview."
+          } >> "$GITHUB_STEP_SUMMARY"
