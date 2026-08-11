@@ -136,12 +136,18 @@ function Winget-Install($id, $name, $slowNote) {
     # machine prompts to accept the source agreement terms, and because this
     # output is captured into a variable the prompt would be invisible -- the
     # script reads as hung while winget waits forever for a Y nobody can see.
-    $result = winget list --id $id --exact --accept-source-agreements --disable-interactivity 2>$null
+    #
+    # --source winget on every call: all our packages come from the winget
+    # community source, and machines with a stale preinstalled App Installer
+    # fail msstore certificate pinning (0x8a15005e, "server certificate did
+    # not match any of the expected values"). Never consulting msstore makes
+    # the client version irrelevant.
+    $result = winget list --id $id --exact --source winget --accept-source-agreements --disable-interactivity 2>$null
     if ($LASTEXITCODE -eq 0 -and ($result -match $id)) {
         Write-Skip "$name already installed"
         return
     }
-    winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
+    winget install --id $id --exact --source winget --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
     if ($LASTEXITCODE -eq 0) { Write-Ok ("{0} installed ({1:mm\:ss} elapsed)" -f $name, $sw.Elapsed) }
     else {
         Write-Warn "$name install returned exit $LASTEXITCODE (may still have succeeded)"

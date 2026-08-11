@@ -84,12 +84,12 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 ```
 
 > [!TIP]
-> **Certificate or TLS error from winget during the install?** Per-machine, not your profile. Check the clock (`Get-Date`, fix with `w32tm /resync /force`), then reset winget's source cache and re-run the script:
+> **Certificate error `0x8a15005e` ("server certificate did not match") from winget?** That machine has a stale preinstalled App Installer whose msstore certificates are outdated -- per-machine, not your profile. The script pins every install to the `winget` source, which sidesteps msstore entirely. If it still appears, install PowerShell 7 directly and re-run the script:
 > ```powershell
-> winget source reset --force
-> winget source update
+> winget install --id Microsoft.PowerShell --exact --source winget --accept-package-agreements --accept-source-agreements
 > ./Install-LabTools.ps1
 > ```
+> For other certificate/TLS errors: check the clock (`Get-Date`, fix with `w32tm /resync /force`), then `winget source reset --force` and re-run.
 
 > [!NOTE]
 > **On a brand-new machine this script runs in two stages.** Stage 1 installs PowerShell 7 and asks you to close the window — that is expected, not an error. Open a **new** PowerShell window (Run as Administrator), run this same block again, and the script detects PowerShell 7, switches to it, and installs everything else (stage 2). If PowerShell 7 was already present, there is only one stage.
