@@ -5,14 +5,22 @@ Two different cleanups, and they are not interchangeable. One stops Azure chargi
 > [!CAUTION]
 > **Order matters.** Tear down Azure **first**, then clear credentials. Once you are signed out you can no longer delete anything — and Azure Firewall, Bastion, Front Door and SQL keep billing at roughly **$1.84/hr** with the full stack up.
 
-| | What it removes | Script |
+| | What it removes | How |
 |---|---|---|
-| **1 · Azure** | Everything the labs deployed, and optionally the OIDC identity | `Cleanup-Labs.ps1` |
-| **2 · This machine** | `az` and `gh` sign-ins, saved settings, your passwords file | `Clear-LabCredentials.ps1` |
+| **1 · Azure** | Everything the labs deployed | Classroom: the **Teardown labs** workflow · Self-hosted: `Cleanup-Labs.ps1` |
+| **2 · This machine** | `az` and `gh` sign-ins, saved settings, your passwords file | `Clear-LabCredentials.ps1` *(self-hosted / CLI path)* |
 
 ---
 
 ## 1. Tear down Azure
+
+### Classroom — the Teardown workflow
+
+On your fork: **Actions → Teardown labs → Run workflow**. It **defaults to a dry run** that only lists what would be deleted; to delete for real, un-check *dry run* and type `DELETE` into the confirmation input.
+
+That workflow is your teardown path, full stop: your account holds **Reader** on the resource group, so `Cleanup-Labs.ps1` (which deletes resources directly with your own credentials) cannot work for you — it is a self-hosted tool. The workflow deletes under the shared deploy identity instead, targeting the group named after your fork owner. The group itself always stays.
+
+### Self-hosted — the script
 
 Preview first — it lists what would go and changes nothing:
 
@@ -21,15 +29,16 @@ Preview first — it lists what would go and changes nothing:
 ./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP
 ```
 
-**You should see:** the resources deleted in three passes, then a report of anything that survived. It deletes the *contents* of the group and leaves the group itself — in a classroom you usually hold Contributor on the group and cannot recreate it.
+**You should see:** the resources deleted in three passes, then a report of anything that survived. It deletes the *contents* of the group and leaves the group itself. (The Teardown workflow works for self-hosted forks too.)
 
-Prefer the browser? **Actions → Teardown labs → Run workflow**, and type `DELETE` to confirm. It defaults to a dry run.
-
-Also removing the Entra app registration this workshop created:
+Also removing the Entra app registration your own setup created:
 
 ```powershell
 ./scripts/Cleanup-Labs.ps1 -Prefix "<yourname>" -RemoveOidc
 ```
+
+> [!WARNING]
+> **`-RemoveOidc` is for self-hosted setups only — in the classroom, removing the Entra app is instructor-only.** The classroom deploy identity is the **shared app for the entire class**; deleting it would break every student's deploys at once. Instructors: see [Instructor Admin Tools](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Admin-Tools).
 
 > [!WARNING]
 > **Do not delete only the Azure Firewall.** After L1.2, both spoke subnets route `0.0.0.0/0` at its private IP. Removing it alone black-holes every VM's outbound traffic while they keep billing. Tear down all of L1.2, route table included, or run the full teardown.
@@ -100,7 +109,11 @@ az deployment group list -g $RG --query "[?properties.provisioningState=='Failed
 az deployment group show -g $RG --name <deployment-name> --query properties.error
 ```
 
-**Start the whole workshop over** — teardown, then re-run setup:
+**Start the whole workshop over**
+
+*Classroom:* run the **Teardown labs** workflow (dry run → `DELETE`), then simply run L1.1 again. There is nothing to re-run or re-wire — the deploy identity lives in the workflow code and the federated trust, not in your fork.
+
+*Self-hosted:* teardown, then re-run setup:
 
 ```powershell
 ./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP
@@ -111,7 +124,7 @@ az deployment group show -g $RG --name <deployment-name> --query properties.erro
 
 ## Related pages
 
-- [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide) — the one-time OIDC setup
+- [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide) — how deploys work, plus the self-hosted OIDC setup appendix
 - [Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References) — every script, one line each
 - [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) — when a command does not do what this page says
 - [Instructor Admin Tools](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Admin-Tools) — tearing down a whole class at once

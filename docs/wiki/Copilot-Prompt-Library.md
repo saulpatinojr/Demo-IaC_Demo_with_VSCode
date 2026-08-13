@@ -12,6 +12,9 @@ Copy-paste prompts that work against this repo, grouped by what you want to do. 
 > [!TIP]
 > This repo ships a [`.github/copilot-instructions.md`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/.github/copilot-instructions.md), which Copilot reads automatically. It already knows to use Azure Verified Modules, pin versions, keep the prefix under 12 characters and deploy at resource-group scope — so you don't have to say any of that.
 
+> [!NOTE]
+> **Classroom accounts hold Azure Reader**, so prompts that run `az deployment group create` (or `what-if`) locally will fail with authorization errors — verify deploys through the **Actions workflow logs** or the Azure portal instead, and deploy by running the lab workflow. Prompts that only edit or compile Bicep (`az bicep build`) work unchanged for everyone; the local deploy/diagnose prompts below work as written on self-hosted subscriptions.
+
 ---
 
 ## Deploy as-is
