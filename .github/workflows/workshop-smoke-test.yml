@@ -1,0 +1,86 @@
+name: "Workshop smoke test (instructor)"
+
+# Instructor-only verification for the pre-staged classroom. Logs in with the
+# shared workshop identity -- the same in-code values the student workflows
+# fall back to -- and runs the L1.1 stages (lint -> what-if -> deploy) against
+# a chosen testing resource group (User31-TechCon .. User35-TechCon). This is
+# exactly what a student fork does, minus the fork.
+#
+# NOTE: this run's OIDC subject is this repo and branch, so the shared app
+# needs a federated credential for it (students' forks each have their own).
+# A login failure here names the exact subject to add.
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: "Testing resource group (a User<nn>-TechCon testing slot)"
+        type: string
+        required: true
+        default: "User35-TechCon"
+      prefix:
+        description: "Resource prefix (lowercase, max 12 chars)"
+        type: string
+        required: true
+        default: "user35"
+      deploy:
+        description: "Deploy after what-if (uncheck for what-if only)"
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: workshop-smoke-test
+  cancel-in-progress: false
+
+env:
+  # The shared workshop identity, verbatim -- no secrets on purpose: the point
+  # is to prove the in-code fallback path the classroom relies on. This
+  # environment is throwaway and deleted after the event.
+  AZURE_CLIENT_ID: "ec772fb1-230b-4d26-a980-4870f847e392"
+  AZURE_TENANT_ID: "92247f12-056e-4600-9248-fb43a78491c9"
+  AZURE_SUBSCRIPTION_ID: "456beea5-e9a5-4fde-aa3e-f136cf384213"
+  AZURE_PREFIX: ${{ inputs.prefix }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+  AZURE_RESOURCE_GROUP: ${{ inputs.resource_group }}
+  # Same throwaway convention the student workflows default to: <account>!!
+  VM_ADMIN_PASSWORD: ${{ format('{0}!!', inputs.resource_group) }}
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC, shared identity)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify the testing resource group is reachable
+        run: az group show --name "$AZURE_RESOURCE_GROUP" --query "{name:name, location:location}" -o table
+
+      - name: Lint (compile + linter)
+        run: |
+          az bicep build --file curriculum/L1.1-core-deployment/main.bicep --stdout > /dev/null
+          az bicep build-params --file curriculum/L1.1-core-deployment/main.bicepparam --stdout > /dev/null
+
+      - name: What-if (preview changes)
+        run: |
+          az deployment group what-if \
+            --name smoke-whatif-${{ github.run_number }} \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --parameters curriculum/L1.1-core-deployment/main.bicepparam
+
+      - name: Deploy
+        if: ${{ inputs.deploy }}
+        run: |
+          az deployment group create \
+            --name smoke-deploy-${{ github.run_number }} \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --parameters curriculum/L1.1-core-deployment/main.bicepparam
