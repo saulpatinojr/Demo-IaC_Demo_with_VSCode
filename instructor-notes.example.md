@@ -1,8 +1,13 @@
 # Instructor notes — workshop identifiers (PRIVATE when filled in)
 
 Copy this file to `instructor-notes.md` and fill in the real values.
-`instructor-notes.md` is gitignored: the identifiers live there and **nowhere
-else in the repo** — never in workflow files, docs, or commit history.
+`instructor-notes.md` is gitignored. Note what is and isn't secret here: the
+app/tenant/subscription IDs are deliberately **committed** to the repo as
+in-code workflow fallbacks — they are identifiers, not credentials, and this
+classroom environment is deleted after the event — so seeing them in
+`.github/workflows/*.yml` is expected, not a leak. What belongs **only** in
+your gitignored copy is the rest: the shared storage account name and any
+roster or tenant notes.
 
 ## Shared deployment identity (Entra app registration)
 
