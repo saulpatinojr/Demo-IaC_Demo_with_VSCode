@@ -136,6 +136,12 @@ AKS, which is a different lab and a different bill), and move on.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds
+> Reader, so local `az deployment` commands will be refused — deploys go
+> through your fork's workflow, which uses the shared workshop identity
+> automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>
@@ -291,6 +297,7 @@ Every alert it handles exists because something here was switched on.
 | Your situation | Go to |
 |---|---|
 | Ready to keep going — work the alerts these protections raise | **[L3.3 — Security Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-3-Security-Operations)** |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want the big picture of this level first | [Level 3 · Secure overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

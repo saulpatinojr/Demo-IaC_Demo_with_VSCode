@@ -1,6 +1,6 @@
 # L3.1 — Security Foundation 🟡
 
-**📍 [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L2.4 — Enterprise Monitoring Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-4-Monitoring-Strategy) &nbsp;·&nbsp; Next: [L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection)
+**📍 [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals) &nbsp;·&nbsp; Next: [L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals) · Go deeper: [L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection)
 
 ---
 
@@ -16,12 +16,13 @@ code looks.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Chapter 1 of Level 3 · everyone | ~20 min | **Levels 1 and 2** | 🟢 **$0.00/hr** — nothing in this chapter is billable |
+| Chapter 1 of Level 3 · everyone | ~20 min | **Nothing** — this deploys on its own; the workbook simply shows more when more is deployed | 🟢 **$0.00/hr** — nothing in this chapter is billable |
 
 > [!IMPORTANT]
 > **Defender plans are not enabled here, and you cannot enable them.**
-> `Microsoft.Security/pricings` is subscription-scoped and your Contributor
-> role stops at the resource group — enabling plans is an instructor job.
+> `Microsoft.Security/pricings` is subscription-scoped — your account holds
+> Reader, and even the deploy identity's Contributor stops at the resource
+> group. Enabling plans is an instructor job.
 
 <br>
 
@@ -63,7 +64,8 @@ the **pricings** resource showing which Defender plans are enabled.
 
 The dotted line records the permission boundary. You can *read* the plan state —
 and you should, because it decides what half of Level 3 can detect — but you
-cannot change it with Contributor on a resource group.
+cannot change it: the change lives at subscription scope, above both your
+Reader role and the deploy identity's resource-group Contributor.
 
 Everything here is free: foundational CSPM, secure score, recommendations,
 Resource Graph and workbooks all cost nothing on any subscription.
@@ -92,8 +94,9 @@ is worth more than the workbook itself.
 
 <br>
 
-`Microsoft.Security/pricings` is a **subscription**-scoped resource, and this
-lab grants you Contributor on **one resource group**. Turning plans on is an
+`Microsoft.Security/pricings` is a **subscription**-scoped resource, and in
+this lab your account holds Reader while the shared deploy identity holds
+Contributor on **one resource group**. Turning plans on is an
 instructor job — `scripts/admin/Enable-DefenderPlans.ps1`, run once per lab
 subscription. That is not a gap in the lab; it is the same separation of
 duties every real organisation has, and L3.2 is built around what you *can*
@@ -129,6 +132,12 @@ configure yourself.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds
+> Reader, so local `az deployment` commands will be refused — deploys go
+> through your fork's workflow, which uses the shared workshop identity
+> automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -235,12 +244,14 @@ catching it is a Level 3 skill.
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Least privilege in the pipeline, too**
 >
-> **You just hit it:** the OIDC identity this repo creates holds Contributor on
-> one resource group — deliberately. That is why this chapter's workflow can
-> deploy a workbook and cannot enable a Defender plan, and why the deploy fails
-> loudly instead of quietly widening its own access.
-> **Find it:** `scripts/Setup-Oidc.ps1`, which says in its own header that it
-> has no subscription-scoped mode.
+> **You just hit it:** the workshop's shared deploy identity holds Contributor
+> on each student's resource group — deliberately, while you yourself hold only
+> Reader. That is why this chapter's workflow can deploy a workbook and cannot
+> enable a Defender plan, and why the deploy fails loudly instead of quietly
+> widening its own access.
+> **Find it:** self-hosted users create their own identity with
+> `scripts/Setup-Oidc.ps1`, which says in its own header that it has no
+> subscription-scoped mode.
 > **Beyond the lab:** a CI identity that can do everything is the fastest way to
 > turn a compromised workflow into a compromised tenant. The right amount of
 > friction here is *some*.
@@ -252,10 +263,11 @@ catching it is a Level 3 skill.
 
 ## ➡️ What carries forward
 
-L3.2 turns on the protection a Contributor genuinely can — per-resource Defender
-settings on the SQL server, and just-in-time access on the VMs — and prices each
-one before enabling it. The recommendations you ranked here are the list it
-works from.
+On the main path, L4.1 protects the same estate against loss instead of attack.
+Going deeper, L3.2 turns on the protection that genuinely can be enabled at
+resource scope — per-resource Defender settings on the SQL server, and
+just-in-time access on the VMs — and prices each one before enabling it. The
+recommendations you ranked here are the list it works from.
 
 <br>
 
@@ -263,7 +275,9 @@ works from.
 
 | Your situation | Go to |
 |---|---|
-| Ready to keep going — turn on the protection you can | **[L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection)** |
+| Continue the main path — protect the estate against loss | **[L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals)** |
+| Go deeper into security — turn on the protection you can | [L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection) |
+| See every chapter, its needs and its cost | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want the big picture of this level first | [Level 3 · Secure overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

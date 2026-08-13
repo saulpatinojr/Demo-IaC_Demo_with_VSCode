@@ -9,7 +9,7 @@
 
 | | |
 |---|---|
-| **Builds on** | Level 1 (what gets protected), Level 2 (job alerting), Level 3 (protection as governance) |
+| **Builds on** | **L1.1 for L4.1** — the test VM is the protected instance; **L1.3 and L2.3** for the deeper chapters |
 | **Chapters** | L4.1 · L4.2 · L4.3 · L4.4 |
 | **Existing assets reused** | The Level 1 VMs, SQL databases and Key Vault; L2.3's action groups; L3.1's Azure Policy model |
 | **New Azure resources** | Recovery Services vault · Backup vault · backup policies |
@@ -24,6 +24,20 @@
 > redundancy and cross-region restore freeze the moment the first item is
 > protected, and L4.4 needs the second one. Read L4.1 before running anything
 > in this level.
+
+## The chapters
+
+L4.1 is the **main-path** stop for this level — the last one on the
+[🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map)'s
+east–west line L1.1 → L2.1 → L3.1 → L4.1. Chapters .2–.4 go **deeper** into the
+data-protection discipline, each adding resources, cost and prerequisites.
+
+| Chapter | One line | Adds |
+|---|---|---|
+| **[L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals)** · 🧭 main path | Vault, policy and VM protection — needs L1.1 only, and holds the one irreversible decision | +$0.06/hr |
+| [L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection) · go deeper | SQL point-in-time restore verified, long-term retention configured, Key Vault protections checked | +$0.01/hr |
+| [L4.3 — Operational Backup Management](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-3-Backup-Operations) · go deeper | Vault telemetry, failed-and-missing job alerts, and a rehearsed restore drill | +$0.01/hr |
+| [L4.4 — Enterprise Data Protection Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-4-Data-Protection-Strategy) · go deeper | A long-retention policy that tiers into archive, and the arithmetic behind it | +$0.01/hr |
 
 ## Where this level sits
 
@@ -83,7 +97,9 @@ recovery point actually is.
   for each.
 - Enable soft delete and describe the deletion attack it defeats.
 
-**Builds on.** L1.1 and L1.2 — the four VMs are the protected instances.
+**Builds on.** L1.1 only — the test VM is the protected instance. The
+workflow's `include_web_tier` toggle defaults off; tick it while L1.2 stands
+to protect the web VMs too.
 
 **Azure services.** Recovery Services vault · Azure Backup for Azure VMs ·
 backup policies · instant restore snapshots · soft delete · vault redundancy
@@ -158,8 +174,10 @@ rehearsed, and protected against its own operators.
   explain why "no news" from a backup system is the most dangerous signal.
 - Build a backup compliance report from the Log Analytics data and identify
   unprotected resources.
-- Apply least-privilege backup RBAC — Backup Operator cannot delete, Backup
-  Contributor can — and explain the separation.
+- Apply least-privilege backup RBAC — Backup Operator cannot delete recovery
+  points, Backup Contributor can — and explain the separation, including why
+  the shared deploy identity's Contributor sits on the dangerous side of that
+  line while your own account holds Reader.
 - Configure multi-user authorization with a Resource Guard so a single
   compromised admin cannot destroy the backups.
 - Run a restore drill against a documented expectation and record the result.
