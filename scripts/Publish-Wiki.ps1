@@ -312,6 +312,36 @@ if (-not (Test-Path $readme)) {
     }
 }
 
+# ---- 11. Chapter navigation ------------------------------------------------
+# Every chapter page carries the grid navigation: a pin breadcrumb line with
+# Previous/Next, a "Where next?" section, and a link to the Curriculum Map.
+# Convention was the only enforcement before this check; a page that drops out
+# of the pattern strands the reader mid-curriculum.
+# (Emoji are matched by surrogate-pair escapes -- U+1F4CD is the pin,
+#  U+1F9ED the compass -- so this block adds no literal emoji to the file.)
+Write-Step 'Chapter navigation'
+$navProblems = 0
+$chapterPages = @($pages | Where-Object { $_.Name -match '^Curriculum-L\d-\d-' })
+foreach ($p in $chapterPages) {
+    $text = [System.IO.File]::ReadAllText($p.FullName)
+    if ($text -notmatch ('\*\*' + [char]0xD83D + [char]0xDCCD + ' \[')) {
+        Add-Problem "$($p.Name): no pin breadcrumb line at the top" $true; $navProblems++
+    }
+    foreach ($needle in @('Previous:', 'Next:')) {
+        if ($text -notlike "*$needle*") {
+            Add-Problem "$($p.Name): breadcrumb missing '$needle'" $true; $navProblems++
+        }
+    }
+    if ($text -notmatch ("(?m)^##\s+" + [char]0xD83E + [char]0xDDED + "\s+Where next\?")) {
+        Add-Problem "$($p.Name): no 'Where next?' section" $true; $navProblems++
+    }
+    if ($text -notmatch 'Curriculum-Map') {
+        Add-Problem "$($p.Name): no link to the Curriculum Map" $true; $navProblems++
+    }
+}
+if ($chapterPages.Count -eq 0) { Add-Problem 'no chapter pages found for the navigation check' $false }
+elseif ($navProblems -eq 0) { Write-Ok "all $($chapterPages.Count) chapter pages carry breadcrumb, Where-next and map link" }
+
 # ---- Verdict ---------------------------------------------------------------
 Write-Host ""
 if ($script:Errors -gt 0) {
