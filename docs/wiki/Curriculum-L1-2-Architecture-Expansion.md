@@ -100,9 +100,12 @@ All three deploy the **same** template and give the **same** result.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use Option 2 (GitHub Actions).** Your Azure account holds Reader, so the local `az deployment` commands in Options 1 and 3 will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
+**Best if you like the command line** (self-hosted only). Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
 
 ```powershell
 az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.2-architecture-expansion/main.bicepparam
@@ -120,7 +123,7 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
+**Best if you'd rather click a button.** Classroom forks are pre-wired — nothing to set up; self-hosted needs the one-time `Setup-Oidc.ps1` ([Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide)).
 
 On GitHub: **Actions → "Curriculum L1.2 - Architecture Expansion" → Run workflow** (or `gh workflow run curriculum-l1-2-architecture-expansion.yml`).
 
@@ -132,9 +135,9 @@ On GitHub: **Actions → "Curriculum L1.2 - Architecture Expansion" → Run work
 
 ## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
 
-**Best if you'd rather describe the change** and have AI edit and deploy it.
+**Best if you'd rather describe the change** and have AI edit and deploy it. The deploy step is self-hosted only (classroom accounts hold Reader).
 
-Copilot runs the deploy **locally**, so load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
+Copilot runs the deploy **locally**, so (self-hosted) load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
 
 Open **Copilot Chat → Agent mode**:
 
@@ -218,4 +221,5 @@ L1.3 does **not** build on this lab. It creates its own spoke, peers it straight
 | Ready to keep going — containers, SQL and private networking | **[L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application)** |
 | Save ~$1.41/hr first: tear this chapter down (L1.3 doesn't use it) | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Want the big picture of Level 1 | [Level 1 · Deploy overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -1,43 +1,51 @@
 # L2.1 — Monitoring Fundamentals 🔵
 
-**📍 [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L1.4 — Production-Ready Platform](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform) &nbsp;·&nbsp; Next: [L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility)
+**📍 [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L1.1 — Core Deployment](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment) &nbsp;·&nbsp; Next: [L3.1 — Security Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-1-Security-Foundation) · Go deeper: [L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility)
 
 ---
 
-**Goal:** point everything Level 1 built at **one** Log Analytics workspace.
-Nothing new gets deployed and nothing here has an hourly rate — from this
-chapter on you pay per **GB collected**.
+**Goal:** point everything you've built so far at **one** Log Analytics
+workspace. Nothing here has an hourly rate — from this chapter on you pay per
+**GB collected**.
 
-**The IaC lesson:** one template wires up an entire estate — four agent
-installs and six diagnostic settings that would otherwise be forty portal
+**The IaC lesson:** one template wires up whatever is standing — agent
+installs and diagnostic settings that would otherwise be dozens of portal
 clicks, done identically every time.
 
 <br>
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Chapter 1 of Level 2 · everyone | ~15 min | **All of Level 1** (chapters L1.1–L1.4) | 🔵 ~$0.06/hr added · ~$1.90/hr running total |
+| Chapter 1 of Level 2 · everyone | ~15 min | **L1.1 only** | 🔵 ~$0.06/hr added · ~$1.90/hr running total |
 
 > [!IMPORTANT]
-> **Level 1 must already be deployed.** This template creates no workspace — it
-> reuses `log-<prefix>-l3`, the one L1.3 made.
+> **Only L1.1 needs to be deployed.** On the main path this template creates
+> its own small workspace, `log-<prefix>-mon`, and monitors the core estate —
+> the test VM gets the agent and a data collection rule, Bastion gets a
+> diagnostic setting. If you went south in Level 1 first, flip the workflow's
+> **`include_web_tier`** / **`include_app_tier`** switches to monitor those
+> tiers too; the app-tier switch also moves everything onto `log-<prefix>-l3`,
+> the workspace L1.3 made, so the estate keeps **one** workspace for L5's
+> Sentinel later.
 
 <br>
 
 ## What you're building
 
 Two collection paths, one destination. VMs get an **agent** that gathers what
-a **data collection rule** tells it to. Platform resources (firewall, load
-balancer, Bastion, Key Vault, SQL, container app) get **diagnostic settings** —
-no agent, nothing to install. Both land in the workspace L1.3 already created.
+a **data collection rule** tells it to. Platform resources (Bastion always;
+firewall and load balancer with the web tier; Key Vault, SQL and container app
+with the app tier) get **diagnostic settings** — no agent, nothing to install.
+Both paths land in one workspace: `log-<prefix>-mon`, which this template
+creates, or L1.3's `log-<prefix>-l3` when the app tier is standing.
 
 ```mermaid
 flowchart LR
-  VMS["4 VMs<br/>from L1.1 + L1.2"]
-  RES["6 platform resources<br/>firewall · LB · Bastion<br/>Key Vault · SQL · container app"]
+  VMS["VMs standing now<br/>L1.1 test VM ·<br/>+3 web VMs if L1.2 is up"]
+  RES["platform resources<br/>Bastion always ·<br/>firewall + LB with L1.2 ·<br/>Key Vault + SQL + app with L1.3"]
   AMA["Azure Monitor Agent<br/>+ data collection rule"]
   DIAG["diagnostic settings<br/>named categories only"]
-  WS["log-iacdemo-l3<br/>from L1.3 — reused,<br/>not replaced"]
+  WS["log-iacdemo-mon<br/>created here — or L1.3's<br/>log-iacdemo-l3 when the<br/>app tier is deployed"]
 
   VMS --> AMA --> WS
   RES --> DIAG --> WS
@@ -54,18 +62,24 @@ flowchart LR
 
 Two collection paths converge on one workspace.
 
-The four VMs (the L1.1 test VM and the three L1.2 web VMs) get the Azure
-Monitor Agent extension, associated with the data collection rule
-`dcr-iacdemo-vm`. The rule decides *what* the agent gathers — six performance
+Every VM standing gets the Azure Monitor Agent extension, associated with the
+data collection rule `dcr-iacdemo-vm`. On the main path that is one VM — the
+L1.1 test VM; with L1.2 deployed and `include_web_tier` ticked, the three web
+VMs join it. The rule decides *what* the agent gathers — six performance
 counters every 60 seconds and syslog at warning level and above.
 
-The six platform resources (firewall, internal load balancer, Bastion host,
-Key Vault, SQL database, container app) each get a diagnostic setting that
-forwards named log categories. No agent involved.
+The platform resources each get a diagnostic setting that forwards named log
+categories. No agent involved. Bastion is always included; the firewall and
+internal load balancer join with the web tier, and Key Vault, SQL database
+and the container app join with the app tier.
 
-Both paths land in `log-iacdemo-l3` — the workspace **L1.3 already created**.
-This chapter promotes it from an app-scoped workspace to the platform
-workspace for the whole estate rather than creating a second one.
+Where it all lands depends on which mode you are in. On the main path
+(L1.1 → L2.1) the template creates a small workspace of its own,
+`log-iacdemo-mon`, so the chapter stands on the core alone. With
+`include_app_tier` on, it instead reuses `log-iacdemo-l3` — the workspace
+**L1.3 already created** — promoting it from an app-scoped workspace to the
+platform workspace for the whole estate rather than creating a second one.
+That reuse is the architectural teaching point once the app tier exists.
 
 </details>
 
@@ -95,7 +109,7 @@ estate in it, instead of starting again.
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
 <b>Azure RBAC</b><br><br>
-<b>Contributor</b> on the lab resource group — what <code>Setup-Oidc.ps1</code> already granted you.<br>
+<b>Contributor</b> on the lab resource group — held by the <i>shared workshop deploy identity</i> your fork's workflow signs in as. Classroom accounts themselves hold <b>Reader</b>, which is why deploys go through GitHub Actions.<br>
 <sub>Why: the template installs a VM extension, creates a data collection rule and writes diagnostic settings onto resources another template owns. All three are ordinary resource writes. <b>Monitoring Contributor</b> plus <b>Virtual Machine Contributor</b> is the least-privilege equivalent for production.</sub>
 </td>
 </tr>
@@ -116,6 +130,9 @@ estate in it, instead of starting again.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -143,14 +160,17 @@ az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L2.1-monitoring-fundamentals/main.bicepparam
 ```
 
-**You should see:** a `monitoredVmNames` output listing four VMs, and
-`diagnosticSettingsApplied` of 6.
+**You should see:** a `monitoredVmNames` output listing every VM standing, and
+a `diagnosticSettingsApplied` count to match — on the main path that is one VM
+and 1 setting (Bastion); with every tier up, four VMs and 6 settings.
 
-**Tore L1.2 down to save money?** Then say so, and the firewall, load balancer
-and three web VMs are skipped:
+**Match the switches to what is actually deployed** — skipped or tore down
+L1.2? Deployed L1.3 and want its resources monitored (and its workspace
+reused)?
 
 ```powershell
 $env:CURRICULUM_INCLUDE_WEB_TIER = "false"
+$env:CURRICULUM_INCLUDE_APP_TIER = "true"
 ```
 
 <br>
@@ -162,9 +182,12 @@ $env:CURRICULUM_INCLUDE_WEB_TIER = "false"
 On GitHub: **Actions → "Curriculum L2 - Operations & Monitoring" → Run
 workflow**, then pick **L2.1 - Monitoring Fundamentals** from the dropdown.
 
-Two inputs matter:
+Three inputs matter, and the tier switches **default to off** — the main-path
+run needs no ticking at all:
 
-- **L1.2 is still deployed** — untick if you tore the firewall down.
+- **`include_web_tier`** — tick only while L1.2's firewall and web VMs stand.
+- **`include_app_tier`** — tick only when L1.3 is deployed; it also switches
+  everything onto L1.3's workspace instead of creating `log-<prefix>-mon`.
 - **Stop after what-if** — shows every change and deploys nothing. Worth one
   run on its own: this is the first template in the curriculum that changes
   resources somebody else's template owns.
@@ -197,16 +220,19 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
 
 ## ✅ Verify it
 
-1. **The agents are reporting** — every VM should appear within about 10 minutes:
+1. **The agents are reporting** — every VM should appear within about 10
+   minutes. On the main path the workspace is `log-<prefix>-mon`; if you
+   deployed with `include_app_tier` on, query `log-<prefix>-l3` instead:
 
    ```powershell
    $WS = az monitor log-analytics workspace show -g $env:AZURE_RESOURCE_GROUP `
-     -n "log-$env:AZURE_PREFIX-l3" --query customerId -o tsv
+     -n "log-$env:AZURE_PREFIX-mon" --query customerId -o tsv
    az monitor log-analytics query --workspace $WS `
      --analytics-query "Heartbeat | summarize LastSeen=max(TimeGenerated) by Computer" -o table
    ```
 
-   **You should see:** four rows — the L1.1 test VM and the three L1.2 web VMs.
+   **You should see:** one row per VM standing — just the L1.1 test VM on the
+   main path, four rows once the L1.2 web VMs are in play.
 
 2. **The rule is actually attached** — an unassociated agent collects nothing,
    and it is the most common "why is there no data?" in Azure Monitor:
@@ -226,9 +252,11 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
      --analytics-query "union AzureDiagnostics, AZFWNetworkRule, AZFWApplicationRule | summarize Rows=count() by Type" -o table
    ```
 
-   **You should see:** at least the firewall tables once traffic has passed
-   through it. Quiet firewall, no rows — generate some by curling out from a
-   web VM, the same test you ran in L1.2.
+   **You should see:** on the main path, Bastion rows in `AzureDiagnostics`
+   once you have opened a Bastion session to the test VM. With the web tier
+   on, the firewall tables appear too once traffic has passed through it —
+   quiet firewall, no rows; generate some by curling out from a web VM, the
+   same test you ran in L1.2.
 
 4. **Find out what it costs** — the point of the chapter:
 
@@ -252,8 +280,8 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
 > **Find it:** `.github/workflows/curriculum-l2-operations.yml` — adding a
 > chapter is two lines, one option and one case.
 > **Beyond the lab:** typed inputs (choice, boolean) turn a workflow into a
-> small internal tool, and the boolean you ticked for "L1.2 is still deployed"
-> is the same mechanism a real pipeline uses for environment flags.
+> small internal tool, and the `include_web_tier` / `include_app_tier`
+> booleans are the same mechanism a real pipeline uses for environment flags.
 > [Docs →](https://docs.github.com/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_dispatchinputs)
 
 <br>
@@ -262,9 +290,11 @@ Then decide whether you want it. That is the whole skill this chapter teaches.
 
 ## ➡️ What carries forward
 
-L2.2 writes queries against exactly this data — the perf counters, the syslog,
-and the firewall categories you chose here. Anything you did not collect in
-this chapter is a query you cannot write in the next one.
+On the main path, L3.1 checks the security of the estate you have now
+instrumented. If you go deeper instead, L2.2 writes queries against exactly
+this data — the perf counters, the syslog, and whatever categories you chose
+here. Anything you did not collect in this chapter is a query you cannot
+write there.
 
 <br>
 
@@ -272,7 +302,9 @@ this chapter is a query you cannot write in the next one.
 
 | Your situation | Go to |
 |---|---|
-| Ready to keep going — turn this data into answers | **[L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility)** |
+| **Continue the main path — check the security of what you built** | **[L3.1 — Security Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-1-Security-Foundation)** |
+| Go deeper — turn this data into answers | [L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility) (needs L1.3) |
+| See every chapter, cost and prerequisite | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want the big picture of this level first | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -8,11 +8,23 @@
 actually operate — and learn that in Azure Monitor, *what you collect* is what
 you pay for.
 
+**L2.1 is this level's main-path stop** — it stands on L1.1 alone and is all
+you need before moving on to Level 3. Chapters L2.2–L2.4 are the level's
+depth: go south into them when you want to turn the collected data into
+queries, alerts and a governed bill.
+
+| Chapter | One line | Adds |
+|---|---|---|
+| **[L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals)** · main path | Point everything standing at one Log Analytics workspace — agents, a data collection rule and diagnostic settings | +$0.06/hr |
+| [L2.2 — Operational Visibility](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-2-Operational-Visibility) · depth | Turn the data into answers — saved KQL, a workbook, an optional availability test (needs L1.3) | +$0.02/hr |
+| [L2.3 — Proactive Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-3-Proactive-Operations) · depth | Stop having to look — six alert rules, one action group, a maintenance-window suppression | +$0.01/hr |
+| [L2.4 — Enterprise Monitoring Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-4-Monitoring-Strategy) · depth | Govern the bill — table plans, retention, an audit policy and a budget | −$0.02/hr net |
+
 | | |
 |---|---|
-| **Builds on** | All of Level 1 (L1.1 – L1.4) |
+| **Builds on** | L1.1 (L2.1 stands on the core alone); deeper chapters need L1.3 |
 | **Chapters** | L2.1 · L2.2 · L2.3 · L2.4 |
-| **Existing assets reused** | The Log Analytics workspace and Application Insights from L1.3; the alert rule pattern already in `curriculum/L1.3-multi-service-application/main.bicep` |
+| **Existing assets reused** | The Log Analytics workspace and Application Insights from L1.3 (when the app tier is deployed); the alert rule pattern already in `curriculum/L1.3-multi-service-application/main.bicep` |
 | **New Azure resources** | Almost none — this level is mostly configuration on existing resources |
 | **Running cost at end of level** | **~$1.93/hr** (~$1.91/hr after L2.4's tiering work) |
 
@@ -45,11 +57,12 @@ flowchart LR
 <details><summary>Text description of this diagram</summary>
 
 The Level 1 environment feeds into L2.1, which is the collection chapter: data
-collection rules and diagnostic settings point every existing resource at the
-Log Analytics workspace that L1.3 already created. The remaining three chapters
-run in order and each answers a different question — L2.2 *what is happening*,
-L2.3 *what should wake someone up*, L2.4 *what should we be collecting at all,
-and what does it cost*.
+collection rules and diagnostic settings point every standing resource at one
+Log Analytics workspace — a small one L2.1 creates itself on the main path, or
+the one L1.3 already created once the app tier is deployed. The remaining
+three chapters are the level's depth and run in order, each answering a
+different question — L2.2 *what is happening*, L2.3 *what should wake someone
+up*, L2.4 *what should we be collecting at all, and what does it cost*.
 
 The dotted line to Level 3 records the design decision that matters most here:
 Level 2 produces **one workspace**, and Level 3 puts its security data in that
@@ -79,9 +92,12 @@ one workspace, and be able to say what each stream costs.
   write to.
 - Read the workspace's own usage table to see what each source is costing.
 
-**Builds on.** L1.1–L1.4 for the resources; L1.3 for the workspace.
+**Builds on.** L1.1 only — the main-path stop right after Core Deployment; it
+creates its own workspace (`log-<prefix>-mon`). Flip `include_web_tier` /
+`include_app_tier` to monitor the southern tiers too; the app-tier switch
+reuses L1.3's workspace instead.
 
-**Azure services.** Log Analytics workspace (reused) · Azure Monitor Agent ·
+**Azure services.** Log Analytics workspace (created on the main path, reused from L1.3 with the app tier) · Azure Monitor Agent ·
 data collection rules · data collection endpoints · diagnostic settings ·
 VM insights · container insights · Azure Activity log.
 
@@ -234,10 +250,12 @@ costs. That comparison belongs in the level's closing slide.
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Repository variables for lab settings**
 >
 > **Why it matters here:** every alert in this level needs a destination, and
-> every workspace query needs a resource group. Those are already repository
-> variables and secrets (`AZURE_PREFIX`, `AZURE_RESOURCE_GROUP`) set once by
-> `Setup-Oidc.ps1`, so monitoring configuration never hardcodes an environment.
-> **Find it:** **Settings → Secrets and variables → Actions**.
+> every workspace query needs a resource group. The workflow derives both from
+> the fork owner — the resource group *is* your account name, and the prefix is
+> its first segment lowercased — so no repository variables are needed and
+> monitoring configuration never hardcodes an environment. Repository
+> variables (`AZURE_PREFIX`, `ALERT_EMAIL`) exist only as overrides.
+> **Find it:** the `env:` block in `.github/workflows/curriculum-l2-operations.yml`.
 > **Beyond the lab:** the same split — non-secret configuration as variables,
 > credentials as OIDC — is what lets one monitoring template serve dev, test and
 > production.
@@ -256,6 +274,7 @@ what keeps Level 5's Sentinel bill sane.
 | Your situation | Go to |
 |---|---|
 | Start the first chapter | **[L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals)** |
+| See every chapter, cost and prerequisite | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Level 2 done — move to the next level | [Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure) |
 | Back to the previous level | [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) |
 | What does the whole curriculum cost? | [Cost model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model) |

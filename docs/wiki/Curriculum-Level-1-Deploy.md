@@ -11,17 +11,26 @@ phase instead of four separate demos. The Bicep, the parameter files and the
 workflows are unchanged — what changes is the promise made to the learner at the
 end: *this environment stays up, and you are going to run it.*
 
+Only **L1.1 is on the curriculum's main path** (L1.1 → L2.1 → L3.1 → L4.1 — one
+foundation chapter per level). **L1.2, L1.3 and L1.4 are this level's optional
+depth**: go south into them when you want more of the Deploy story, and come
+back via the [Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map).
+L1.2 is required by nothing that follows; L1.3 is the prerequisite for L1.4 and
+for most of the deeper chapters in Levels 2–6.
+
+| Chapter | What you build | Adds |
+|---|---|---|
+| [L1.1 — Core Deployment](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment) | Hub + spoke VNets, Bastion, one Linux VM — the foundation every later level uses | +$0.24/hr |
+| [L1.2 — Architecture Expansion](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion) | Azure Firewall + three web VMs behind an internal load balancer — the cost detour | +$1.41/hr |
+| [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application) | Container Apps, SQL, Key Vault — data tier behind private endpoints | +$0.08/hr |
+| [L1.4 — Production-Ready Platform](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform) | Second region, SQL failover group, Front Door | +$0.11/hr |
+
 | | |
 |---|---|
 | **Builds on** | Nothing — this is the entry point |
 | **Chapters** | L1.1 · L1.2 · L1.3 · L1.4 |
 | **Existing assets reused** | `curriculum/L1.1-core-deployment` · `curriculum/L1.2-architecture-expansion` · `curriculum/L1.3-multi-service-application` · `curriculum/L1.4-production-platform` · `curriculum-l1-*.yml` |
 | **Running cost at end of level** | **~$1.84/hr** (~$0.43/hr if L1.2's firewall is torn down) |
-
-> [!NOTE]
-> This is a curriculum outline. Chapter pages define objectives, dependencies,
-> services and cost only — the hands-on steps for each chapter are the existing
-> lab pages today, and will be rewritten against this structure in a later phase.
 
 ## Where this level sits
 
@@ -90,6 +99,8 @@ not the disk.
 
 ## L1.2 — Architecture Expansion
 
+**Walkthrough:** [L1.2 — Architecture Expansion](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion)
+
 **Objective.** Grow the single-VM foundation into a redundant, traffic-governed
 tier, and see what centralised inspection costs.
 
@@ -122,6 +133,8 @@ trade-off. Do **not** delete the firewall alone: both spoke subnets route
 keep billing.
 
 ## L1.3 — Multi-Service Application Architecture
+
+**Walkthrough:** [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application)
 
 **Objective.** Replace VM-hosted compute with a managed application platform and
 put the data tier behind private networking.
@@ -156,6 +169,8 @@ makes this the right chapter to introduce ingestion-based pricing before the
 learner is exposed to it.
 
 ## L1.4 — Production-Ready Platform Deployment
+
+**Walkthrough:** [L1.4 — Production-Ready Platform](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform)
 
 **Objective.** Take the single-region application to a two-region,
 globally-fronted platform, and ask honestly whether it would survive an outage.
