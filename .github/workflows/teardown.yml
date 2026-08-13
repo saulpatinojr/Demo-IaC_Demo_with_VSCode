@@ -15,6 +15,11 @@ name: "Teardown labs"
 on:
   workflow_dispatch:
     inputs:
+      resource_group:
+        description: "Instructor/testing override: deploy into this resource group instead of the fork-owner default"
+        type: string
+        required: false
+        default: ""
       dry_run:
         description: "Preview only — list what would be deleted, delete nothing"
         type: boolean
@@ -34,7 +39,17 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  # Shared workshop deployment identity. These are identifiers, not secrets --
+  # authentication happens through the federated credential tied to each
+  # classroom fork -- and this classroom environment is deleted after the
+  # event. Fork secrets, when present, still take precedence.
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || 'ec772fb1-230b-4d26-a980-4870f847e392' }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || '92247f12-056e-4600-9248-fb43a78491c9' }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || '456beea5-e9a5-4fde-aa3e-f136cf384213' }}
+  # Classroom isolation is naming: each workshop GitHub account matches its
+  # pre-created resource group, so the fork owner is the default target RG.
+  # The AZURE_RESOURCE_GROUP secret still overrides it for self-hosted runs.
+  AZURE_RESOURCE_GROUP: ${{ inputs.resource_group || secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
 
 jobs:
   teardown:
@@ -42,27 +57,12 @@ jobs:
     # A real delete needs the typed confirmation; a dry run never does.
     if: ${{ inputs.dry_run || inputs.confirm == 'DELETE' }}
     steps:
-      - name: Preflight - verify required secrets
-        env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        run: |
-          missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
-            if [ -z "${!v}" ]; then
-              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 first."
-              missing=1
-            fi
-          done
-          [ "$missing" = "0" ] || exit 1
-
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Delete every resource in the lab resource group
         env:

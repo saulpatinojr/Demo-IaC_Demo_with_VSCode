@@ -13,6 +13,11 @@ name: "Curriculum L2 - Operations & Monitoring"
 on:
   workflow_dispatch:
     inputs:
+      resource_group:
+        description: "Instructor/testing override: deploy into this resource group instead of the fork-owner default"
+        type: string
+        required: false
+        default: ""
       chapter:
         description: "Which chapter to deploy"
         type: choice
@@ -24,10 +29,20 @@ on:
           - "L2.3 - Proactive Operations"
           - "L2.4 - Enterprise Monitoring Strategy"
       include_web_tier:
-        description: "L1.2 (firewall + web tier) is still deployed"
+        description: "L1.2 (firewall + web tier) is deployed - include it here"
         type: boolean
         required: true
-        default: true
+        default: false
+      include_app_tier:
+        description: "L1.3 (workspace + SQL + Key Vault + app) is deployed - monitor it too"
+        type: boolean
+        required: true
+        default: false
+      availability_test:
+        description: "L2.2 only: deploy the availability web test (needs L1.4's Front Door)"
+        type: boolean
+        required: true
+        default: false
       dry_run:
         description: "Stop after what-if — show the changes, deploy nothing"
         type: boolean
@@ -43,10 +58,26 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
+  # Shared workshop deployment identity. These are identifiers, not secrets --
+  # authentication happens through the federated credential tied to each
+  # classroom fork -- and this classroom environment is deleted after the
+  # event. Fork secrets, when present, still take precedence.
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || 'ec772fb1-230b-4d26-a980-4870f847e392' }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || '92247f12-056e-4600-9248-fb43a78491c9' }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || '456beea5-e9a5-4fde-aa3e-f136cf384213' }}
+  AZURE_PREFIX: ${{ vars.AZURE_PREFIX }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  # Classroom isolation is naming: each workshop GitHub account matches its
+  # pre-created resource group, so the fork owner is the default target RG.
+  # The AZURE_RESOURCE_GROUP secret still overrides it for self-hosted runs.
+  AZURE_RESOURCE_GROUP: ${{ inputs.resource_group || secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
   CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
+  # Read by L2.1: gates the L1.3 diagnostic settings and switches between the
+  # self-created workspace (main path) and L1.3's workspace.
+  CURRICULUM_INCLUDE_APP_TIER: ${{ inputs.include_app_tier }}
+  # Read by L2.2: the web test does a property read on L1.4's Front Door, so
+  # it must stay off until L1.4 is standing.
+  CURRICULUM_AVAILABILITY_TEST: ${{ inputs.availability_test }}
   # Read by L2.3. Same variable the L1.3 lab already uses, so a class that set it
   # once does not set it again.
   ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
@@ -58,20 +89,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Preflight - verify required secrets
-        env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # Classroom forks are pre-staged and need no per-student variables: the
+      # prefix defaults to the fork owner's name up to the first hyphen,
+      # lowercased and trimmed to the 12 chars the templates allow
+      # (User01-TechCon -> user01). Set the AZURE_PREFIX repo variable to
+      # override it.
+      - name: Resolve resource group and prefix
         run: |
-          missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
-            if [ -z "${!v}" ]; then
-              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
-              missing=1
-            fi
-          done
-          [ "$missing" = "0" ] || exit 1
+          if [ -z "$AZURE_PREFIX" ]; then
+            owner='${{ github.repository_owner }}'
+            prefix=$(printf '%s' "${owner%%-*}" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9' | cut -c1-12)
+            [ -n "$prefix" ] || prefix=$(printf '%s' "$owner" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9' | cut -c1-12)
+            echo "AZURE_PREFIX=$prefix" >> "$GITHUB_ENV"
+            export AZURE_PREFIX="$prefix"
+          fi
+          echo "Prefix '$AZURE_PREFIX' -> resource group '$AZURE_RESOURCE_GROUP'"
 
       # The dropdown label is for humans; this turns it into a path. Keeping
       # the mapping in one place means adding a chapter is two lines: an option
@@ -95,9 +127,9 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Lint (compile + linter)
         env:

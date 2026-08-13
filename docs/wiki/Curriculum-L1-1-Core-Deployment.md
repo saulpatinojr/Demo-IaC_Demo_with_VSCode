@@ -1,6 +1,6 @@
 # L1.1 — Core Deployment 🟢
 
-**📍 [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) &nbsp;·&nbsp; Next: [L1.2 — Architecture Expansion](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion)
+**📍 [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) &nbsp;·&nbsp; Next: [L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals) &nbsp;·&nbsp; Go deeper: [L1.2 — Architecture Expansion](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion)
 
 ---
 
@@ -8,12 +8,12 @@
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Lab 1 of 4 · everyone | ~15 min, 10 of it Bastion | Tools installed, and a resource group that already exists | 🟢 ~$0.24/hr running total |
+| Lab 1 of 4 · everyone | ~15 min, 10 of it Bastion | A browser, your workshop GitHub account, and your pre-created resource group (named after your account) | 🟢 ~$0.24/hr running total |
 
 > [!IMPORTANT]
-> **Your resource group must already exist.** Every lab deploys *into* one; none of them create it. In a classroom your instructor has already made yours. Working on your own subscription, create it once:
+> **Your resource group must already exist.** Every lab deploys *into* one; none of them create it. In the classroom yours is already there, named exactly like your GitHub account (e.g. `User01-TechCon`) — there is nothing to create. Self-hosted on your own subscription, create it once:
 > ```powershell
-> az group create --name "rg-techdemo-<yourname>" --location eastus2
+> az group create --name "<your-resource-group>" --location eastus2
 > ```
 
 ## What you're building
@@ -59,8 +59,10 @@ SSH across the peering. Nothing else can reach it.
 
 The dashed red line is the point of this lab: the VM has **no route to the
 internet at all**. No public IP, no NAT gateway, and no route table sending
-traffic anywhere. `iacdemo` is the default `AZURE_PREFIX`; your resources use
-whatever prefix you set.
+traffic anywhere. In the classroom your prefix is derived from your GitHub
+account (`User01-TechCon` → `user01`), so you'll see `vnet-user01-hub` and so
+on; `iacdemo` is only the default when running the bare CLI commands without
+setting `AZURE_PREFIX`.
 
 </details>
 
@@ -87,13 +89,22 @@ All three deploy the **same** template and give the **same** result. Choose the 
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use Option 2 (GitHub Actions).** Your Azure account holds Reader, so the local `az deployment` commands in Options 1 and 3 will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**Best if you like the command line** and want to watch each step happen.
+**Best if you like the command line** and want to watch each step happen. Self-hosted only — a classroom (Reader) account can't run `az deployment` locally.
 
-### Do this once
+### Do this once (self-hosted)
 
-Fill in one small file instead of typing variables into every command. Copy `lab-settings.csv.example` to **`lab-settings.csv`** in the repo root and fill in the row — it opens in Excel or VS Code:
+**Classroom students configure nothing** — the workflow in Option 2 derives everything from your fork: target resource group = your account name (`User01-TechCon`), `AZURE_PREFIX` = its first segment lowercased (`user01`), and the VM and SQL admin passwords default to your account name followed by two exclamation marks (`User01-TechCon!!`). Skip straight to Option 2.
+
+Self-hosted with the CLI, fill in one small file instead of typing variables into every command.
+
+<details><summary><b>Self-hosted only · lab-settings.csv</b></summary>
+
+Copy `lab-settings.csv.example` to **`lab-settings.csv`** in the repo root and fill in the row — it opens in Excel or VS Code:
 
 | Column | What goes in it |
 |---|---|
@@ -114,12 +125,14 @@ Then load it. Leave `-Persist` off and the values last for this terminal only; a
 `lab-settings.csv` is in `.gitignore`, so your passwords are never committed.
 
 > [!IMPORTANT]
-> **`-Persist` writes your passwords to this machine in plain text** (Windows registry, `HKCU\Environment`), and they stay until removed. That is fine on a classroom laptop that gets reimaged. **On your own machine, remove them when you finish:**
+> **`-Persist` writes your passwords to this machine in plain text** (Windows registry, `HKCU\Environment`), and they stay until removed. **Remove them when you finish:**
 > ```powershell
 > ./scripts/Load-LabSettings.ps1 -Clear          # just the saved values
 > ./scripts/Clear-LabCredentials.ps1             # also sign out of az and gh
 > ```
 > This workshop is **Windows 11 only**. If you try it on macOS or Linux anyway, `-Persist` does nothing at all — only Windows has a user environment store for it to write to. Re-run the plain command in each new terminal; `lab-settings.csv` is the persistence. Full details on [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset).
+
+</details>
 
 ### Then deploy
 
@@ -138,20 +151,10 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button** and let the cloud do the work. No `lab-settings.csv` needed — Actions reads the GitHub secrets instead.
-
-### Do this once — and this part *is* local
+**Best if you'd rather click a button** and let the cloud do the work — and the only option a classroom (Reader) account can use.
 
 > [!NOTE]
-> **The one-time setup runs on your machine, not in the cloud.** `Setup-Oidc.ps1` needs PowerShell 7, `az` and `gh` installed, both signed in, and a clone of your fork to run from — everything in [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) sections C, D and F. There is no browser-only path to it, because it has to talk to Azure as *you* to create the identity that GitHub will later use.
->
-> **After it succeeds, every deploy really is browser-only** — that is the part Actions buys you. If your instructor pre-ran setup ([Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup) step 0C), you can skip straight to *Then deploy* and never install anything.
-
-Store your credentials in GitHub. This registers the OIDC trust and pushes the secrets and variables the workflows read:
-
-```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
-```
+> **Classroom: already wired up — nothing to run.** Your fork deploys with the shared workshop identity, and the workflow derives the resource group, prefix and passwords from your fork's owner. No repo secrets or variables are needed — `gh secret list` showing *no secrets found* is the normal, correct state. **Self-hosted:** run the one-time `./scripts/Setup-Oidc.ps1` per the [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide).
 
 ### Then deploy
 
@@ -165,9 +168,9 @@ On GitHub: **Actions → "Curriculum L1.1 - Core Deployment" → Run workflow**.
 
 ## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
 
-**Best if you'd rather describe what you want** and have AI change the template and deploy it for you.
+**Best if you'd rather describe what you want** and have AI change the template and deploy it for you. The deploy step is self-hosted only (classroom accounts hold Reader) — though Copilot's *editing* and `az bicep build` work for everyone.
 
-Copilot runs the deploy **locally**, so load your values once first — same file as Option 1: `./scripts/Load-LabSettings.ps1`.
+Copilot runs the deploy **locally**, so (self-hosted) load your values once first — same file as Option 1: `./scripts/Load-LabSettings.ps1`.
 
 Open **Copilot Chat → Agent mode** and paste:
 
@@ -185,7 +188,7 @@ Copilot edits the Bicep, verifies it compiles, and runs the deploy. If a command
 
 ## ✅ Verify it
 
-1. **Reach the VM through Bastion** — in the Portal, open `vm-<your prefix>-test` → **Connect → Bastion**, and sign in as `azureuser` with the `VM_ADMIN_PASSWORD` you set.
+1. **Reach the VM through Bastion** — in the Portal, open `vm-<your prefix>-test` → **Connect → Bastion**, and sign in as `azureuser` with your VM password: your account name followed by two exclamation marks (e.g. `User01-TechCon!!`) unless you overrode the secret. (Self-hosted: the `VM_ADMIN_PASSWORD` you set.)
 
    **You should see:** a shell prompt in your browser. The VM has no public IP, so this is the only way in.
 
@@ -225,7 +228,9 @@ L1.2 deploys an Azure Firewall into the hub's reserved `AzureFirewallSubnet`, ad
 
 | Your situation | Go to |
 |---|---|
-| Ready to keep going — add the web tier and firewall | **[L1.2 — Architecture Expansion](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion)** |
-| Watching costs? L1.3 doesn't need L1.2's firewall — skip ahead | [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application) |
+| **Continue the main path — monitor what you just built** | **[L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals)** |
+| Go deeper in Level 1 instead — add the firewall + web tier ($1.25/hr!) | [L1.2 — Architecture Expansion](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-2-Architecture-Expansion) |
+| Skip ahead to the app tier — L1.3 doesn't need L1.2 | [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application) |
 | Done for the day — Bastion bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
+| See every chapter, cost and prerequisite | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |

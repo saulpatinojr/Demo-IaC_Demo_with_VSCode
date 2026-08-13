@@ -122,6 +122,12 @@ output says exactly why that is not the same as having MUA.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds
+> Reader, so local `az deployment` commands will be refused — deploys go
+> through your fork's workflow, which uses the shared workshop identity
+> automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>
@@ -262,6 +268,7 @@ it.
 | Your situation | Go to |
 |---|---|
 | Ready to keep going — turn backup into a costed strategy | **[L4.4 — Enterprise Data Protection Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-4-Data-Protection-Strategy)** |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want the big picture of this level first | [Level 4 · Protect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

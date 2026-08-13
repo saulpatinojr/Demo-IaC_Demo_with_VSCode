@@ -1,25 +1,50 @@
 # Start-Here Checklist
 
-Work top to bottom. Each item is one small, checkable thing. If you can tick every box, your first deploy will work.
+> [!TIP]
+> New to the vocabulary — repo, fork, secret, OIDC? Skim [Understanding IaC](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Understanding-IaC) and [GitHub Essentials](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials) first. Ten minutes that make everything below make sense.
+
+## 🏫 Classroom (pre-staged) — start here
+
+If you are in the instructor-led workshop, there is **nothing to install**. Four steps and you are deploying:
+
+1. **Sign in to GitHub** as your workshop account (`User<nn>-TechCon`, e.g. `User01-TechCon`).
+2. **Open your fork** in the browser: `github.com/<your-account>/Demo-IaC_Demo_with_VSCode`.
+3. Open the **Actions** tab and click the green **"I understand my workflows, go ahead and enable them"** button (forks disable workflows by default).
+4. Go to **[L1.1 — Core Deployment](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment)** and run your first deploy. Done.
+
+Everything else is **already done for you**:
+
+| Already staged | Details |
+|---|---|
+| **Your fork** | Pre-created at `github.com/<your-account>/Demo-IaC_Demo_with_VSCode` |
+| **Your resource group** | Pre-created, named **exactly like your GitHub account** (e.g. `User01-TechCon`) — the workflows target it automatically |
+| **Deploy identity** | A shared workshop identity, federated to your fork — deployments need **no repo secrets**. `gh secret list` showing `no secrets found` is the normal, correct state |
+| **VM / SQL passwords** | Default to `<your-account>!!` (e.g. `User01-TechCon!!`) |
+
+Your own Azure role is **Reader** — you verify what got built in the portal, while the deployments run through GitHub Actions under the shared identity (which holds Contributor on your group). That also means local `az deployment ...` commands will fail for you — deploy through the Actions tab.
+
+The main curriculum path runs **east: L1.1 → L2.1 → L3.1 → L4.1** — one foundation chapter per level. The full grid of all 22 chapters is on the **[Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map)**.
+
+> [!NOTE]
+> Want the full **VS Code + Copilot + CLI** experience on top of the browser-only path — or are you running the workshop **at home on your own subscription**? Continue below. Otherwise you can stop reading this page now.
+
+---
+
+## 🛠️ Self-hosted / at-home setup (Sections A–D)
+
+Work top to bottom. Each item is one small, checkable thing. These tool installs are needed for the Copilot/CLI experience (classroom included, if you want it) and for self-hosted deploys from your own subscription.
 
 > [!IMPORTANT]
 > **You need Windows 11.** Section C installs the toolchain with `winget`, which is Windows-only, and the settings helper writes to the Windows user environment store. macOS and Linux are **not supported today** — see [Getting Comfortable with the Tools](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Getting-Comfortable-with-the-Tools) for exactly which two dependencies block them.
 
-> [!TIP]
-> New to the vocabulary — repo, fork, secret, OIDC? Skim [Understanding IaC](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Understanding-IaC) and [GitHub Essentials](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/GitHub-Essentials) first. Ten minutes that make everything below make sense.
-
-## Which are you?
-
-The steps are the same either way — but one path has less to do, because someone did part of it for you.
+### Which are you?
 
 <table>
 <tr>
-<td align="center" width="360"><img src="icon-instructor.svg" width="56"><br><br><b>My instructor set me up</b><br><sub>Resource group and OIDC already done — verify and go</sub></td>
-<td align="center" width="360"><img src="icon-self-service.svg" width="56"><br><br><b>I'm on my own</b><br><sub>Own subscription — create the group, run setup yourself</sub></td>
+<td align="center" width="360"><img src="icon-instructor.svg" width="56"><br><br><b>Classroom participant</b><br><sub>Fork, resource group and deploy identity already staged — install tools only if you want the Copilot/CLI experience</sub></td>
+<td align="center" width="360"><img src="icon-self-service.svg" width="56"><br><br><b>I'm on my own</b><br><sub>Own subscription — create the group, run the OIDC setup yourself</sub></td>
 </tr>
 </table>
-
-If you are in a classroom, assume the left-hand column and **confirm before Section G** — running the OIDC setup a second time is harmless but wastes ten minutes.
 
 ---
 
@@ -28,15 +53,15 @@ If you are in a classroom, assume the left-hand column and **confirm before Sect
 - [ ] **GitHub account** — https://github.com/join
 - [ ] **GitHub Copilot** access — Free tier works for individuals. In a classroom org, your instructor will assign you a Copilot Business or Enterprise seat.
 - [ ] **Azure access** — one of:
-  - **Classroom participant:** Your instructor has pre-created a resource group (typically `rg-techdemo-<your-username>`) and granted you Contributor on it. They may have already run the OIDC setup for you. Confirm before going to Section G.
-  - **Self-hosted:** An Azure subscription where you have at least Contributor and can create app registrations. Free trial: https://azure.microsoft.com/free — you create the resource group yourself, once, in Section G.
+  - **Classroom participant:** Nothing to set up. Your resource group is pre-created and named after your GitHub account (e.g. `User01-TechCon`), and you hold **Reader** on it — the shared workshop deploy identity holds Contributor and does the deploying for you.
+  - **Self-hosted:** An Azure subscription where you have at least **Contributor and can create app registrations** — that is the self-hosted requirement, not the classroom one. Free trial: https://azure.microsoft.com/free — you create the resource group yourself, once, when you run the OIDC setup ([Part 2, self-hosted section](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist-Part-2)).
 
-> [!IMPORTANT]
-> **Don't type `<yourname>` literally, and don't assume the name.** Every lab deploys into one group that must already exist. After `az login` in Section D, list what you actually have and use that exact string everywhere below:
+> [!NOTE]
+> **Self-hosted only — don't type `<your-rg>` literally.** Every lab deploys into one group that must already exist in your subscription. After `az login` in Section D, list what you actually have and use that exact string everywhere below:
 > ```powershell
 > az group list --query "[].name" -o tsv
 > ```
-> If that prints nothing and you are in a classroom, stop and ask your instructor — you are missing the group the whole workshop deploys into.
+> (Classroom accounts can skip this — the group name **is** your GitHub account name.)
 
 ---
 
@@ -262,7 +287,7 @@ This completes Part 1 (A–D).
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Forks and the `upstream` remote**
 >
-> **You just used it:** forking gave you a complete, independent copy of this repo — your own Actions runs, your own secrets, your own history. Nothing you do can affect anyone else's.
+> **You just used it:** your fork is a complete, independent copy of this repo — your own Actions runs, your own history. Nothing you do can affect anyone else's.
 > **Find it:** `git remote -v` in your clone. `origin` is your fork; `upstream` points at the original, which is how you pull in later changes without losing your work.
 > **Beyond the lab:** this is how essentially all open-source contribution works: fork, branch, pull request. The workshop uses it so twenty people can deploy from twenty repos with no coordination.
 > [Docs →](https://docs.github.com/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks)

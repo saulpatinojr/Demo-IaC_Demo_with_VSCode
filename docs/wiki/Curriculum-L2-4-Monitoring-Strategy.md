@@ -89,10 +89,10 @@ and one forecast threshold notifies the action group L2.3 built.
 
 > [!IMPORTANT]
 > **The policy assignment is off by default, and that is the lesson.** Plain
-> Contributor — what you and the OIDC identity hold — cannot create a policy
-> assignment. Turn it on with `CURRICULUM_ASSIGN_POLICY=true` only if you hold
-> **Resource Policy Contributor** or **Owner**. The full story is in *Going
-> deeper* below.
+> Contributor — what the shared workshop deploy identity holds (students
+> themselves hold **Reader**) — cannot create a policy assignment. Turn it on
+> with `CURRICULUM_ASSIGN_POLICY=true` only if you hold **Resource Policy
+> Contributor** or **Owner**. The full story is in *Going deeper* below.
 
 <br>
 
@@ -102,8 +102,9 @@ and one forecast threshold notifies the action group L2.3 built.
 
 Contributor's `notActions` include `Microsoft.Authorization/*/Write`, which
 covers policy assignments as well as role assignments. Classroom participants
-and the OIDC identity both hold plain Contributor on one resource group, so
-leaving the assignment on would fail the deploy for everyone it was written
+hold **Reader**; only the shared workshop deploy identity holds plain
+Contributor on each resource group — so leaving the assignment on would fail
+the deploy for everyone it was written
 for. Your instructor already has the same job covered by
 `scripts/admin/Set-LabPolicy.ps1`.
 
@@ -145,6 +146,9 @@ it is worth ten minutes of discussion.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -298,6 +302,7 @@ Cloud on top of this, sending its findings into **this** workspace, using
 | Your situation | Go to |
 |---|---|
 | Ready for the next level — harden the estate | **[Level 3 · Secure](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-3-Secure)** |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want to review what Level 2 built | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -56,7 +56,7 @@ A **repository** ("repo") is a project folder that GitHub tracks with **git** �
 
 | Term | What it means |
 |------|--------------|
-| **Fork** | Your personal copy of someone else's repo, under your account. You need a fork here because Actions run against *your* secrets and *your* Azure subscription. |
+| **Fork** | Your personal copy of someone else's repo, under your account. You need a fork here because Actions runs belong to the repo they run in — your fork gets its own runs, its own configuration, and its own federated deploy credential. |
 | **Clone** | Download the repo to your machine so you can edit it (`gh repo clone <owner>/<repo>` or GitHub Desktop). |
 | **Commit / push** | Save a set of changes (commit) and upload them to GitHub (push). |
 | **Branch** | A parallel line of work. This workshop deploys from `main`. |
@@ -79,7 +79,7 @@ Key anatomy (from `curriculum-l1-1-core-deployment.yml`):
 | `on: workflow_dispatch` | Manual trigger — only runs when you click the button |
 | `permissions: id-token: write` | Allows the run to request an OIDC token for passwordless Azure login |
 | `concurrency:` | Prevents two runs of the same lab from clobbering each other |
-| `steps:` | checkout → preflight secret check → Azure login → lint → what-if → deploy |
+| `steps:` | checkout → resolve resource group & prefix → Azure login → lint → what-if → deploy |
 
 **Try it:** Actions → **Curriculum L1.1 - Core Deployment** → **Run workflow** → expand the **What-if** step to see what would be created.
 
@@ -107,32 +107,36 @@ Both live under **Settings → Secrets and variables → Actions** in your fork,
 | **Purpose** | Sensitive values | Non-sensitive config |
 | **Visible after saving?** | **Never** — write-only, masked in logs | Yes, fully readable |
 | **Used in YAML as** | `${{ secrets.NAME }}` | `${{ vars.NAME }}` |
-| **Examples in this workshop** | `AZURE_CLIENT_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD` | `AZURE_PREFIX`, `AZURE_LOCATION`, `ALERT_EMAIL` |
+| **Names this workshop recognizes** | `AZURE_CLIENT_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD` | `AZURE_PREFIX`, `AZURE_LOCATION`, `ALERT_EMAIL` |
 
 > [!TIP]
 > **Rule of thumb:** if someone leaking it could cause harm, it is a **secret**. If you would happily print it in a log, it is a **variable**.
 >
 > The IDs (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) are stored as secrets not because they are dangerous alone, but so they are auto-masked in logs. That is a common, sensible convention.
 
-### Worked example — set a variable and a secret
+### Worked example — secrets with defaults
+
+Here is the twist this workshop teaches: **your classroom fork needs no secrets or variables at all.** The workflows read every value through a fallback expression — *secret if present, sensible default if not*. From the real [`curriculum-l1-1-core-deployment.yml`](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/.github/workflows/curriculum-l1-1-core-deployment.yml):
+
+```yaml
+env:
+  VM_ADMIN_PASSWORD:    ${{ secrets.VM_ADMIN_PASSWORD || format('{0}!!', github.repository_owner) }}
+  AZURE_LOCATION:       ${{ vars.AZURE_LOCATION || 'eastus2' }}
+  AZURE_RESOURCE_GROUP: ${{ inputs.resource_group || secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
+```
+
+Read the last line right to left: the resource group defaults to **the fork owner's name** (your pre-created group is named after your account), a repo secret overrides that, and a manual workflow input overrides both. That chain is why a pre-staged fork with zero configuration deploys on the first click — and why a self-hosted fork can point the very same workflow at its own subscription just by setting secrets.
+
+Setting them (self-hosted — a set value always beats the fallback):
 
 ```bash
 # Variable (readable, appears in logs)
 gh variable set AZURE_PREFIX  --body "alice"
 gh variable set AZURE_LOCATION --body "eastus2"
-gh variable set ALERT_EMAIL   --body "ops@example.com"
 
 # Secret (write-only, masked in logs)
-gh secret set AZURE_RESOURCE_GROUP  --body "rg-techdemo-alice"
+gh secret set AZURE_RESOURCE_GROUP  --body "<your-rg>"
 gh secret set VM_ADMIN_PASSWORD     --body "S0me-Throwaway-Pass!"
-```
-
-```yaml
-# Using them in a workflow:
-env:
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-  AZURE_PREFIX:         ${{ vars.AZURE_PREFIX || 'iacdemo' }}
-  VM_ADMIN_PASSWORD:    ${{ secrets.VM_ADMIN_PASSWORD }}
 ```
 
 ### List what you have
@@ -142,7 +146,7 @@ gh secret list    # shows names and timestamps (never values)
 gh variable list  # shows names and values
 ```
 
-The `Setup-Oidc.ps1` script sets all secrets and variables for you automatically — this section explains *what* it did so you can manage them by hand if needed.
+On a **classroom fork** both correctly return nothing — `no secrets found` means the fallbacks are doing their job. On a **self-hosted** fork, the `Setup-Oidc.ps1` script sets all secrets and variables for you automatically — this section explains *what* it does so you can manage them by hand if needed.
 
 ---
 

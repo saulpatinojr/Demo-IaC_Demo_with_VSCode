@@ -9,7 +9,7 @@ built and instrumented — without deploying a single new workload to attack.
 
 | | |
 |---|---|
-| **Builds on** | Level 1 (the resources) and Level 2 (the workspace and alert routing) |
+| **Builds on** | **Nothing for L3.1** — the workbook deploys on its own and shows more when more is deployed; **L1.3** for the deeper chapters L3.2 and L3.3 |
 | **Chapters** | L3.1 · L3.2 · L3.3 · L3.4 |
 | **Existing assets reused** | Key Vault, managed identity and private endpoints from L1.3; the Log Analytics workspace from L2.1; action groups from L2.3 |
 | **New Azure resources** | Plans and policies, not infrastructure |
@@ -18,6 +18,21 @@ built and instrumented — without deploying a single new workload to attack.
 > [!NOTE]
 > **Build status:** Level 3 is fully built — four templates, one workflow, four
 > walkthroughs, and the instructor script for the subscription-scoped half.
+
+## The chapters
+
+L3.1 is the **main-path** stop for this level — on the
+[🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map)
+it sits on the east–west line L1.1 → L2.1 → L3.1 → L4.1. Chapters .2–.4 go
+**deeper** into the security discipline, each adding resources, cost and
+prerequisites.
+
+| Chapter | One line | Adds |
+|---|---|---|
+| **[L3.1 — Security Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-1-Security-Foundation)** · 🧭 main path | One free Resource Graph workbook that shows secure score, findings and plan state — needs nothing deployed first | +$0.00/hr |
+| [L3.2 — Workload Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-2-Workload-Protection) · go deeper | Turn on Defender for SQL per server, SQL auditing and (conditionally) JIT — the meter starts here | +$0.07/hr |
+| [L3.3 — Security Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-3-Security-Operations) · go deeper | Continuous export into the workspace plus a Logic App triage playbook | +$0.03/hr |
+| [L3.4 — Enterprise Security Architecture](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-4-Security-Architecture) · go deeper | A costed WAF design — real rules, deliberately attached to nothing | +$0.00/hr as designed |
 
 ## Where this level sits
 
@@ -73,15 +88,19 @@ free capability, before spending anything.
 - Identify which Level 1 design choices already scored well (private endpoints,
   managed identity, no public IP on the VM) and which did not.
 - Distinguish `Audit`, `Deny` and `DeployIfNotExists` policy effects by blast
-  radius — and explain why a Contributor can assign none of them, since
-  `Microsoft.Authorization/*/Write` sits in the role's `notActions`.
+  radius — and explain why even the deploy identity's Contributor can assign
+  none of them, since `Microsoft.Authorization/*/Write` sits in that role's
+  `notActions` (your own account holds Reader and cannot either).
 - Locate the permission boundary in this lab: Defender **plans** are
   subscription-scoped and belong to the instructor, while per-resource security
-  settings are yours. Name which side each Level 3 task falls on.
-- Review RBAC on the resource group and the OIDC identity, and apply least
-  privilege to both.
+  settings deploy through your fork's workflow. Name which side each Level 3
+  task falls on.
+- Review RBAC on the resource group — your Reader role, and the Contributor
+  held by the shared deploy identity — and explain how least privilege applies
+  to each.
 
-**Builds on.** Levels 1–2. Nothing new is deployed.
+**Builds on.** Nothing — the workbook deploys with nothing else standing, and
+simply shows more when more is deployed. Only the workbook itself is new.
 
 **Azure services.** Microsoft Defender for Cloud — foundational CSPM (free) ·
 secure score · Microsoft Cloud Security Benchmark · Azure Policy ·

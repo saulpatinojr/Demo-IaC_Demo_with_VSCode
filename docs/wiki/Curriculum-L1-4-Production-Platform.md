@@ -1,6 +1,6 @@
 # L1.4 — Production-Ready Platform Deployment 🔴
 
-**📍 [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy)** · Chapter 4 of 4 &nbsp;·&nbsp; Previous: [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application) &nbsp;·&nbsp; Next: [Level 2 · Monitor](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor)
+**📍 [Level 1 · Deploy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy)** · Chapter 4 of 4 &nbsp;·&nbsp; Previous: [L1.3 — Multi-Service Application](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-3-Multi-Service-Application) &nbsp;·&nbsp; Next: [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map)
 
 ---
 
@@ -11,7 +11,7 @@
 | Lab 4 of 4 · everyone | ~15 min, plus ~10 for Front Door to propagate | L1.3 deployed | 🔴 ~$1.84/hr running total |
 
 > [!IMPORTANT]
-> **L1.3 must already be deployed.** L1.4 joins L1.3's SQL server to a failover group, and uses the **same** `SQL_ADMIN_PASSWORD` — a failover group requires matching logins on both servers.
+> **L1.3 must already be deployed.** L1.4 joins L1.3's SQL server to a failover group, and uses the **same** SQL admin password — automatic, like L1.3's: your account name followed by two exclamation marks (e.g. `User01-TechCon!!`) unless you overrode it. A failover group requires matching logins on both servers.
 
 ## What you're building
 
@@ -97,9 +97,12 @@ All three deploy the **same** template and give the **same** result.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use Option 2 (GitHub Actions).** Your Azure account holds Reader, so the local `az deployment` commands in Options 1 and 3 will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
+**Best if you like the command line** (self-hosted only). Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
 
 ```powershell
 az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.4-production-platform/main.bicepparam
@@ -114,7 +117,7 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
+**Best if you'd rather click a button.** Classroom forks are pre-wired — nothing to set up; self-hosted needs the one-time `Setup-Oidc.ps1` ([Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide)).
 
 On GitHub: **Actions → "Curriculum L1.4 - Production-Ready Platform" → Run workflow** (or `gh workflow run curriculum-l1-4-production-platform.yml`).
 
@@ -126,9 +129,9 @@ On GitHub: **Actions → "Curriculum L1.4 - Production-Ready Platform" → Run w
 
 ## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
 
-**Best if you'd rather describe the change** and have AI edit and deploy it.
+**Best if you'd rather describe the change** and have AI edit and deploy it. The deploy step is self-hosted only (classroom accounts hold Reader).
 
-Copilot runs the deploy **locally**, so load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
+Copilot runs the deploy **locally**, so (self-hosted) load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
 
 Open **Copilot Chat → Agent mode**:
 
@@ -257,15 +260,17 @@ data path. It is the most realistic exercise in the workshop, because you are
 fixing a design rather than following instructions.
 
 **Then tear it down.** Front Door, Firewall, Bastion and SQL all bill while
-idle — about **$1.84/hr** with everything running. Preview first:
+idle — about **$1.84/hr** with everything running.
+
+**Classroom:** run the **"Teardown labs"** workflow on your fork — **Actions → Teardown labs → Run workflow**. Self-hosted, the script does the same thing, with a preview:
 
 ```powershell
-./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP -WhatIf
-./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP
+./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP -WhatIf   # self-hosted
+./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP          # self-hosted
 ```
 
 > [!CAUTION]
-> The second command deletes every resource in the group and prompts for confirmation. It leaves the resource group itself in place, which is what you want in a classroom — you usually can't recreate it.
+> Both paths delete every resource in the group (the script prompts for confirmation first). They leave the resource group itself in place, which is what you want in a classroom — you can't recreate it with Reader.
 
 
 ## 🧭 Where next?
@@ -273,6 +278,8 @@ idle — about **$1.84/hr** with everything running. Preview first:
 | Your situation | Go to |
 |---|---|
 | Level 1 complete — start monitoring what you built | **[L2.1 — Monitoring Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-1-Monitoring-Fundamentals)** |
+| ⬅ Back to the main path — pick your next column | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
+| Want the big picture of Level 1 | [Level 1 · Deploy overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) |
 | See what Level 2 builds first | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) · [Tools and References](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Tools-and-References) |

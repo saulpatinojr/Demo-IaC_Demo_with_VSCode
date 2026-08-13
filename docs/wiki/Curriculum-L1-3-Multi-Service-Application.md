@@ -11,7 +11,7 @@
 | Lab 3 of 4 · everyone | ~20 min | L1.1 deployed. **L1.2 is not required.** | 🟠 ~$1.73/hr running total |
 
 > [!IMPORTANT]
-> **L1.1 must already be deployed** — L1.3 peers a new spoke to L1.1's hub. It also uses the **`SQL_ADMIN_PASSWORD`** from your `lab-settings.csv`, the one you set back in L1.1 and haven't needed until now.
+> **L1.1 must already be deployed** — L1.3 peers a new spoke to L1.1's hub. It also uses a SQL admin password, and that's automatic: your account name followed by two exclamation marks (e.g. `User01-TechCon!!`) unless you overrode it. (Self-hosted: the `SQL_ADMIN_PASSWORD` you set in `lab-settings.csv` back in L1.1.)
 
 ## What you're building
 
@@ -102,9 +102,12 @@ All three deploy the **same** template and give the **same** result.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use Option 2 (GitHub Actions).** Your Azure account holds Reader, so the local `az deployment` commands in Options 1 and 3 will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## <img src="bicep.png" width="30" align="top">&nbsp; Option 1 · Bicep from the terminal
 
-**Best if you like the command line.** Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
+**Best if you like the command line** (self-hosted only). Your values are already loaded from `lab-settings.csv` (set up in L1.1) — nothing to re-type.
 
 ```powershell
 az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L1.3-multi-service-application/main.bicepparam
@@ -119,7 +122,7 @@ az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
-**Best if you'd rather click a button.** Needs the one-time `Setup-Oidc.ps1` from L1.1 — and no `lab-settings.csv`, because Actions reads the GitHub secrets instead.
+**Best if you'd rather click a button.** Classroom forks are pre-wired — nothing to set up; self-hosted needs the one-time `Setup-Oidc.ps1` ([Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide)).
 
 On GitHub: **Actions → "Curriculum L1.3 - Multi-Service Application" → Run workflow** (or `gh workflow run curriculum-l1-3-multi-service-application.yml`).
 
@@ -131,9 +134,9 @@ On GitHub: **Actions → "Curriculum L1.3 - Multi-Service Application" → Run w
 
 ## <img src="gh-copilot.png" width="30" align="top">&nbsp; Option 3 · GitHub Copilot (plain English)
 
-**Best if you'd rather describe the change** and have AI edit and deploy it.
+**Best if you'd rather describe the change** and have AI edit and deploy it. The deploy step is self-hosted only (classroom accounts hold Reader).
 
-Copilot runs the deploy **locally**, so load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
+Copilot runs the deploy **locally**, so (self-hosted) load your values once first (same file as Option 1): `./scripts/Load-LabSettings.ps1`.
 
 Open **Copilot Chat → Agent mode**:
 
@@ -190,7 +193,7 @@ Copilot edits, verifies, and deploys — and fixes any error you paste back.
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · OIDC federated credentials**
 >
 > **You just used it:** if you deployed with Option 2, GitHub deployed private networking into your Azure subscription and **there is no cloud password stored anywhere** — not in the repo, not in a secret, not on your machine. The workflow asked GitHub for a signed token describing itself, and Entra ID traded it for a short-lived Azure token.
-> **Find it:** **Settings → Secrets and variables → Actions**. `AZURE_CLIENT_ID` is an identifier, not a credential — publishing it would be harmless. There is no client secret to find.
+> **Find it:** **Settings → Secrets and variables → Actions** on your fork — and find **nothing**. Classroom forks carry **no secrets at all**: the workflow's safe defaults (resource group, prefix, passwords) live in code, and the only secret material is the federated trust between GitHub and Entra ID itself — which is a relationship, not a value anyone could read or leak. The empty page *is* the lesson.
 > **Beyond the lab:** this is the modern answer to the oldest problem in CI. Nothing to leak, nothing to rotate, and a fork can't use it — its token names a different repository, so the subject check fails.
 > [Docs →](https://docs.github.com/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
 
@@ -209,5 +212,6 @@ L1.4 treats everything you just built as the **primary region**. It adds a secon
 |---|---|
 | Ready to keep going — a second region and a global front door | **[L1.4 — Production-Ready Platform](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-4-Production-Platform)** |
 | Want the big picture of Level 1 | [Level 1 · Deploy overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-1-Deploy) |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

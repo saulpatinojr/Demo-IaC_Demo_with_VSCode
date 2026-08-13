@@ -123,6 +123,9 @@ block in L1.3's template instead, and change it there.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>
@@ -267,6 +270,7 @@ the first chapter in the curriculum designed to *reduce* the bill.
 | Your situation | Go to |
 |---|---|
 | Ready to keep going — make the bill smaller | **[L2.4 — Enterprise Monitoring Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-4-Monitoring-Strategy)** |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want the big picture of this level | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

@@ -64,8 +64,9 @@ PowerShell helpers you run on your own machine (requires PowerShell 7 + signed-i
 - Run as Administrator: `./scripts/Install-LabTools.ps1`
 - Idempotent — already-installed tools are skipped.
 
-### `Connect-AzureAndGitHub.ps1`
+### `Connect-AzureAndGitHub.ps1` — self-hosted only
 - Fork + auth helper: validates Azure/GitHub auth, creates your GitHub fork, and verifies `gh copilot` is available.
+- **Classroom accounts never run this** — your fork is pre-created; just open it in the browser.
 - Typical use (after `gh auth login`): `./scripts/Connect-AzureAndGitHub.ps1`
 - Idempotent — existing fork/auth state is detected and reused.
 
@@ -81,11 +82,12 @@ PowerShell helpers you run on your own machine (requires PowerShell 7 + signed-i
 - Always preview: `./scripts/Clear-LabCredentials.ps1 -WhatIf` · Keep your values for a later run with `-KeepSettingsFile`.
 - Full walkthrough: [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset).
 
-### `Setup-Oidc.ps1`
+### `Setup-Oidc.ps1` — self-hosted only
 - One-command GitHub↔Azure OIDC handshake: creates the Entra app registration, adds the federated credential, grants Contributor on your resource group, and pushes all repo secrets and variables.
-- Always preview first: `./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf` — `-ResourceGroup` is required on every run, preview included, and the group must already exist.
+- **Classroom accounts never run this** (Reader role, and no need — the shared workshop identity is already federated to your fork and the workflows carry in-code defaults, so zero secrets is the correct state).
+- Always preview first: `./scripts/Setup-Oidc.ps1 -ResourceGroup "<your-rg>" -Prefix "<yourname>" -WhatIf` — `-ResourceGroup` is required on every run, preview included, and the group must already exist.
 - Idempotent — re-running refreshes the identity and resource-group secrets, and keeps existing VM/SQL passwords so they still match anything already deployed.
-- Full walkthrough: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide).
+- Full walkthrough: [Deployment Guide → self-hosted appendix](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide).
 
 <details><summary><b>Why these scripts pipe secrets in instead of using <code>--body -</code></b> (maintainer note)</summary>
 
@@ -106,7 +108,7 @@ $ gh variable set --help
   -b, --body string   The value for the variable (reads from standard input if not specified)
 ```
 
-`--body -` *specifies* a value, so stdin is never read and the secret is stored as the one-character string `-`. Every `azure/login` then fails with an opaque AAD error, because the preflight check only tests that the secret is non-empty — and `-` is non-empty.
+`--body -` *specifies* a value, so stdin is never read and the secret is stored as the one-character string `-`. Every `azure/login` then fails with an opaque AAD error, because a stored secret — even a one-character garbage one — always overrides the workflow's in-code fallback.
 
 **This has been confirmed against the real client** (`gh` 2.63.2), by pointing it at a local HTTPS server and reading the request it actually sent. A repo secret is encrypted client-side with a libsodium sealed box, which is exactly **48 bytes larger than its plaintext** — so the ciphertext length recovers the plaintext length without ever decrypting anything. Piping the 9-character string `realvalue` both ways:
 
@@ -132,11 +134,12 @@ gh variable delete TEST_BODY_DASH --repo OWNER/REPO
 
 </details>
 
-### `Cleanup-Labs.ps1`
-- Deletes every resource inside your lab resource group — all four labs share one group, so this clears L1.1–L1.4 in one run. The group itself is kept.
+### `Cleanup-Labs.ps1` — self-hosted only
+- Deletes every resource inside your lab resource group — all labs share one group, so this clears them in one run. The group itself is kept.
+- **Classroom accounts use the "Teardown labs" workflow instead** (Actions tab — dry-run by default, type `DELETE` to confirm). Reader on the group means this script cannot delete anything for you.
 - Always preview first: `./scripts/Cleanup-Labs.ps1 -ResourceGroup $env:AZURE_RESOURCE_GROUP -WhatIf`
 - Leave `-ResourceGroup` off and it falls back to the `AZURE_RESOURCE_GROUP` environment variable.
-- Add `-RemoveOidc` to also delete the Entra app registration and its role assignment.
+- Add `-RemoveOidc` to also delete the Entra app registration and its role assignment. **Self-hosted only** — in the classroom that app is the shared identity for the whole class; deleting it is instructor-only and would break everyone's deploys.
 
 ---
 
@@ -145,22 +148,23 @@ gh variable delete TEST_BODY_DASH --repo OWNER/REPO
 These scripts require **Owner or User Access Administrator** on the subscription. `New-LabEnvironment.ps1` uses the Az PowerShell module (`Install-Module Az -Scope CurrentUser`); `Set-LabPolicy.ps1` and `Enable-DefenderPlans.ps1` deploy **Bicep templates** through the Azure CLI. Students never run these.
 
 ### `Setup-OidcAll.ps1`
-- Instructor-run bulk OIDC setup: for every student in `lab-user-data.csv`, creates the Entra app registration, federated credentials, Contributor role assignment, and pushes all 6 GitHub secrets + 2 variables to the student's fork.
-- Run **after** `New-LabEnvironment.ps1`. When complete, students skip straight to Section G → Step 3 (Verify).
+- Instructor-run bulk OIDC setup: for every student in `lab-user-data.csv`, creates an Entra app registration, federated credentials, a Contributor role assignment on the student's resource group, and pushes the GitHub secrets + variables to the student's fork (`User<nn>-TechCon`).
+- The current classroom event runs on a **single shared deploy identity** instead — one app, one federated credential per fork, and **no per-fork secrets** (the workflows' in-code fallbacks cover everything). Maintaining that shared app's federated credentials — including the `AADSTS700213` subject-format fix — is documented in [FIX-STUDENT-DEPLOYMENTS.md](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/blob/main/FIX-STUDENT-DEPLOYMENTS.md).
+- Run **after** `New-LabEnvironment.ps1`. When complete, students only need to enable workflows on their fork and run L1.1.
 - Always preview first: `./scripts/admin/Setup-OidcAll.ps1 -WhatIf`
 - Idempotent — safe to re-run to repair or rotate credentials.
 - Requires `gh` auth with Admin access to each student's fork.
 
 ### `New-LabEnvironment.ps1`
 - Reads `lab-user-data.csv` from the same folder (auto-detects instructor from `Type = Instructor` row).
-- Bulk-provisions all student environments: creates `rg-techdemo-<username>`, applies 4 required tags (`Owner`, `Event`, `Date`, `Instructor`), assigns each student Contributor on their own RG, and assigns the instructor Contributor on all RGs.
+- Bulk-provisions all student environments: creates one resource group per student, **named exactly like the student's GitHub account** (`User<nn>-TechCon` — the workflows target it by fork-owner name), applies 4 required tags (`Owner`, `Event`, `Date`, `Instructor`), grants each student **Reader** on their own RG (the shared deploy identity holds Contributor), and assigns the instructor Contributor on all RGs.
 - Optional: creates a User Assigned Managed Identity (`<username>-mi`) per student (`-IncludeManagedIdentity`).
 - Always preview first: `./scripts/admin/New-LabEnvironment.ps1 -WhatIf`
 - Idempotent — safe to re-run; existing resources are detected and skipped.
 - Full guide: [Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup).
 
 ### `Set-LabPolicy.ps1`
-- Assigns **6 Azure Policy assignments** to every `rg-techdemo-*` resource group:
+- Assigns **6 Azure Policy assignments** to every student resource group:
   - **Allowed locations** — restricts deployments to `eastus2` and `westus2` (L1.4's failover region)
   - **Allowed resource types** — whitelist of ~38 types used by L1.1–L1.4 labs
   - **Inherit tag × 4** — `Owner`, `Event`, `Date`, `Instructor` propagate automatically from RG to all child resources

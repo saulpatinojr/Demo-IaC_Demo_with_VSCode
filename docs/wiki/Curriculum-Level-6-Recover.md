@@ -7,12 +7,26 @@
 **Theme: Recover.** Answer the question L1.4 raised and did not settle: this
 environment is deployed in two regions, but would it survive losing one?
 
-Level 6 is a **parallel track**: it assumes Levels 1–4 are complete and does not
-depend on Level 5.
+Level 6 is an **extra-credit parallel track**: the main path ends at L4.1, and
+this level can be taken after it — before or after Level 5, or skipped
+entirely. It does not depend on Level 5, and its chapters carry lighter
+prerequisites than they look: **L6.1 needs nothing at all** (a $0
+zone-redundancy audit that runs any time), **L6.2 needs L4.1's vault**, and
+**L6.3 needs L1.3's workspace and L2.3's action group**.
+
+**Chapters in this level**
+
+| Chapter | One line |
+|---|---|
+| [L6.1 — High Availability & Redundancy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-1-High-Availability) | Grade the estate's zone posture with a $0 audit workbook — no prerequisites, no new redundancy. |
+| [L6.2 — Disaster Recovery Implementation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-2-Disaster-Recovery) | Match each tier to its recovery mechanism and lay Site Recovery groundwork on L4.1's vault. |
+| [L6.3 — Business Continuity & Validation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-3-Continuity-Validation) | Prove the recovery with an SLO alert and a drill workbook that turns exercises into evidence. |
+
+Full grid of both extra-credit tracks: [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map).
 
 | | |
 |---|---|
-| **Builds on** | Levels 1–4 — the estate, the health signals, the security posture, the backups |
+| **Builds on** | Lighter than "Levels 1–4": **L6.1 — nothing** (deployable any time) · **L6.2 — L4.1's vault** · **L6.3 — L1.3's workspace + L2.3's action group**; the rest of the estate enriches the audit but is not required |
 | **Chapters** | L6.1 · L6.2 · L6.3 |
 | **Existing assets reused** | L1.4's second region, SQL failover group and Front Door; L2.2's availability tests; L4.1's Recovery Services vault |
 | **New Azure resources** | Site Recovery replication, zone-redundant variants — mostly reconfiguration |
@@ -80,7 +94,9 @@ zones and component-level redundancy, and fix what is cheap to fix.
 - Apply the redundancy upgrades that are cheap (extra replicas, zone-redundant
   configuration) and cost the ones that are not.
 
-**Builds on.** All of Level 1 as the subject; L2.2 for the measurement.
+**Builds on.** Nothing, strictly — the audit grades whatever the resource group
+contains. Level 1 gives it a subject worth grading, and L2.2 supplies the
+measured half.
 
 **Azure services.** Availability zones · zone-redundant Standard Load Balancer ·
 Container Apps replica scaling · zone-redundant storage · Azure SQL service tier
@@ -123,8 +139,9 @@ which mechanism applies to which.
   parameters in source, no manual portal changes.
 - Understand region pairing and what it does and does not guarantee.
 
-**Builds on.** L6.1 (redundancy first, then recovery), L1.4 (failover group and
-Front Door already exist), L4.1 (the vault).
+**Builds on.** L4.1 (the vault — the one hard prerequisite); L6.1 for the
+redundancy-first framing; L1.4's failover group and Front Door where they
+exist.
 
 **Azure services.** Azure Site Recovery · recovery plans · Azure SQL failover
 groups (reused from L1.4) · Azure Front Door origin health and priority
@@ -165,8 +182,9 @@ delivers, and make the proof repeatable.
 - Assess the whole estate against the Well-Architected reliability pillar and
   close the curriculum with a prioritised, costed improvement list.
 
-**Builds on.** L6.1 and L6.2 (there is nothing to validate otherwise); L2.2 and
-L2.3 for detection; L4.3's restore drill discipline, applied to region loss.
+**Builds on.** L1.3's workspace and L2.3's action group (the hard
+prerequisites); L6.1 and L6.2 (there is nothing to validate otherwise); L2.2
+and L4.3's restore drill discipline, applied to region loss.
 
 **Azure services.** Site Recovery test failover · SQL failover group forced and
 planned failover · Azure Chaos Studio · Azure Monitor workbooks for drill
@@ -228,5 +246,5 @@ Recover**.
 |---|---|
 | Start the first chapter | **[L6.1 — High Availability & Redundancy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-1-High-Availability)** |
 | Curriculum complete — tear it down | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
-| Skipped Level 5? It only needs Levels 1–4 | [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
+| Skipped Level 5? It only needs L1.3's workspace (plus an instructor-granted Sentinel role) | [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
 | What does the whole curriculum cost? | [Cost model](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Cost-Model) |

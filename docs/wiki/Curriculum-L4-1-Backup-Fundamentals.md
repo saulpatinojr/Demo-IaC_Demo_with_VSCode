@@ -1,6 +1,6 @@
 # L4.1 — Backup Fundamentals 🟣
 
-**📍 [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L3.4 — Security Architecture](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-4-Security-Architecture) &nbsp;·&nbsp; Next: [L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection)
+**📍 [Level 4 · Protect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect)** · Chapter 1 of 4 &nbsp;·&nbsp; Previous: [L3.1 — Security Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L3-1-Security-Foundation) &nbsp;·&nbsp; Next: [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) — main path complete, pick your next column · Go deeper: [L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection)
 
 ---
 
@@ -16,7 +16,7 @@ the resources that freeze them.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Chapter 1 of Level 4 · everyone | ~20 min | **L1.1** and **L1.2** (the VMs) | 🟣 ~$0.06/hr added · ~$2.07/hr running total |
+| Chapter 1 of Level 4 · everyone | ~20 min | **L1.1 only** — the workflow's `include_web_tier` toggle defaults off; tick it while L1.2 stands to protect the web VMs too | 🟣 ~$0.06/hr added · ~$2.07/hr running total |
 
 > [!WARNING]
 > **Vault redundancy freezes the moment the first item is protected.** LRS, ZRS
@@ -122,6 +122,12 @@ slowly.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds
+> Reader, so local `az deployment` commands will be refused — deploys go
+> through your fork's workflow, which uses the shared workshop identity
+> automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -249,8 +255,9 @@ once: the constraint lives in the platform, not in the template.
 
 ## ➡️ What carries forward
 
-L4.2 protects the data that is not on a disk — where "backup" usually turns out
-to mean something already switched on that nobody has verified.
+This chapter completes the main path — deploy, monitor, secure, protect. Going
+deeper, L4.2 protects the data that is not on a disk — where "backup" usually
+turns out to mean something already switched on that nobody has verified.
 
 <br>
 
@@ -258,7 +265,10 @@ to mean something already switched on that nobody has verified.
 
 | Your situation | Go to |
 |---|---|
-| Ready to keep going — protect the data that isn't on a disk | **[L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection)** |
+| **Main path complete!** Pick your next move — go deeper anywhere, or take the extra-credit tracks | **[🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map)** |
+| Go deeper here — protect the data that isn't on a disk | [L4.2 — PaaS Protection](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-2-PaaS-Protection) |
+| Extra credit — put Microsoft Sentinel on the workspace | [L5.1 — Sentinel Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-1-Sentinel-Foundation) |
+| Extra credit — high availability and disaster recovery | [L6.1 — High Availability & Redundancy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-1-High-Availability) |
 | Want the big picture of this level first | [Level 4 · Protect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

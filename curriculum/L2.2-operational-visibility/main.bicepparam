@@ -3,9 +3,10 @@ using 'main.bicep'
 param prefix = readEnvironmentVariable('AZURE_PREFIX', 'iacdemo')
 param location = readEnvironmentVariable('AZURE_LOCATION', 'eastus2')
 
-// The only billed resource in this chapter. Set CURRICULUM_AVAILABILITY_TEST
-// to false if you skipped L1.4, or to make the chapter cost exactly nothing.
-param enableAvailabilityTest = toLower(readEnvironmentVariable('CURRICULUM_AVAILABILITY_TEST', 'true')) == 'true'
+// The only billed resource in this chapter — and it reads a property off
+// L1.4's Front Door, so it hard-fails unless L1.4 is standing. Off by
+// default; set CURRICULUM_AVAILABILITY_TEST=true once L1.4 is deployed.
+param enableAvailabilityTest = toLower(readEnvironmentVariable('CURRICULUM_AVAILABILITY_TEST', 'false')) == 'true'
 
 // 900 = every 15 minutes per location. Azure allows 300, 600 or 900 and
 // nothing else, so this is edited here rather than read from an environment

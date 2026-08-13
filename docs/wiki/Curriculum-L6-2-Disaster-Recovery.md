@@ -114,8 +114,8 @@ sequence down before the drill in L6.3.
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
 <b>Azure RBAC — the minimum this chapter needs</b><br><br>
-<b>Contributor</b> on the lab resource group. <b>Site Recovery Contributor</b> is the least-privilege equivalent.<br>
-<sub>Why: the policy and fabrics are children of the L4.1 vault, so ordinary resource rights are enough. Enabling replication needs write access in <b>both</b> regions — the source VM and the target resource group, which may not be the same group or the same owner. That cross-region permission is the one people discover mid-incident.</sub>
+<b>Contributor</b> on the lab resource group — the <b>shared workshop deploy identity's</b> role, not yours; <b>Site Recovery Contributor</b> is its least-privilege equivalent. Your <b>Reader</b> covers every verification step below.<br>
+<sub>Why: the policy and fabrics are children of the L4.1 vault, so the deploy identity's ordinary resource rights are enough. Enabling replication — the manual step — needs write access in <b>both</b> regions: the source VM and the target resource group, which may not be the same group or the same owner. That cross-region permission is the one people discover mid-incident; in this classroom it means the enable-replication step is the instructor's to run, not yours.</sub>
 </td>
 </tr>
 <tr>
@@ -135,6 +135,9 @@ sequence down before the drill in L6.3.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -275,3 +278,4 @@ kept.
 | Want the big picture of this level first | [Level 6 · Recover overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
+| ⬅ Back to the main path grid | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |

@@ -1,12 +1,125 @@
 # Start Here Checklist — Part 2
 
-Continue here after finishing [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) sections A through D.
+Continue here after finishing [Start-Here Checklist](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Start-Here-Checklist) sections A through D — or, if you are a **classroom participant**, jump straight to **Section H** below.
 
 ---
 
-## 🍴 E. Fork the repo to your GitHub account
+## ✅ Already done for you (classroom)
 
-> **Why fork and not just clone?** GitHub Actions workflows can only read secrets from a repo you own. If you clone the instructor's repo directly, the workflows will fail at the secrets check. Your fork is your personal copy with your own secrets and workflow runs.
+Two whole setup chapters of this page do not apply to classroom accounts, because they were done before you arrived:
+
+- **Your fork already exists** at `github.com/<your-account>/Demo-IaC_Demo_with_VSCode` — nothing to fork, no script to run.
+- **The deploy identity is already wired.** A shared workshop identity carries a federated credential for your fork, and the workflows carry in-code defaults for everything else — target resource group (your account name), prefix, and passwords (`<your-account>!!`). Your fork needs **zero secrets and zero variables**: `gh secret list` returning `no secrets found` is the normal, correct state, not something to fix.
+
+Your classroom path on this page: **Section F** (optional — only if you want the Copilot/CLI experience), then **Section H** — your first deploy.
+
+The fork-and-OIDC setup lives on under **[Self-hosted setup (Sections E & G)](#-self-hosted-setup-sections-e--g)** for people running on their own subscription.
+
+---
+
+## 💻 F. Clone your fork to C:\Users\Public — only needed for the Copilot/CLI path
+
+> [!NOTE]
+> **Classroom:** this section is optional. Deploying and verifying happens entirely in the browser (Actions tab + Azure portal). Clone only if you want to edit Bicep locally with VS Code and Copilot.
+
+You have two ways to clone. Both end with the same folder: `C:\Users\Public\Demo-IaC_Demo_with_VSCode`.
+
+> [!IMPORTANT]
+> **Why not the Desktop?** On these lab machines the Desktop is synced by OneDrive under a shared Microsoft account, so a git repo cloned there syncs its `.git` folder across every station — git operations race the sync client and clones cross-contaminate between lanes. `C:\Users\Public` is local to each machine and never syncs.
+
+<br>
+
+---
+
+### <img src="gh-actions.png" width="30" align="top">&nbsp; Option A · Terminal clone (recommended)
+
+> [!NOTE]
+> **Best if you like the command line.** One command, stays in PowerShell, and sets up both `origin` and `upstream` remotes in one go.
+
+Open a **new PowerShell 7** window and run (replace `<your-username>` with your GitHub account name):
+
+```powershell
+cd $env:PUBLIC
+gh repo clone <your-username>/Demo-IaC_Demo_with_VSCode
+cd .\Demo-IaC_Demo_with_VSCode
+git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
+git remote -v
+```
+
+Expected output from `git remote -v`:
+
+```
+origin   https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode.git (fetch)
+origin   https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode.git (push)
+upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git (fetch)
+upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git (push)
+```
+
+**Then set your fork as the default repo for `gh` commands.** Because you have two remotes (`origin` and `upstream`), `gh` will ask you to pick every time unless you set this once:
+
+```powershell
+gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
+```
+
+You should see: `✓ Set <your-username>/Demo-IaC_Demo_with_VSCode as the default repository for the current directory`
+
+<br>
+
+---
+
+### <img src="github-desktop.svg" width="30" align="top">&nbsp; Option B · GitHub Desktop clone (visual)
+
+> [!TIP]
+> **Best if you prefer a visual, point-and-click approach.** GitHub Desktop handles the clone — you then add the upstream remote in one terminal command.
+
+**Clone in GitHub Desktop:**
+
+1. Open **GitHub Desktop**
+2. Click **File → Clone repository…**
+3. Select the **URL** tab
+4. Paste your fork URL: `https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode`
+5. Set **Local path** to `C:\Users\Public` (type it in, or click **Choose...** and navigate to This PC > Windows (C:) > Users > Public)
+   *(GitHub Desktop appends the repo name — your final folder will be `C:\Users\Public\Demo-IaC_Demo_with_VSCode`)*
+6. Click **Clone**
+
+**Then add the upstream remote and set your fork as default** (run inside the cloned folder):
+
+```powershell
+cd "$env:PUBLIC\Demo-IaC_Demo_with_VSCode"
+git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
+git remote -v
+gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
+```
+
+<br>
+
+---
+
+- [ ] Folder `Demo-IaC_Demo_with_VSCode` exists in `C:\Users\Public`
+- [ ] `git remote -v` shows both `origin` (your fork) and `upstream` (instructor's repo)
+- [ ] `gh repo set-default` confirmed your fork as the default repo
+- [ ] Open the cloned folder in VS Code: `code "$env:PUBLIC\Demo-IaC_Demo_with_VSCode"` — accept the recommended extensions prompt.
+
+---
+
+## 🚀 H. First deploy (L1.1) — the classroom step
+
+This is the whole classroom setup. Everything runs in the browser:
+
+- [ ] On GitHub — signed in as **your workshop account** — open **your fork** and click **Actions**, then the green **"I understand my workflows, go ahead and enable them"** button if prompted (forks disable workflows by default).
+- [ ] Run **Curriculum L1.1 - Core Deployment** → **Run workflow** → **Run workflow**. (No inputs needed — it targets the resource group named after your account automatically.)
+- [ ] Watch the **What-if** step — it lists every resource that will be created. Read it before the deploy step runs.
+- [ ] Green check on all three stages (Lint → What-if → Deploy)? 🎉 Continue with the **[L1.1 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment)**.
+
+---
+
+## 🧰 Self-hosted setup (Sections E & G)
+
+Everything below is for people running the workshop **on their own subscription**. Classroom accounts skip it entirely — see [Already done for you](#-already-done-for-you-classroom) above.
+
+### 🍴 E. Fork the repo to your GitHub account (self-hosted)
+
+> **Why fork and not just clone?** GitHub Actions workflows run under the repo they live in. Your fork is your personal copy with its own workflow runs and its own configuration.
 
 From **PowerShell** in your bootstrap folder, run:
 
@@ -40,91 +153,7 @@ When it finishes you will see:
 
 > If your environment blocks script downloads in the terminal, download `Connect-AzureAndGitHub.ps1` in a browser, save it to `C:\Users\Public\Demo-IaC-Bootstrap\`, then run it.
 
----
-
-## 💻 F. Clone your fork to C:\Users\Public
-
-You have two ways to clone. Both end with the same folder: `C:\Users\Public\Demo-IaC_Demo_with_VSCode`.
-
-> [!IMPORTANT]
-> **Why not the Desktop?** On these lab machines the Desktop is synced by OneDrive under a shared Microsoft account, so a git repo cloned there syncs its `.git` folder across every station — git operations race the sync client and clones cross-contaminate between lanes. `C:\Users\Public` is local to each machine and never syncs.
-
-<br>
-
----
-
-## <img src="gh-actions.png" width="30" align="top">&nbsp; Option A · Terminal clone (recommended)
-
-> [!NOTE]
-> **Best if you like the command line.** One command, stays in PowerShell, and sets up both `origin` and `upstream` remotes in one go.
-
-Open a **new PowerShell 7** window and run (replace `<your-username>` with your GitHub username printed in Section E):
-
-```powershell
-cd $env:PUBLIC
-gh repo clone <your-username>/Demo-IaC_Demo_with_VSCode
-cd .\Demo-IaC_Demo_with_VSCode
-git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
-git remote -v
-```
-
-Expected output from `git remote -v`:
-
-```
-origin   https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode.git (fetch)
-origin   https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode.git (push)
-upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git (fetch)
-upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git (push)
-```
-
-**Then set your fork as the default repo for `gh` commands.** Because you have two remotes (`origin` and `upstream`), `gh` will ask you to pick every time unless you set this once:
-
-```powershell
-gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
-```
-
-You should see: `✓ Set <your-username>/Demo-IaC_Demo_with_VSCode as the default repository for the current directory`
-
-<br>
-
----
-
-## <img src="github-desktop.svg" width="30" align="top">&nbsp; Option B · GitHub Desktop clone (visual)
-
-> [!TIP]
-> **Best if you prefer a visual, point-and-click approach.** GitHub Desktop handles the clone — you then add the upstream remote in one terminal command.
-
-**Clone in GitHub Desktop:**
-
-1. Open **GitHub Desktop**
-2. Click **File → Clone repository…**
-3. Select the **URL** tab
-4. Paste your fork URL: `https://github.com/<your-username>/Demo-IaC_Demo_with_VSCode`
-5. Set **Local path** to `C:\Users\Public` (type it in, or click **Choose...** and navigate to This PC > Windows (C:) > Users > Public)
-   *(GitHub Desktop appends the repo name — your final folder will be `C:\Users\Public\Demo-IaC_Demo_with_VSCode`)*
-6. Click **Clone**
-
-**Then add the upstream remote and set your fork as default** (run inside the cloned folder):
-
-```powershell
-cd "$env:PUBLIC\Demo-IaC_Demo_with_VSCode"
-git remote add upstream https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode.git
-git remote -v
-gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
-```
-
-<br>
-
----
-
-- [ ] Folder `Demo-IaC_Demo_with_VSCode` exists on your Desktop
-- [ ] `git remote -v` shows both `origin` (your fork) and `upstream` (instructor's repo)
-- [ ] `gh repo set-default` confirmed your fork as the default repo
-- [ ] Open the cloned folder in VS Code: `code "$env:PUBLIC\Demo-IaC_Demo_with_VSCode"` — accept the recommended extensions prompt.
-
----
-
-## 🔗 G. Wire up GitHub → Azure (OIDC, one-time)
+### 🔗 G. Wire up GitHub → Azure (OIDC, one-time — self-hosted)
 
 > **Before running any command in this section**, move into the cloned repo folder:
 > ```powershell
@@ -132,70 +161,30 @@ gh repo set-default <your-username>/Demo-IaC_Demo_with_VSCode
 > ```
 > If you see `fatal: not a git repository`, you skipped Section F — go back and clone your fork first.
 
-This creates a passwordless identity that GitHub Actions uses to deploy to Azure. All labs deploy into your single assigned resource group — they do not create their own.
+This creates a passwordless identity that GitHub Actions uses to deploy to Azure. All labs deploy into your single resource group — they do not create their own.
 
-> [!NOTE]
-> **`gh secret list` will return nothing until this section is complete.** That is expected — the secrets do not exist yet. The Setup-Oidc script creates them. Only run the verification commands at the *end* of this section, after the script finishes.
-
----
-
-### Step 1 — Check whether your instructor already ran setup for you
+**Create the resource group first** — the group must already exist, and no lab creates it:
 
 ```powershell
-gh secret list
+az group create --name "<your-rg>" --location eastus2
 ```
 
-| What you see | What it means | What to do |
-|---|---|---|
-| A list of secret names | Instructor already ran Setup-Oidc | Skip to **Step 3 — Verify** below |
-| `no secrets found` | Setup has not been run yet | Continue to **Step 2** |
-
----
-
-### Step 2 — Run Setup-Oidc
-
-`-ResourceGroup` controls **where permissions are scoped** (classroom safety boundary).  
-`-Prefix` controls **unique naming** (Entra app + lab resource names). It is optional in code, but for class labs you should still set it to avoid name collisions.
-
-#### Classroom participant
+Then run Setup-Oidc. `-ResourceGroup` controls **where permissions are scoped**; `-Prefix` controls **unique naming** (Entra app + lab resource names).
 
 > [!TIP]
 > **Optional preview (`-WhatIf`)** — safe dry run. You should only see planned actions, with no changes applied.
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf
+./scripts/Setup-Oidc.ps1 -ResourceGroup "<your-rg>" -Prefix "<yourname>" -WhatIf
 ```
 
 #### Run for real
 
 ```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
+./scripts/Setup-Oidc.ps1 -ResourceGroup "<your-rg>" -Prefix "<yourname>"
 ```
 
-#### Self-hosted (your own subscription)
-
-> [!IMPORTANT]
-> **`-ResourceGroup` is required here too, and the group must already exist.** No lab creates it, and every deploy workflow reads the `AZURE_RESOURCE_GROUP` secret that this flag sets. Create it first:
-> ```powershell
-> az group create --name "rg-techdemo-<yourname>" --location eastus2
-> ```
-
-> [!TIP]
-> **Optional preview (`-WhatIf`)** — safe dry run. You should only see planned actions, with no changes applied.
-
-```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>" -WhatIf
-```
-
-#### Run for real
-
-```powershell
-./scripts/Setup-Oidc.ps1 -ResourceGroup "rg-techdemo-<yourname>" -Prefix "<yourname>"
-```
-
----
-
-### Step 3 — Verify (run this only after the script completes)
+#### Verify (run this only after the script completes)
 
 ```powershell
 gh secret list
@@ -203,19 +192,11 @@ gh variable list
 ```
 
 - [ ] `gh secret list` shows all 6 secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `VM_ADMIN_PASSWORD`, `SQL_ADMIN_PASSWORD`
-  *(Same 6 either way — classroom and self-hosted both need `AZURE_RESOURCE_GROUP`, because the workflows deploy into a named group in both cases.)*
 - [ ] `gh variable list` shows `AZURE_PREFIX` and `AZURE_LOCATION`
 
+*(This 6-secret state is self-hosted only. On a classroom fork, both commands correctly return nothing — the workflow's in-code defaults and the shared federated identity replace them.)*
+
 > Full walkthrough and manual steps: [Deployment Guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Deployment-Guide). Instructor pre-lab setup: [Instructor Setup](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Instructor-Setup).
-
----
-
-## 🚀 H. First deploy (L1.1)
-
-- [ ] On GitHub, open **Actions** and click the green **"I understand my workflows, go ahead and enable them"** button if prompted (forks disable workflows by default).
-- [ ] Run **Curriculum L1.1 - Core Deployment** → **Run workflow** → **Run workflow**.
-- [ ] Watch the **What-if** step — it lists every resource that will be created. Read it before the deploy step runs.
-- [ ] Green check on all three steps (Lint → What-if → Deploy)? 🎉 Continue with the **[L1.1 guide](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment)**.
 
 ---
 
@@ -223,17 +204,22 @@ gh variable list
 
 | Question | Where to fix if "no" |
 |---|---|
-| `gh auth status` shows my GitHub username? | Part 1 — Section D |
-| `az account show` prints the correct subscription? | Part 1 — Section D |
-| Fork exists at `github.com/<me>/Demo-IaC_Demo_with_VSCode`? | Section E |
-| Local clone exists in C:\Users\Public? | Section F |
-| `git remote -v` shows both `origin` and `upstream`? | Section F |
-| `gh repo set-default` points to my fork (not the instructor's)? | Section F |
-| `gh secret list` shows `AZURE_RESOURCE_GROUP` and 5 others? | Section G |
-| `gh variable list` shows `AZURE_PREFIX` and `AZURE_LOCATION`? | Section G |
-| The Actions tab shows the deploy workflows (not blocked)? | Section H |
+| Signed in to GitHub as my workshop account (`User<nn>-TechCon`)? *(classroom)* | Sign out and back in with the account your instructor gave you |
+| My fork exists at `github.com/<me>/Demo-IaC_Demo_with_VSCode`? | Classroom: pre-created — check you are signed in as the right account. Self-hosted: Section E |
+| The Actions tab shows the deploy workflows (not blocked)? | Section H — click the green enable button |
+| `gh secret list` on my **classroom** fork returns `no secrets found`? | That is **correct** — nothing to fix. Fallbacks in the workflow files cover everything |
+| `gh variable list` on my **classroom** fork returns nothing? | Also correct — the prefix derives from your account name automatically |
+| *(Copilot/CLI path)* Local clone exists in C:\Users\Public? | Section F |
+| *(Copilot/CLI path)* `git remote -v` shows both `origin` and `upstream`? | Section F |
+| *(Copilot/CLI path)* `gh repo set-default` points to my fork? | Section F |
+| *(Self-hosted)* `gh secret list` shows `AZURE_RESOURCE_GROUP` and 5 others? | Section G |
+| *(Self-hosted)* `gh variable list` shows `AZURE_PREFIX` and `AZURE_LOCATION`? | Section G |
 
 Stuck on any of these → [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting).
+
+---
+
+➡️ Ready? Head to **[L1.1 — Core Deployment](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L1-1-Core-Deployment)** and run your first deploy. The main path continues east: **L1.1 → L2.1 → L3.1 → L4.1** — see the [Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map).
 
 <br>
 
@@ -241,7 +227,7 @@ Stuck on any of these → [Troubleshooting](https://github.com/saulpatinojr/Demo
 
 > <img src="icon-spotlight.svg" width="16" align="top"> **GitHub feature spotlight · Secrets versus variables**
 >
-> **You just used it:** `Setup-Oidc.ps1` pushed both kinds. `AZURE_PREFIX` and `AZURE_LOCATION` went in as **variables** because they appear in resource names and logs anyway. The passwords and IDs went in as **secrets**.
+> **You just used it — by not needing it:** a classroom fork carries **no secrets and no variables at all.** The workflows read every value through a fallback expression like `${{ secrets.VM_ADMIN_PASSWORD || format('{0}!!', github.repository_owner) }}`, and authentication happens through a federated trust rather than a stored credential — so there is nothing to push into your fork. Self-hosted forks are the contrast: there `Setup-Oidc.ps1` pushes both kinds — `AZURE_PREFIX` and `AZURE_LOCATION` as **variables** (they appear in resource names and logs anyway), passwords and IDs as **secrets**.
 > **Find it:** **Settings → Secrets and variables → Actions**. You can read a variable back; you can never read a secret back, only replace it. In a run log a secret prints as `***`, automatically.
-> **Beyond the lab:** the test is simple — if someone leaking it would cause harm, it is a secret; if you would happily print it in a log, it is a variable. Getting that split right is most of what secret hygiene means in practice.
+> **Beyond the lab:** the test is simple — if someone leaking it would cause harm, it is a secret; if you would happily print it in a log, it is a variable. And a fallback default in the workflow file is how you make secrets *optional* without making them impossible.
 > [Docs →](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions)

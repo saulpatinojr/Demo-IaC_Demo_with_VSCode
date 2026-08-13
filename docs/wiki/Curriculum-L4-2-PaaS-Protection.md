@@ -120,6 +120,12 @@ a protection review.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds
+> Reader, so local `az deployment` commands will be refused — deploys go
+> through your fork's workflow, which uses the shared workshop identity
+> automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>
@@ -263,6 +269,7 @@ against a written expectation.
 | Your situation | Go to |
 |---|---|
 | Ready to keep going — make backup an operational service | **[L4.3 — Operational Backup Management](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-3-Backup-Operations)** |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want the big picture of this level first | [Level 4 · Protect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-4-Protect) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |

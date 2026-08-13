@@ -6,7 +6,7 @@
 
 **Goal:** turn the data L2.1 started collecting into answers — a query library
 saved into the workspace, a workbook that puts the whole estate on one page,
-and an availability test against L1.4's Front Door endpoint.
+and (optionally) an availability test against L1.4's Front Door endpoint.
 
 **The IaC lesson:** dashboards as code. The workbook is a Bicep object, so
 "someone changed the dashboard" is a reviewable diff with an author — not a
@@ -16,11 +16,16 @@ mystery portal edit.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Chapter 2 of Level 2 · everyone | ~15 min | **L2.1**, plus L1.3 and L1.4 | 🔵 ~$0.02/hr added · ~$1.92/hr running total |
+| Chapter 2 of Level 2 · everyone | ~15 min | **L2.1**, plus **L1.3** (its workspace + App Insights) | 🔵 ~$0.02/hr added · ~$1.92/hr running total |
 
 > [!IMPORTANT]
 > **L2.1 must already be deployed.** There is nothing to query otherwise — the
-> workbook would render five empty tiles.
+> workbook would render five empty tiles. This chapter also hard-requires
+> **L1.3**: the saved searches and workbook land in its workspace, and the
+> availability test binds to its Application Insights. The availability test
+> *additionally* needs **L1.4**'s Front Door — which is why it now ships
+> **off by default** (workflow input `availability_test`); turn it on only
+> while L1.4 is standing.
 
 <br>
 
@@ -122,6 +127,9 @@ wrong one for a lab — knowing which you are looking at is the skill.
 
 ---
 
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
+
 ## 🚀 Deploy it — pick any one of three ways
 
 <table>
@@ -143,14 +151,15 @@ az deployment group what-if --resource-group $env:AZURE_RESOURCE_GROUP --paramet
 az deployment group create  --resource-group $env:AZURE_RESOURCE_GROUP --parameters curriculum/L2.2-operational-visibility/main.bicepparam
 ```
 
-**You should see:** `savedQueryCount` of 5 and
-`availabilityTestExecutionsPerHour` of 8. Multiply that by $0.0005 — the
+**You should see:** `savedQueryCount` of 5. With the availability test on,
+also `availabilityTestExecutionsPerHour` of 8 — multiply that by $0.0005; the
 template prints the number so you never have to guess.
 
-**Skipped L1.4, or want this chapter to cost nothing?**
+**Have L1.4's Front Door standing and want the availability test?** It is off
+by default — turn it on explicitly:
 
 ```powershell
-$env:CURRICULUM_AVAILABILITY_TEST = "false"
+$env:CURRICULUM_AVAILABILITY_TEST = "true"
 ```
 
 <br>
@@ -160,7 +169,8 @@ $env:CURRICULUM_AVAILABILITY_TEST = "false"
 ## <img src="gh-actions.png" width="30" align="top">&nbsp; Option 2 · GitHub Actions (push-button)
 
 **Actions → "Curriculum L2 - Operations & Monitoring" → Run workflow**, then
-pick **L2.2 - Operational Visibility**.
+pick **L2.2 - Operational Visibility**. Tick **`availability_test`** only if
+L1.4's Front Door is standing — it defaults to off.
 
 **You should see:** **Lint → What-if → Deploy**, then a run summary carrying
 the execution count and its cost basis.
@@ -208,8 +218,9 @@ blob — which is exactly why Copilot can edit it and you can read the diff.
    means no traffic has crossed the firewall since L2.1 — not a broken
    deployment.
 
-3. **The availability test is bound to Application Insights** — the binding is
-   a tag, and getting it wrong is the classic failure:
+3. **The availability test is bound to Application Insights** *(only if you
+   turned the test on)* — the binding is a tag, and getting it wrong is the
+   classic failure:
 
    ```powershell
    az monitor app-insights web-test list -g $env:AZURE_RESOURCE_GROUP -o table
@@ -264,6 +275,7 @@ set** — that is the argument the next chapter opens with.
 | Your situation | Go to |
 |---|---|
 | Ready to keep going — stop having to look | **[L2.3 — Proactive Operations](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L2-3-Proactive-Operations)** |
+| ⬅ Back to the main path | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
 | Want the big picture of this level | [Level 2 · Monitor overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-2-Monitor) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
