@@ -16,9 +16,20 @@ else in the repo** — never in workflow files, docs, or commit history.
 One app registration is shared by the whole class. It holds Contributor on
 every student resource group and is the identity that actually deploys —
 students themselves hold only Reader. Each student fork authenticates to it
-through a federated credential whose subject is:
+through a federated credential.
 
-    repo:User<nn>-TechCon/Demo-IaC_Demo_with_VSCode:ref:refs/heads/main
+**Subject format matters.** GitHub repos created after 15 Jul 2026 — which
+includes every workshop fork — always present the immutable, ID-enriched
+OIDC subject, so each federated credential's subject must be:
+
+    repo:User<nn>-TechCon@<owner-id>/Demo-IaC_Demo_with_VSCode@<repo-id>:ref:refs/heads/main
+
+The classic name-only subject (`repo:User<nn>-TechCon/Demo-IaC…`) fails with
+`AADSTS700213: No matching federated identity record found`. When a login
+fails, the fork's Actions log ("Federated token details") prints the exact
+subject to copy into the credential. One Entra *flexible* federated
+credential with a claims-matching expression can also cover every fork with
+a single entry instead of 35.
 
 The L1–L4 and teardown workflows carry the three IDs as in-code fallbacks
 (this classroom environment is deleted after the event), so forks work with
