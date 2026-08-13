@@ -34,7 +34,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  # Classroom isolation is naming: each workshop GitHub account matches its
+  # pre-created resource group, so the fork owner is the default target RG.
+  # The AZURE_RESOURCE_GROUP secret still overrides it for self-hosted runs.
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
 
 jobs:
   teardown:
@@ -49,9 +52,9 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP; do
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
             if [ -z "${!v}" ]; then
-              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 first."
+              echo "::error::Missing repo secret '$v'. Classroom forks come pre-staged -- tell your instructor this secret is missing. Self-hosted: run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
               missing=1
             fi
           done
