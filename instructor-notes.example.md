@@ -20,9 +20,11 @@ through a federated credential whose subject is:
 
     repo:User<nn>-TechCon/Demo-IaC_Demo_with_VSCode:ref:refs/heads/main
 
-and carries the three IDs above as Actions secrets (`AZURE_CLIENT_ID`,
-`AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`). The shared storage account is
-namespaced per student by key — record its name here, not in the repo.
+The L1–L4 and teardown workflows carry the three IDs as in-code fallbacks
+(this classroom environment is deleted after the event), so forks work with
+zero secrets; `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID`
+secrets on a fork still take precedence when present. The shared storage
+account is namespaced per student by key — record its name here.
 
 ## Roster and naming
 

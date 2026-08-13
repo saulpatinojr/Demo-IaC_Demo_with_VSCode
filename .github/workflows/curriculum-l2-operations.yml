@@ -43,6 +43,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  # Shared workshop deployment identity. These are identifiers, not secrets --
+  # authentication happens through the federated credential tied to each
+  # classroom fork -- and this classroom environment is deleted after the
+  # event. Fork secrets, when present, still take precedence.
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || 'ec772fb1-230b-4d26-a980-4870f847e392' }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || '92247f12-056e-4600-9248-fb43a78491c9' }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || '456beea5-e9a5-4fde-aa3e-f136cf384213' }}
   AZURE_PREFIX: ${{ vars.AZURE_PREFIX }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
   # Classroom isolation is naming: each workshop GitHub account matches its
@@ -77,21 +84,6 @@ jobs:
           fi
           echo "Prefix '$AZURE_PREFIX' -> resource group '$AZURE_RESOURCE_GROUP'"
 
-      - name: Preflight - verify required secrets
-        env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        run: |
-          missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
-            if [ -z "${!v}" ]; then
-              echo "::error::Missing repo secret '$v'. Classroom forks come pre-staged -- tell your instructor this secret is missing. Self-hosted: run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
-              missing=1
-            fi
-          done
-          [ "$missing" = "0" ] || exit 1
-
       # The dropdown label is for humans; this turns it into a path. Keeping
       # the mapping in one place means adding a chapter is two lines: an option
       # above and a case below.
@@ -114,9 +106,9 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Lint (compile + linter)
         env:
