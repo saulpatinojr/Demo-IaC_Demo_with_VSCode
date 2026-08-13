@@ -93,7 +93,7 @@ this level, or the automation looks like a rounding error.
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
 <b>Azure RBAC — the minimum this chapter needs</b><br><br>
-<b>Microsoft Sentinel Contributor</b> for the automation rules, plus <b>Contributor</b> for the Logic App.<br>
+<b>Microsoft Sentinel Contributor</b> for the automation rules, plus <b>Contributor</b> for the Logic App — both requirements on the <b>shared workshop deploy identity</b>, which already holds them after L5.1. You verify everything below with <b>Reader</b>.<br>
 <sub>Why: automation rules are Sentinel resources; the playbook is an ordinary Logic App. There is a subtlety worth knowing — for Sentinel to <i>run</i> a playbook it needs the <b>Microsoft Sentinel Automation Contributor</b> role on the playbook resource group, which the portal grants for you the first time and a template does not. If a playbook never fires from an automation rule, that missing grant is why.</sub>
 </td>
 </tr>
@@ -114,6 +114,9 @@ this level, or the automation looks like a rounding error.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -255,3 +258,4 @@ Sentinel does not delete the workspace, and retained data keeps billing.
 | Want the big picture of this level | [Level 5 · Detect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
+| ⬅ Back to the main path grid | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |

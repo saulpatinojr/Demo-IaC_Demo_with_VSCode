@@ -7,14 +7,29 @@
 **Theme: Detect.** Stand up a SIEM on the workspace this curriculum has been
 filling since L2.1, and run a security incident from signal to closure.
 
-Level 5 is a **parallel track**: it assumes Levels 1–4 are complete and does not
-depend on Level 6.
+Level 5 is an **extra-credit parallel track**: the main path ends at L4.1, and
+this level can be taken after it — before or after Level 6, or skipped
+entirely. It does not depend on Level 6, and its true prerequisite is smaller
+than it looks: **L1.3's Log Analytics workspace**, plus the **Microsoft
+Sentinel Contributor** role on it for the shared deploy identity (an extra
+grant the instructor arranges). Everything the earlier levels wrote into that
+workspace enriches the level but is not a hard dependency.
+
+**Chapters in this level**
+
+| Chapter | One line |
+|---|---|
+| [L5.1 — Sentinel Foundation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-1-Sentinel-Foundation) | Enable Sentinel on the existing workspace and connect only the free data sources, priced first. |
+| [L5.2 — Detection & Investigation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-2-Detection-Investigation) | Write analytics rules as Bicep and investigate the incidents they raise. |
+| [L5.3 — SOC Operations & Automation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-3-SOC-Operations) | Automate triage with playbooks and close the level with a cost review. |
+
+Full grid of both extra-credit tracks: [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map).
 
 | | |
 |---|---|
-| **Builds on** | Levels 1–4 — the estate, the workspace, the Defender plans, the governance |
+| **Builds on** | **L1.3's workspace** (filled since L2.1) + **Microsoft Sentinel Contributor** for the shared deploy identity — the rest of Levels 1–4 enriches, but is not required |
 | **Chapters** | L5.1 · L5.2 · L5.3 |
-| **Existing assets reused** | The Log Analytics workspace (L2.1), diagnostic settings (L2.1), action groups (L2.3), Defender alerts (L3.3) |
+| **Existing assets reused** | The Log Analytics workspace (L1.3, filled since L2.1), diagnostic settings (L2.1), action groups (L2.3), Defender alerts (L3.3) |
 | **New Azure resources** | Sentinel onboarding, analytics rules, playbooks — no new infrastructure |
 | **Running cost at end of level** | **~$2.11/hr inside the free trial · ~$2.45/hr after it** |
 
@@ -27,9 +42,13 @@ depend on Level 6.
 > level that needs a role **outside Azure**: the Microsoft Entra ID data
 > connector is granted by a **Global Administrator** or **Security
 > Administrator** in the directory, which in most organisations is a different
-> person on a different team. On the Azure side you need **Microsoft Sentinel
-> Contributor** on the workspace. Neither is something a lab participant holding
-> Contributor on one resource group can grant themselves.
+> person on a different team. On the Azure side the **shared workshop deploy
+> identity** needs **Microsoft Sentinel Contributor** on the workspace — an
+> upgrade on the Contributor it normally holds, and one only the instructor can
+> arrange. Neither role is something anyone in the lab can grant themselves:
+> your account holds Reader, and even the deploy identity cannot escalate its
+> own access. Roles come from someone who already holds the authority — that
+> is the lesson, and it survives contact with any real organisation.
 
 > [!IMPORTANT]
 > **Sequence this level against the calendar.** Microsoft Sentinel's free trial
@@ -96,8 +115,8 @@ priced decision about every data source before connecting it.
 - Know where Sentinel lives going forward: the Azure portal experience retires
   after **31 March 2027**, and the Microsoft Defender portal is the destination.
 
-**Builds on.** L2.1 (the workspace and its diagnostic settings), L2.4 (the table
-plan discipline), L3.3 (Defender alerts).
+**Builds on.** L1.3 (the workspace, with diagnostic settings flowing since
+L2.1), L2.4 (the table plan discipline), L3.3 (Defender alerts).
 
 **Azure services.** Microsoft Sentinel · data connectors · Content hub ·
 Log Analytics table plans · Microsoft Defender portal.

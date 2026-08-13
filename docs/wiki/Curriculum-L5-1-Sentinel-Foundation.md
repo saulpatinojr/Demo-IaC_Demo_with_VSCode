@@ -1,6 +1,10 @@
 # L5.1 — Sentinel Foundation 🟠
 
-**📍 [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)** · Chapter 1 of 3 &nbsp;·&nbsp; Previous: [L4.4 — Enterprise Data Protection Strategy](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-4-Data-Protection-Strategy) &nbsp;·&nbsp; Next: [L5.2 — Detection & Investigation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-2-Detection-Investigation)
+**📍 [Level 5 · Detect](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect)** · Chapter 1 of 3 &nbsp;·&nbsp; Previous: [L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals) &nbsp;·&nbsp; Next: [L5.2 — Detection & Investigation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-2-Detection-Investigation)
+
+> Level 5 is an **extra-credit track**: the main path ends at L4.1, and this
+> level starts here whenever you pick it up — before or after Level 6, or not
+> at all. See the [Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map).
 
 ---
 
@@ -17,7 +21,7 @@ this one onboards Sentinel and its free connectors in a single deploy, and its
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Chapter 1 of Level 5 · everyone | ~20 min | **Levels 1–4**, and Sentinel Contributor | 🟠 **$0.00/hr in the trial** · +$0.31/hr after it |
+| Chapter 1 of Level 5 · everyone | ~20 min | **L1.3's workspace** (filled since L2.1), and **Microsoft Sentinel Contributor** granted to the shared deploy identity — ask the instructor | 🟠 **$0.00/hr in the trial** · +$0.31/hr after it |
 
 > [!WARNING]
 > **Sentinel bills analysis on everything in the workspace it is enabled on** —
@@ -32,7 +36,7 @@ One template turns the existing workspace into a SIEM. Sentinel is enabled on
 `log-iacdemo-l3` — the workspace every level has written into since L2.1 — and
 only the free data sources are connected. One paid source stays deliberately
 out of reach: Microsoft Entra ID sign-in and audit logs need a directory
-admin, and no template can substitute for that.
+admin, and no template — and no Azure role — can substitute for that.
 
 ```mermaid
 flowchart LR
@@ -75,8 +79,9 @@ table like this one.
 
 The red boxes are the wall. Microsoft Entra ID sign-in and audit logs are paid
 data **and** need a Global Administrator or Security Administrator to connect
-them in the directory. No Azure permission substitutes for that, and a
-resource-group Contributor cannot get there from here.
+them in the directory. No Azure permission substitutes for that — not your
+Reader, and not the shared deploy identity's Contributor on the resource group.
+Nobody in this lab can get there from here.
 
 </details>
 
@@ -119,8 +124,8 @@ before the retirement does.
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
 <b>Azure RBAC — the minimum this chapter needs</b><br><br>
-<b>Microsoft Sentinel Contributor</b> on the workspace. Plain Contributor is <b>not</b> enough.<br>
-<sub>Why: onboarding Sentinel and creating data connectors are <code>Microsoft.SecurityInsights</code> operations that Contributor on a resource group does not cover. This is the first chapter where the lab identity genuinely needs a role upgrade rather than a workaround — ask before the class, because a failed onboarding at minute five stops the level.</sub>
+<b>Microsoft Sentinel Contributor</b> on the workspace — held by the <b>shared workshop deploy identity</b>, not by you. Its usual plain Contributor is <b>not</b> enough.<br>
+<sub>Why: onboarding Sentinel and creating data connectors are <code>Microsoft.SecurityInsights</code> operations that Contributor on a resource group does not cover. This is the first chapter where the deploy identity genuinely needs a role upgrade rather than a workaround — the instructor grants it before the class, because a failed onboarding at minute five stops the level. Your own <b>Reader</b> access is all you need to verify the results.</sub>
 </td>
 </tr>
 <tr>
@@ -140,6 +145,9 @@ before the retirement does.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -181,7 +189,7 @@ $env:CURRICULUM_DEMOTE_VERBOSE = "false"   # then compare tomorrow's Usage bill
 **Actions → "Curriculum L5 - Microsoft Sentinel" → Run workflow →
 L5.1 - Sentinel Foundation**.
 
-If onboarding fails with an authorisation error, the identity has Contributor and not **Microsoft Sentinel Contributor**. That is the expected failure, not a broken template.
+If onboarding fails with an authorisation error, the shared deploy identity still has its usual Contributor and not **Microsoft Sentinel Contributor** — ask the instructor to grant it. That is the expected failure, not a broken template.
 
 <br>
 
@@ -275,3 +283,4 @@ wrote into the same workspace.
 | Want the big picture of this level first | [Level 5 · Detect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
+| ⬅ Back to the main path grid | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |

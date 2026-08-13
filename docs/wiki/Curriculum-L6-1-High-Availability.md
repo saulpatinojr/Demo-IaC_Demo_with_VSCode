@@ -1,6 +1,10 @@
 # L6.1 — High Availability & Redundancy 🔴
 
-**📍 [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** · Chapter 1 of 3 &nbsp;·&nbsp; Previous: [L5.3 — SOC Operations & Automation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L5-3-SOC-Operations) &nbsp;·&nbsp; Next: [L6.2 — Disaster Recovery Implementation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-2-Disaster-Recovery)
+**📍 [Level 6 · Recover](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover)** · Chapter 1 of 3 &nbsp;·&nbsp; Previous: [L4.1 — Backup Fundamentals](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L4-1-Backup-Fundamentals) &nbsp;·&nbsp; Next: [L6.2 — Disaster Recovery Implementation](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-L6-2-Disaster-Recovery)
+
+> Level 6 is an **extra-credit track**, parallel to Level 5 — take either one
+> first, or neither. This chapter in particular depends on nothing and costs
+> nothing, so it can be run at any point. See the [Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map).
 
 ---
 
@@ -16,7 +20,7 @@ a reviewed pull request against the Level 1 file that owns the resource.
 
 | Who this is for | Time | You need first | Cost while it runs |
 |---|---|---|---|
-| Chapter 1 of Level 6 · everyone | ~20 min | **Levels 1–4**, and L2.2 for the measured half | 🟢 **$0.00/hr** — this chapter deploys a report, not redundancy |
+| Chapter 1 of Level 6 · everyone | ~20 min | **Nothing** — the audit grades whatever the group contains; L2.2 enriches the measured half | 🟢 **$0.00/hr** — this chapter deploys a report, not redundancy |
 
 > [!IMPORTANT]
 > **This chapter changes nothing, deliberately.** Every redundancy upgrade
@@ -113,7 +117,7 @@ behind a single Basic Bastion does not make the *system* 99.99%.
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
 <b>Azure RBAC — the minimum this chapter needs</b><br><br>
-<b>Reader</b> on the resource group is enough to run every query. <b>Contributor</b> to deploy the workbook.<br>
+Your own <b>Reader</b> on the resource group is enough to run every query and use the workbook. Deploying the workbook takes <b>Contributor</b> — which the shared deploy identity holds, and you do not need.<br>
 <sub>Why: Azure Resource Graph reads what your identity can already see, so the grade is only as complete as your access — a Reader scoped to one resource group cannot tell you about the subscription around it. Worth noticing before quoting the result as an estate-wide finding.</sub>
 </td>
 </tr>
@@ -134,6 +138,9 @@ behind a single Basic Bastion does not make the *system* 99.99%.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -258,3 +265,4 @@ redeployed — the stateful one.
 | Want the big picture of this level first | [Level 6 · Recover overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-6-Recover) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
+| ⬅ Back to the main path grid | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |

@@ -121,8 +121,8 @@ months later. Test the rule, do not assume the plan.
 <td width="72" align="center" valign="top"><img src="icon-azure-rbac.svg" width="44"></td>
 <td valign="top">
 <b>Azure RBAC — the minimum this chapter needs</b><br><br>
-<b>Microsoft Sentinel Contributor</b> on the workspace.<br>
-<sub>Why: analytics rules are <code>Microsoft.SecurityInsights</code> resources, same as the onboarding in L5.1. Worth knowing the narrower roles too — <b>Microsoft Sentinel Responder</b> can investigate and manage incidents but not change rules, and <b>Microsoft Sentinel Reader</b> can only look. A SOC that gives every analyst Contributor has no change control over its own detections.</sub>
+<b>Microsoft Sentinel Contributor</b> on the workspace — a requirement on the <b>shared workshop deploy identity</b> that ships the rules, not on you. Your own <b>Reader</b> is enough to open the incidents they produce.<br>
+<sub>Why: analytics rules are <code>Microsoft.SecurityInsights</code> resources, same as the onboarding in L5.1. Worth knowing the narrower roles too — <b>Microsoft Sentinel Responder</b> can investigate and manage incidents but not change rules, and <b>Microsoft Sentinel Reader</b> can only look. A SOC that gives every analyst Contributor has no change control over its own detections — which is exactly why this workshop routes every rule change through the deploy identity and a pull request rather than granting write access to each participant.</sub>
 </td>
 </tr>
 <tr>
@@ -142,6 +142,9 @@ months later. Test the rule, do not assume the plan.
 <br>
 
 ---
+
+> [!NOTE]
+> **🏫 Classroom: use the GitHub Actions option.** Your Azure account holds Reader, so local `az deployment` commands will be refused — deploys go through your fork's workflow, which uses the shared workshop identity automatically. Compiling locally (`az bicep build`) works for everyone.
 
 ## 🚀 Deploy it — pick any one of three ways
 
@@ -282,3 +285,4 @@ cost review that turns off a connector you have proved you do not need.
 | Want the big picture of this level first | [Level 5 · Detect overview](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Level-5-Detect) |
 | Done for the day — the estate bills while idle | [Cleanup & Reset](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Cleanup-and-Reset) |
 | Something didn't work | [Troubleshooting](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Troubleshooting) |
+| ⬅ Back to the main path grid | [🗺️ Curriculum Map](https://github.com/saulpatinojr/Demo-IaC_Demo_with_VSCode/wiki/Curriculum-Map) |
