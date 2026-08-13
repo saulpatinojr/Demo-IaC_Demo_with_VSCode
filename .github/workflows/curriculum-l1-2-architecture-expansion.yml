@@ -14,15 +14,34 @@ concurrency:
 
 env:
   VM_ADMIN_PASSWORD: ${{ secrets.VM_ADMIN_PASSWORD }}
-  AZURE_PREFIX: ${{ vars.AZURE_PREFIX || 'iacdemo' }}
+  AZURE_PREFIX: ${{ vars.AZURE_PREFIX }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  # Classroom isolation is naming: each workshop GitHub account matches its
+  # pre-created resource group, so the fork owner is the default target RG.
+  # The AZURE_RESOURCE_GROUP secret still overrides it for self-hosted runs.
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Classroom forks are pre-staged and need no per-student variables: the
+      # prefix defaults to the fork owner's name up to the first hyphen,
+      # lowercased and trimmed to the 12 chars the templates allow
+      # (User01-TechCon -> user01). Set the AZURE_PREFIX repo variable to
+      # override it.
+      - name: Resolve resource group and prefix
+        run: |
+          if [ -z "$AZURE_PREFIX" ]; then
+            owner='${{ github.repository_owner }}'
+            prefix=$(printf '%s' "${owner%%-*}" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9' | cut -c1-12)
+            [ -n "$prefix" ] || prefix=$(printf '%s' "$owner" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9' | cut -c1-12)
+            echo "AZURE_PREFIX=$prefix" >> "$GITHUB_ENV"
+            export AZURE_PREFIX="$prefix"
+          fi
+          echo "Prefix '$AZURE_PREFIX' -> resource group '$AZURE_RESOURCE_GROUP'"
 
       - name: Preflight - verify required secrets
         env:
@@ -31,9 +50,9 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           missing=0
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP VM_ADMIN_PASSWORD; do
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID VM_ADMIN_PASSWORD; do
             if [ -z "${!v}" ]; then
-              echo "::error::Missing repo secret '$v'. Run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
+              echo "::error::Missing repo secret '$v'. Classroom forks come pre-staged -- tell your instructor this secret is missing. Self-hosted: run scripts/Setup-Oidc.ps1 (see Wiki -> Deployment Guide)."
               missing=1
             fi
           done

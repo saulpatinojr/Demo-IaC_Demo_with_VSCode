@@ -16,5 +16,9 @@ lab-settings.csv
 # Admin roster file — contains credentials, never commit the real one
 scripts/admin/lab-user-data.csv
 
+# Instructor notes — the real workshop identifiers (app, tenant, subscription)
+# live only here, never in the repo (copy from instructor-notes.example.md)
+instructor-notes.md
+
 # Local wiki clone
 Demo-IaC_Demo_with_VSCode.wiki/
