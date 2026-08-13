@@ -9,6 +9,11 @@ name: "Curriculum L3 - Security & Defender for Cloud"
 on:
   workflow_dispatch:
     inputs:
+      resource_group:
+        description: "Instructor/testing override: deploy into this resource group instead of the fork-owner default"
+        type: string
+        required: false
+        default: ""
       chapter:
         description: "Which chapter to deploy"
         type: choice
@@ -20,15 +25,15 @@ on:
           - "L3.3 - Security Operations"
           - "L3.4 - Enterprise Security Architecture"
       include_web_tier:
-        description: "L1.2 (firewall + web tier) is still deployed"
+        description: "L1.2 (firewall + web tier) is deployed - include it here"
         type: boolean
         required: true
-        default: true
+        default: false
       secondary_region:
-        description: "L1.4 (second region + DR SQL server) is deployed"
+        description: "L1.4 (second region + DR SQL server) is deployed - include it here"
         type: boolean
         required: true
-        default: true
+        default: false
       enable_jit:
         description: "Deploy just-in-time VM access (needs Defender for Servers P2)"
         type: boolean
@@ -61,7 +66,7 @@ env:
   # Classroom isolation is naming: each workshop GitHub account matches its
   # pre-created resource group, so the fork owner is the default target RG.
   # The AZURE_RESOURCE_GROUP secret still overrides it for self-hosted runs.
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
+  AZURE_RESOURCE_GROUP: ${{ inputs.resource_group || secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
   CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
   ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}
   # Read by L3.2. JIT needs Defender for Servers Plan 2 on the subscription,

@@ -1,20 +1,25 @@
 // ============================================================================
-// L2.1 — Monitoring Fundamentals (builds on all of Level 1)
+// L2.1 — Monitoring Fundamentals (builds on L1.1; more of L1 lights up more)
 // Points the environment Level 1 deployed at ONE Log Analytics workspace: an
 // Azure Monitor Agent and a data collection rule on every VM, and diagnostic
-// settings on the firewall, load balancer, Bastion, Key Vault, SQL database
-// and container app.
+// settings on whatever platform resources are standing — Bastion always,
+// firewall + load balancer when L1.2 is deployed, Key Vault + SQL database +
+// container app when L1.3 is deployed.
 //
-// This template deploys no application infrastructure and creates no
-// workspace. It REUSES the workspace L1.3 already made (log-<prefix>-l3),
-// which is what makes L5 Sentinel possible later without a second workspace
-// to reconcile. If you point it somewhere else, use -workspaceName.
+// Workspace: when L1.3 is deployed (includeAppTier), this template REUSES the
+// workspace L1.3 made (log-<prefix>-l3) — one workspace is what makes L5
+// Sentinel possible later without a second workspace to reconcile. On the
+// main curriculum path (L1.1 -> L2.1, no app tier yet) it creates a small
+// workspace of its own, log-<prefix>-mon, so monitoring the L1.1 VM works
+// with nothing else deployed.
 //
 // Cost note: nothing here has an hourly rate. Everything below bills per GB
 // ingested, so the parameters are the price dial — read the comments on
 // sendPlatformMetricsToLogs and collectFirewallLogs before turning them on.
 //
-// Prerequisite: L1.1–L1.4 deployed (same prefix, same resource group).
+// Prerequisite: L1.1 deployed (same prefix, same resource group). L1.2 and
+// L1.3 are optional — mirror what is actually standing with includeWebTier
+// and includeAppTier.
 // Deploys into a pre-existing resource group (targeted via --resource-group).
 // ============================================================================
 
@@ -25,11 +30,14 @@ param prefix string = 'iacdemo'
 @description('Same region used in Level 1.')
 param location string = 'eastus2'
 
-@description('Workspace everything reports to. Defaults to the one L1.3 created.')
+@description('Workspace everything reports to when the app tier exists. Defaults to the one L1.3 created. Ignored when includeAppTier is false — this template then creates log-<prefix>-mon itself.')
 param workspaceName string = 'log-${prefix}-l3'
 
 @description('Set false if you tore down L1.2 to save money — its firewall, load balancer and three web VMs are then skipped.')
 param includeWebTier bool = true
+
+@description('Set true only when L1.3 is deployed. Gates the Key Vault, SQL database and container app diagnostic settings, and switches the workspace from a self-created one to the one L1.3 made.')
+param includeAppTier bool = false
 
 @description('How many L1.2 web VMs exist. Ignored when includeWebTier is false.')
 @minValue(0)
@@ -56,12 +64,27 @@ var vmNames = union(
 var diagnosticName = 'diag-to-workspace'
 
 // ---------------------------------------------------------------------------
-// The workspace L1.3 created. Referenced, never created — reusing it is the
-// architectural decision this chapter is built on.
+// The workspace. With the app tier standing, L1.3's workspace is referenced,
+// never created — reusing it is the architectural decision this chapter is
+// built on. Without the app tier (the main path: L1.1 -> L2.1), a small
+// workspace is created here so the chapter stands on its own; L1.3 keeps its
+// separate log-<prefix>-l3 name, so deploying it later never collides.
 // ---------------------------------------------------------------------------
-resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
+resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = if (includeAppTier) {
   name: workspaceName
 }
+
+// Same AVM module and retention L1.3 uses for its workspace.
+module monWorkspace 'br/public:avm/res/operational-insights/workspace:0.15.1' = if (!includeAppTier) {
+  name: 'l21-log-analytics'
+  params: {
+    name: 'log-${prefix}-mon'
+    location: location
+    dataRetention: 30
+  }
+}
+
+var workspaceResourceId = includeAppTier ? workspace.id : monWorkspace!.outputs.resourceId
 
 var metricSettings = sendPlatformMetricsToLogs
   ? [{ category: 'AllMetrics', enabled: true }]
@@ -111,7 +134,7 @@ module dcr 'br/public:avm/res/insights/data-collection-rule:0.6.0' = {
         logAnalytics: [
           {
             name: 'laDestination'
-            workspaceResourceId: workspace.id
+            workspaceResourceId: workspaceResourceId
           }
         ]
       }
@@ -186,7 +209,7 @@ resource firewallDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-p
   name: diagnosticName
   scope: firewall
   properties: {
-    workspaceId: workspace.id
+    workspaceId: workspaceResourceId
     logs: [
       { category: 'AZFWNetworkRule', enabled: true }
       { category: 'AZFWApplicationRule', enabled: true }
@@ -203,7 +226,7 @@ resource loadBalancerDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-
   name: diagnosticName
   scope: loadBalancer
   properties: {
-    workspaceId: workspace.id
+    workspaceId: workspaceResourceId
     logs: [
       { categoryGroup: 'allLogs', enabled: true }
     ]
@@ -220,7 +243,7 @@ resource bastionDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pr
   name: diagnosticName
   scope: bastion
   properties: {
-    workspaceId: workspace.id
+    workspaceId: workspaceResourceId
     logs: [
       { categoryGroup: 'allLogs', enabled: true }
     ]
@@ -228,18 +251,18 @@ resource bastionDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pr
   }
 }
 
-// --- L1.3: Key Vault, SQL database, container app --------------------------
-resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
+// --- L1.3 (only when includeAppTier): Key Vault, SQL, container app --------
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = if (includeAppTier) {
   name: 'kv-${prefix}-${suffix}'
 }
 
 // Key Vault audit events are the one category worth arguing over: they are how
 // you answer "who read that secret", and L3.3 needs them.
-resource keyVaultDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource keyVaultDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (includeAppTier) {
   name: diagnosticName
   scope: keyVault
   properties: {
-    workspaceId: workspace.id
+    workspaceId: workspaceResourceId
     logs: [
       { categoryGroup: 'audit', enabled: true }
     ]
@@ -247,17 +270,17 @@ resource keyVaultDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-p
   }
 }
 
-resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' existing = {
+resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' existing = if (includeAppTier) {
   name: 'sql-${prefix}-${suffix}/sqldb-${prefix}-app'
 }
 
 // Basic-tier databases emit far less than the category list suggests, so this
 // stays cheap. Errors and timeouts are what L2.3 alerts on.
-resource sqlDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource sqlDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (includeAppTier) {
   name: diagnosticName
   scope: sqlDatabase
   properties: {
-    workspaceId: workspace.id
+    workspaceId: workspaceResourceId
     logs: [
       { category: 'Errors', enabled: true }
       { category: 'Timeouts', enabled: true }
@@ -267,15 +290,15 @@ resource sqlDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-previe
   }
 }
 
-resource containerApp 'Microsoft.App/containerApps@2024-03-01' existing = {
+resource containerApp 'Microsoft.App/containerApps@2024-03-01' existing = if (includeAppTier) {
   name: 'ca-${prefix}-web'
 }
 
-resource containerAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource containerAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (includeAppTier) {
   name: diagnosticName
   scope: containerApp
   properties: {
-    workspaceId: workspace.id
+    workspaceId: workspaceResourceId
     logs: [
       { categoryGroup: 'allLogs', enabled: true }
     ]
@@ -283,7 +306,7 @@ resource containerAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-
   }
 }
 
-output workspaceResourceId string = workspace.id
+output workspaceResourceId string = workspaceResourceId
 output dataCollectionRuleId string = dcr.outputs.resourceId
 output monitoredVmNames array = vmNames
-output diagnosticSettingsApplied int = includeWebTier ? (collectFirewallLogs ? 6 : 5) : 4
+output diagnosticSettingsApplied int = 1 + (includeWebTier ? (collectFirewallLogs ? 2 : 1) : 0) + (includeAppTier ? 3 : 0)

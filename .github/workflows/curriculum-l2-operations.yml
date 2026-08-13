@@ -13,6 +13,11 @@ name: "Curriculum L2 - Operations & Monitoring"
 on:
   workflow_dispatch:
     inputs:
+      resource_group:
+        description: "Instructor/testing override: deploy into this resource group instead of the fork-owner default"
+        type: string
+        required: false
+        default: ""
       chapter:
         description: "Which chapter to deploy"
         type: choice
@@ -24,10 +29,20 @@ on:
           - "L2.3 - Proactive Operations"
           - "L2.4 - Enterprise Monitoring Strategy"
       include_web_tier:
-        description: "L1.2 (firewall + web tier) is still deployed"
+        description: "L1.2 (firewall + web tier) is deployed - include it here"
         type: boolean
         required: true
-        default: true
+        default: false
+      include_app_tier:
+        description: "L1.3 (workspace + SQL + Key Vault + app) is deployed - monitor it too"
+        type: boolean
+        required: true
+        default: false
+      availability_test:
+        description: "L2.2 only: deploy the availability web test (needs L1.4's Front Door)"
+        type: boolean
+        required: true
+        default: false
       dry_run:
         description: "Stop after what-if — show the changes, deploy nothing"
         type: boolean
@@ -55,8 +70,14 @@ env:
   # Classroom isolation is naming: each workshop GitHub account matches its
   # pre-created resource group, so the fork owner is the default target RG.
   # The AZURE_RESOURCE_GROUP secret still overrides it for self-hosted runs.
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
+  AZURE_RESOURCE_GROUP: ${{ inputs.resource_group || secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
   CURRICULUM_INCLUDE_WEB_TIER: ${{ inputs.include_web_tier }}
+  # Read by L2.1: gates the L1.3 diagnostic settings and switches between the
+  # self-created workspace (main path) and L1.3's workspace.
+  CURRICULUM_INCLUDE_APP_TIER: ${{ inputs.include_app_tier }}
+  # Read by L2.2: the web test does a property read on L1.4's Front Door, so
+  # it must stay off until L1.4 is standing.
+  CURRICULUM_AVAILABILITY_TEST: ${{ inputs.availability_test }}
   # Read by L2.3. Same variable the L1.3 lab already uses, so a class that set it
   # once does not set it again.
   ALERT_EMAIL: ${{ vars.ALERT_EMAIL || 'you@example.com' }}

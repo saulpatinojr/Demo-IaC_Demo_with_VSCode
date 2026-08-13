@@ -15,6 +15,11 @@ name: "Teardown labs"
 on:
   workflow_dispatch:
     inputs:
+      resource_group:
+        description: "Instructor/testing override: deploy into this resource group instead of the fork-owner default"
+        type: string
+        required: false
+        default: ""
       dry_run:
         description: "Preview only — list what would be deleted, delete nothing"
         type: boolean
@@ -44,7 +49,7 @@ env:
   # Classroom isolation is naming: each workshop GitHub account matches its
   # pre-created resource group, so the fork owner is the default target RG.
   # The AZURE_RESOURCE_GROUP secret still overrides it for self-hosted runs.
-  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
+  AZURE_RESOURCE_GROUP: ${{ inputs.resource_group || secrets.AZURE_RESOURCE_GROUP || github.repository_owner }}
 
 jobs:
   teardown:
